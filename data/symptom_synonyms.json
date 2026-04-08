@@ -1,0 +1,142 @@
+{
+  "chest pain": [
+    "burning in my chest",
+    "chest burning",
+    "chest hurts",
+    "pain in my chest",
+    "tight chest",
+    "chest tightness",
+    "pressure in chest",
+    "squeezing in chest",
+    "heavy chest"
+  ],
+  "shortness of breath": [
+    "can't breathe",
+    "hard to breathe",
+    "difficulty breathing",
+    "gasping for air",
+    "out of breath",
+    "breathing trouble",
+    "winded",
+    "can't catch my breath"
+  ],
+  "joint pain": [
+    "joints hurt",
+    "achy joints",
+    "joints are killing me",
+    "joint ache",
+    "stiff joints",
+    "painful joints",
+    "sore joints"
+  ],
+  "headache": [
+    "head hurts",
+    "head pain",
+    "pounding head",
+    "splitting headache",
+    "head is killing me",
+    "migraine"
+  ],
+  "nausea": [
+    "feeling sick",
+    "feel like throwing up",
+    "queasy",
+    "sick to my stomach",
+    "upset stomach"
+  ],
+  "vomiting": [
+    "throwing up",
+    "puking",
+    "been sick"
+  ],
+  "fatigue": [
+    "tired all the time",
+    "exhausted",
+    "no energy",
+    "worn out",
+    "always tired"
+  ],
+  "dizziness": [
+    "dizzy",
+    "lightheaded",
+    "room is spinning",
+    "vertigo",
+    "feeling faint"
+  ],
+  "insomnia": [
+    "can't sleep",
+    "trouble sleeping",
+    "not sleeping well",
+    "lying awake at night"
+  ],
+  "frequent urination": [
+    "peeing a lot",
+    "going to the bathroom a lot",
+    "urinating frequently"
+  ],
+  "diplopia": [
+    "seeing double",
+    "double vision",
+    "blurry vision in both eyes"
+  ],
+  "paresthesia": [
+    "pins and needles",
+    "tingling",
+    "numbness and tingling",
+    "prickling sensation"
+  ],
+  "tachycardia": [
+    "heart racing",
+    "rapid heartbeat",
+    "heart pounding",
+    "heart beating fast"
+  ],
+  "rhinorrhea": [
+    "runny nose",
+    "nose running",
+    "nasal drip"
+  ],
+  "dyspnea": [
+    "short of breath",
+    "breathlessness",
+    "labored breathing"
+  ],
+  "edema": [
+    "swelling",
+    "swollen legs",
+    "puffy ankles",
+    "fluid retention"
+  ],
+  "diaphoresis": [
+    "cold sweat",
+    "sweating profusely",
+    "drenched in sweat",
+    "night sweats"
+  ],
+  "cough": [
+    "coughing",
+    "persistent cough",
+    "dry cough",
+    "wet cough",
+    "hacking cough"
+  ],
+  "abdominal pain": [
+    "stomach pain",
+    "belly pain",
+    "stomach cramps",
+    "tummy ache",
+    "gut pain"
+  ],
+  "fever": [
+    "high temperature",
+    "feeling hot",
+    "burning up",
+    "chills and fever"
+  ],
+  "rash": [
+    "skin rash",
+    "breakout",
+    "skin irritation",
+    "itchy skin"
+  ]
+}
