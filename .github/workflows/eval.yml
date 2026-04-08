@@ -1,0 +1,34 @@
+name: Evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_cases:
+        description: "Max eval cases to run"
+        default: "50"
+        type: string
+  schedule:
+    - cron: "0 2 * * 1" # Weekly Monday 2 AM UTC
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          pip install httpx
+      - name: Run evaluation
+        run: |
+          python -m eval.run_eval \
+            --api-url ${{ vars.API_URL }} \
+            --api-key ${{ secrets.API_KEY }} \
+            --max-cases ${{ inputs.max_cases || '50' }}
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results-${{ github.sha }}
+          path: eval/results.json

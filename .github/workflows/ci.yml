@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install ruff
+        run: pip install ruff
+      - name: Lint backend
+        run: ruff check services/api/ services/ingestion/ eval/
+      - name: Format check
+        run: ruff format --check services/api/ services/ingestion/ eval/
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          pip install pip-tools
+          pip-compile services/api/requirements.in -o services/api/requirements.txt
+          pip install -r services/api/requirements.txt
+      - name: Run tests
+        run: |
+          cd services/api
+          python -m pytest tests/ -v --tb=short
+        env:
+          ENVIRONMENT: development
+
+  frontend-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install deps
+        working-directory: services/frontend
+        run: npm ci
+      - name: Type check
+        working-directory: services/frontend
+        run: npx tsc --noEmit
+      - name: Build
+        working-directory: services/frontend
+        run: npm run build
