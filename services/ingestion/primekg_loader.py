@@ -129,44 +129,38 @@ def load_nodes(driver, nodes: pd.DataFrame) -> None:
 
 
 def load_edges(driver, df: pd.DataFrame) -> None:
-    """Load edges into Neo4j in batches."""
-    records = df[["x_index", "y_index", "relation", "x_type", "y_type"]].to_dict("records")
+    """Load edges into Neo4j in batches, grouped by relationship type.
 
-    for i in range(0, len(records), BATCH_SIZE):
-        batch = records[i : i + BATCH_SIZE]
-        with driver.session() as session:
-            session.run(
-                """
-                UNWIND $batch AS row
-                MATCH (a {primekg_id: row.x_index})
-                MATCH (b {primekg_id: row.y_index})
-                CALL {
-                    WITH a, b, row
-                    WITH a, b, row
-                    WHERE row.relation = 'disease_phenotype_positive'
-                    MERGE (a)-[:disease_phenotype_positive]->(b)
-                } IN TRANSACTIONS OF 100 ROWS
-                """,
-                batch=batch,
-            )
-        # Generic edge creation for all types
-        with driver.session() as session:
-            for edge in batch:
-                rel_type = edge["relation"]
+    Groups edges by relation type so each batch uses a single MERGE pattern
+    with UNWIND — no per-edge queries, no CALL subqueries, no APOC.
+    """
+    total_loaded = 0
+    total_edges = len(df)
+
+    for rel_type, group in df.groupby("relation"):
+        records = group[["x_index", "y_index"]].to_dict("records")
+        logger.info("Loading edge type: %s (%d edges)", rel_type, len(records))
+
+        for i in range(0, len(records), BATCH_SIZE):
+            batch = records[i : i + BATCH_SIZE]
+            with driver.session() as session:
                 session.run(
                     f"""
-                    MATCH (a {{primekg_id: $x_id}})
-                    MATCH (b {{primekg_id: $y_id}})
+                    UNWIND $batch AS row
+                    MATCH (a {{primekg_id: row.x_index}})
+                    MATCH (b {{primekg_id: row.y_index}})
                     MERGE (a)-[:{rel_type}]->(b)
                     """,
-                    x_id=edge["x_index"],
-                    y_id=edge["y_index"],
+                    batch=batch,
+                )
+            total_loaded += len(batch)
+
+            if total_loaded % 5000 < BATCH_SIZE:
+                logger.info(
+                    "Loaded edges: %d/%d (current: %s)", total_loaded, total_edges, rel_type
                 )
 
-        if (i + BATCH_SIZE) % 5000 < BATCH_SIZE:
-            logger.info("Loaded edges: %d/%d", min(i + BATCH_SIZE, len(records)), len(records))
-
-    logger.info("All edges loaded: %d", len(records))
+    logger.info("All edges loaded: %d", total_loaded)
 
 
 def print_summary(driver) -> None:
