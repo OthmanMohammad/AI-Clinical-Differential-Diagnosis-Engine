@@ -55,7 +55,40 @@ ERRORS = Counter(
 # --- Structured logging ---
 
 def configure_logging(environment: str) -> None:
-    """Configure structlog for JSON output."""
+    """Configure structlog for JSON output and silence noisy third-party loggers."""
+    import logging
+
+    # Silence noisy third-party loggers — they spam DEBUG/INFO output
+    # that drowns out actual application logs
+    noisy_loggers = {
+        "PyRuSH": logging.WARNING,
+        "PyRuSH.PyRuSHSentencizer": logging.WARNING,
+        "medspacy": logging.WARNING,
+        "spacy": logging.WARNING,
+        "guardrails-ai": logging.ERROR,
+        "httpx": logging.WARNING,
+        "httpcore": logging.WARNING,
+        "huggingface_hub": logging.WARNING,
+        "fastembed": logging.WARNING,
+        "urllib3": logging.WARNING,
+        "neo4j.notifications": logging.ERROR,
+        "neo4j.pool": logging.WARNING,
+        "LiteLLM": logging.WARNING,
+        "litellm": logging.WARNING,
+        "openai": logging.WARNING,
+    }
+    for logger_name, level in noisy_loggers.items():
+        logging.getLogger(logger_name).setLevel(level)
+
+    # Also disable loguru for PyRuSH which uses it separately
+    try:
+        from loguru import logger as loguru_logger
+
+        loguru_logger.remove()
+        loguru_logger.add(lambda msg: None, level="ERROR")  # swallow all loguru logs
+    except ImportError:
+        pass
+
     # Base processors common to both environments
     processors: list = [
         structlog.contextvars.merge_contextvars,
@@ -80,3 +113,6 @@ def configure_logging(environment: str) -> None:
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
+
+    # Set root logger level for app's own loggers
+    logging.getLogger("app").setLevel(logging.INFO)

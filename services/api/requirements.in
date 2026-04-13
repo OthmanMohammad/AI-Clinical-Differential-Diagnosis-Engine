@@ -19,7 +19,9 @@ qdrant-client>=1.12.0
 fastembed>=0.4.0
 
 # Observability
-langfuse>=2.50.0
+# Pin Langfuse to v2.x — v3 and v4 have API incompatibilities with LiteLLM's
+# built-in Langfuse integration. v2.60.x is the last stable v2 line.
+langfuse>=2.60.0,<3.0.0
 structlog>=24.4.0
 prometheus-client>=0.21.0
 
