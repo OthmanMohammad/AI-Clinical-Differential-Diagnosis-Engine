@@ -113,9 +113,14 @@ async def run_diagnosis_pipeline(
     raw_output, model_used = await call_llm(messages)
     end_span(span, output_data={"model": model_used})
 
-    # Detect fallback
-    settings_primary = "groq/llama-3.3-70b-versatile"
-    llm_fallback = model_used != settings_primary
+    # Detect fallback — LiteLLM returns "llama-3.3-70b-versatile" without the
+    # "groq/" provider prefix, so strip the prefix from the configured primary
+    # before comparing.
+    from app.config import get_settings
+    primary = get_settings().primary_llm
+    primary_bare = primary.split("/", 1)[-1] if "/" in primary else primary
+    model_bare = model_used.split("/", 1)[-1] if "/" in model_used else model_used
+    llm_fallback = model_bare != primary_bare
 
     # --- Layer 6: Output Guardrails ---
     span = create_span(trace, "output_gates")
