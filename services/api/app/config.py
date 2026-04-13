@@ -3,9 +3,17 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Project root — walk up from this file until we find the project marker
+# services/api/app/config.py → services/api/app → services/api → services → <root>
+_THIS_FILE = Path(__file__).resolve()
+PROJECT_ROOT = _THIS_FILE.parents[3]  # services/api/app/config.py is 3 levels deep
+DATA_DIR = PROJECT_ROOT / "data"
+PROMPTS_DIR = PROJECT_ROOT / "prompts"
 
 
 class Settings(BaseSettings):

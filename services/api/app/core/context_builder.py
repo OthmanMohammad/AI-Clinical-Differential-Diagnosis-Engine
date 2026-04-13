@@ -7,11 +7,11 @@ loads versioned prompt templates from YAML, and enforces token budget.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import structlog
 import yaml
 
+from app.config import PROMPTS_DIR
 from app.models.diagnosis import DifferentialDiagnosis
 from app.models.patient import PatientIntake
 
@@ -19,9 +19,6 @@ logger = structlog.get_logger()
 
 # Prompt template cache
 _prompt_cache: dict[str, dict] = {}
-
-# Default prompt template path
-PROMPTS_DIR = Path("prompts")
 
 
 def serialize_subgraph(nodes: list[dict], relationships: list[dict]) -> str:

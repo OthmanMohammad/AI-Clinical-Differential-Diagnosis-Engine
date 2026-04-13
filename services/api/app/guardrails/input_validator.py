@@ -8,10 +8,10 @@ from __future__ import annotations
 import json
 import re
 import unicodedata
-from pathlib import Path
 
 import structlog
 
+from app.config import DATA_DIR
 from app.models.patient import PatientIntake
 from app.observability.metrics import GATE_TRIGGERS
 
@@ -23,7 +23,7 @@ _medical_terms: set[str] | None = None
 
 def _load_medical_terms() -> set[str]:
     """Load medical terms extracted from PrimeKG during ingestion."""
-    terms_path = Path("data/medical_terms.json")
+    terms_path = DATA_DIR / "medical_terms.json"
     if not terms_path.exists():
         logger.warning("medical_terms_not_found", path=str(terms_path))
         return set()

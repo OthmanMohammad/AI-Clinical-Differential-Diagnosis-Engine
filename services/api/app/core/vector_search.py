@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 import structlog
 from fastembed import TextEmbedding
 from qdrant_client import AsyncQdrantClient
-from qdrant_client.models import ScoredPoint
 
 from app.config import get_settings
 from app.observability.metrics import QDRANT_LATENCY
@@ -55,7 +54,7 @@ async def get_seed_nodes(
     qdrant: AsyncQdrantClient,
     top_k: int = 5,
     score_threshold: float = 0.65,
-) -> tuple[list[str], list[ScoredPoint]]:
+) -> tuple[list[str], list]:
     """Embed patient input, search Qdrant, return seed node IDs for graph traversal.
 
     Returns:
@@ -67,14 +66,15 @@ async def get_seed_nodes(
     # Embed
     embedding = embed_text(query_text)
 
-    # Search Qdrant
+    # Search Qdrant — query_points() is the current API (search() removed in 1.17+)
     start = time.monotonic()
-    results: list[ScoredPoint] = await qdrant.search(
+    response = await qdrant.query_points(
         collection_name=settings.qdrant_collection,
-        query_vector=embedding,
+        query=embedding,
         limit=top_k,
         score_threshold=score_threshold,
     )
+    results = response.points
     elapsed = time.monotonic() - start
     QDRANT_LATENCY.observe(elapsed)
 

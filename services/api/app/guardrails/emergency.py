@@ -7,12 +7,12 @@ Runs on every request before any LLM call. Must be fast, deterministic, always a
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import structlog
 from spacy.language import Language
 
+from app.config import DATA_DIR
 from app.models.diagnosis import EmergencyResult
 from app.observability.metrics import EMERGENCY_TRIGGERS, GATE_TRIGGERS
 
@@ -112,7 +112,7 @@ def _load_nlp() -> Language:
     patterns: list[dict] = []
 
     # Load PrimeKG medical terms if available
-    terms_path = Path("data/medical_terms.json")
+    terms_path = DATA_DIR / "medical_terms.json"
     if terms_path.exists():
         with open(terms_path) as f:
             medical_terms: list[str] = json.load(f)
@@ -121,7 +121,7 @@ def _load_nlp() -> Language:
         logger.info("entity_ruler_loaded_primekg", count=len(medical_terms))
 
     # Load symptom synonyms if available
-    synonyms_path = Path("data/symptom_synonyms.json")
+    synonyms_path = DATA_DIR / "symptom_synonyms.json"
     if synonyms_path.exists():
         with open(synonyms_path) as f:
             synonym_map: dict[str, list[str]] = json.load(f)
