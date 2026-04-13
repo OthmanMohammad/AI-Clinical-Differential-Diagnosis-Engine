@@ -83,7 +83,6 @@ def verify_qdrant(client: QdrantClient, collection: str = "medical_entities") ->
         info = client.get_collection(collection)
         print(f"\n=== Qdrant Collection: {collection} ===")
         print(f"  Points: {info.points_count}")
-        print(f"  Vectors: {info.vectors_count}")
         print(f"  Status: {info.status}")
 
         if info.points_count < 100:
