@@ -1,10 +1,12 @@
-"""Langfuse tracing integration — fully optional, version-agnostic.
+"""Langfuse v3 tracing integration.
 
-If Langfuse is not configured or the installed version has an incompatible API,
-all tracing calls become no-ops. The pipeline continues to work.
+Uses the OpenTelemetry-based span API introduced in Langfuse v3.
+LiteLLM integration is handled via environment variables + callback strings.
 """
 
 from __future__ import annotations
+
+import os
 
 import structlog
 
@@ -13,27 +15,47 @@ from app.config import Settings
 logger = structlog.get_logger()
 
 _langfuse = None  # type: ignore[var-annotated]
+_enabled: bool = False
 
 
 def init_langfuse(settings: Settings) -> None:
-    """Initialize Langfuse client if keys are configured."""
-    global _langfuse
+    """Initialize Langfuse v3 client and configure LiteLLM callbacks."""
+    global _langfuse, _enabled
+
     if not (settings.langfuse_public_key and settings.langfuse_secret_key):
         logger.info("langfuse_skipped", reason="no keys configured")
         return
 
-    try:
-        from langfuse import Langfuse
+    # LiteLLM reads Langfuse config from environment variables
+    os.environ["LANGFUSE_PUBLIC_KEY"] = settings.langfuse_public_key
+    os.environ["LANGFUSE_SECRET_KEY"] = settings.langfuse_secret_key
+    os.environ["LANGFUSE_HOST"] = settings.langfuse_host
 
-        _langfuse = Langfuse(
-            public_key=settings.langfuse_public_key,
-            secret_key=settings.langfuse_secret_key,
-            host=settings.langfuse_host,
-        )
-        logger.info("langfuse_initialized")
-    except Exception as exc:
-        logger.warning("langfuse_init_failed", error=str(exc))
-        _langfuse = None
+    from langfuse import Langfuse
+
+    _langfuse = Langfuse(
+        public_key=settings.langfuse_public_key,
+        secret_key=settings.langfuse_secret_key,
+        host=settings.langfuse_host,
+    )
+    _enabled = True
+    logger.info("langfuse_initialized", host=settings.langfuse_host)
+
+
+def configure_litellm_callbacks() -> None:
+    """Wire LiteLLM success/failure callbacks to Langfuse (v3 style)."""
+    if not _enabled:
+        return
+
+    import litellm
+
+    # v3 uses the string-based callback registration
+    if "langfuse" not in (litellm.success_callback or []):
+        litellm.success_callback = [*(litellm.success_callback or []), "langfuse"]
+    if "langfuse" not in (litellm.failure_callback or []):
+        litellm.failure_callback = [*(litellm.failure_callback or []), "langfuse"]
+
+    logger.info("litellm_langfuse_callbacks_registered")
 
 
 def get_langfuse():
@@ -41,53 +63,41 @@ def get_langfuse():
     return _langfuse
 
 
-def get_langfuse_callback():
-    """Get LiteLLM-compatible Langfuse callback handler."""
-    if _langfuse is None:
-        return None
-    try:
-        from langfuse.callback import CallbackHandler
-
-        return CallbackHandler()
-    except Exception as exc:
-        logger.debug("langfuse_callback_unavailable", error=str(exc))
-        return None
-
-
 def create_trace(name: str, request_id: str, metadata: dict | None = None):
-    """Create a trace — returns None if Langfuse unavailable or API mismatch."""
-    if _langfuse is None:
+    """Create a root span that acts as the request trace.
+
+    Returns a Langfuse v3 span object (or None if disabled).
+    """
+    if not _enabled or _langfuse is None:
         return None
-    try:
-        # Try v2.x API
-        if hasattr(_langfuse, "trace"):
-            return _langfuse.trace(name=name, id=request_id, metadata=metadata or {})
-        # Try v3.x API
-        if hasattr(_langfuse, "start_as_current_span"):
-            return _langfuse.start_as_current_span(name=name)
-    except Exception as exc:
-        logger.debug("langfuse_trace_failed", error=str(exc))
-    return None
+
+    span = _langfuse.start_span(
+        name=name,
+        input={"request_id": request_id, **(metadata or {})},
+    )
+    return span
 
 
-def create_span(trace, name: str, input_data: dict | None = None):
-    """Create a span within a trace — returns None gracefully on any error."""
-    if trace is None:
+def create_span(parent, name: str, input_data: dict | None = None):
+    """Create a child span under a parent span."""
+    if parent is None:
         return None
-    try:
-        if hasattr(trace, "span"):
-            return trace.span(name=name, input=input_data or {})
-    except Exception as exc:
-        logger.debug("langfuse_span_failed", error=str(exc))
-    return None
+    return parent.start_span(name=name, input=input_data or {})
 
 
 def end_span(span, output_data: dict | None = None, level: str = "DEFAULT"):
-    """End a span with output data — no-op if span is None or API mismatch."""
+    """End a span with output data."""
     if span is None:
         return
-    try:
-        if hasattr(span, "end"):
-            span.end(output=output_data or {}, level=level)
-    except Exception as exc:
-        logger.debug("langfuse_end_failed", error=str(exc))
+    if output_data:
+        span.update(output=output_data)
+    span.end()
+
+
+def flush() -> None:
+    """Flush pending traces to Langfuse server (call at request end)."""
+    if _enabled and _langfuse is not None:
+        try:
+            _langfuse.flush()
+        except Exception as exc:
+            logger.debug("langfuse_flush_failed", error=str(exc))

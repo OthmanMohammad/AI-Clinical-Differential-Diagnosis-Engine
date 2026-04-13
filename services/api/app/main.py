@@ -17,7 +17,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.config import get_settings
 from app.dependencies import close_neo4j, close_qdrant, init_neo4j, init_qdrant
-from app.observability.langfuse_client import get_langfuse_callback, init_langfuse
+from app.observability.langfuse_client import configure_litellm_callbacks, init_langfuse
 from app.observability.metrics import configure_logging
 from app.routers import diagnosis, graph, health
 
@@ -48,9 +48,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Configure LiteLLM
     litellm.telemetry = False
     litellm.drop_params = True
-    callback = get_langfuse_callback()
-    if callback:
-        litellm.callbacks = [callback]
 
     # Set provider API keys in environment for LiteLLM
     import os
@@ -58,6 +55,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         os.environ["GROQ_API_KEY"] = settings.groq_api_key
     if settings.cerebras_api_key:
         os.environ["CEREBRAS_API_KEY"] = settings.cerebras_api_key
+
+    # Register Langfuse as LiteLLM callback (must happen after env vars are set)
+    configure_litellm_callbacks()
 
     logger.info("pathodx_started")
     yield
