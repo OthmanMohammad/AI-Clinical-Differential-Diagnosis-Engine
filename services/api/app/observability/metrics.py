@@ -56,18 +56,21 @@ ERRORS = Counter(
 
 def configure_logging(environment: str) -> None:
     """Configure structlog for JSON output."""
-    processors = [
+    # Base processors common to both environments
+    processors: list = [
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
     ]
 
     if environment == "production":
+        # JSONRenderer needs format_exc_info to stringify exceptions
+        processors.append(structlog.processors.format_exc_info)
         processors.append(structlog.processors.JSONRenderer())
     else:
+        # ConsoleRenderer handles exceptions itself — don't pre-format
         processors.append(structlog.dev.ConsoleRenderer())
 
     structlog.configure(
