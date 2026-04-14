@@ -63,12 +63,12 @@ export function GraphPanel({ response, topPath }: GraphPanelProps) {
     });
   };
 
-  const handleExport = async (format: "png" | "svg") => {
+  const handleExportPng = async () => {
     try {
-      await graphRef.current?.exportImage(format);
-      toast.success(`Graph exported as ${format.toUpperCase()}`);
+      await graphRef.current?.exportImage("png");
+      toast.success("Graph exported as PNG");
     } catch (err) {
-      toast.error(`Export failed`, {
+      toast.error("Export failed", {
         description: (err as Error).message,
       });
     }
@@ -118,8 +118,7 @@ export function GraphPanel({ response, topPath }: GraphPanelProps) {
                 onZoomIn={() => graphRef.current?.zoomIn()}
                 onZoomOut={() => graphRef.current?.zoomOut()}
                 onSearch={() => setSearchOpen(true)}
-                onExportPng={() => void handleExport("png")}
-                onExportSvg={() => void handleExport("svg")}
+                onExportPng={() => void handleExportPng()}
                 onToggleFullscreen={toggleFullscreen}
                 fullscreen={graphFullscreen}
               />

@@ -45,13 +45,13 @@
     --input: 214 32% 91%;
     --ring: 221 83% 53%;
 
-    /* Clinical entity colors — vivid, distinct, accessible */
-    --disease: 263 75% 56%;       /* Violet — primary medical entity */
-    --symptom: 215 28% 42%;       /* Slate — patient-reported */
-    --gene: 142 70% 38%;          /* Green — biological */
-    --drug: 28 90% 50%;           /* Amber — pharmacology */
-    --phenotype: 199 88% 48%;     /* Sky — observable traits */
-    --anatomy: 172 70% 38%;       /* Teal — body structures */
+    /* Clinical entity colors — vivid and maximally distinct */
+    --disease: 280 88% 56%;       /* Vivid violet — primary medical entity */
+    --symptom: 220 55% 50%;       /* Vivid blue — patient-reported */
+    --gene: 142 80% 38%;          /* Vivid green — biological */
+    --drug: 25 95% 52%;           /* Vivid orange — pharmacology */
+    --phenotype: 199 95% 48%;     /* Vivid cyan — observable traits */
+    --anatomy: 175 80% 38%;       /* Vivid teal — body structures */
 
     /* State colors */
     --success: 142 72% 38%;
@@ -92,12 +92,12 @@
     --ring: 217 91% 60%;
 
     /* Clinical entity colors — brighter for dark bg, still distinct */
-    --disease: 263 90% 72%;
-    --symptom: 215 22% 70%;
-    --gene: 142 75% 55%;
-    --drug: 28 95% 62%;
-    --phenotype: 199 92% 65%;
-    --anatomy: 172 78% 55%;
+    --disease: 280 95% 72%;
+    --symptom: 220 75% 70%;
+    --gene: 142 80% 55%;
+    --drug: 25 98% 62%;
+    --phenotype: 199 98% 60%;
+    --anatomy: 175 85% 52%;
 
     --success: 142 71% 45%;
     --warning: 38 92% 55%;

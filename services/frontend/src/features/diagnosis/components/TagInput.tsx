@@ -40,30 +40,32 @@ export function TagInput({
 }: TagInputProps) {
   const [draft, setDraft] = React.useState("");
   const [focused, setFocused] = React.useState(false);
-  const [activeSuggestion, setActiveSuggestion] = React.useState(0);
+  // -1 means "no suggestion is highlighted" — Enter will add the literal text.
+  // Becomes >= 0 when the user explicitly arrows down into the dropdown.
+  const [activeSuggestion, setActiveSuggestion] = React.useState(-1);
 
   const filteredSuggestions = React.useMemo(() => {
     const q = draft.trim().toLowerCase();
     if (q.length < 2 || suggestions.length === 0) return [];
     const existing = new Set(value.map((v) => v.toLowerCase()));
-    const exact: string[] = [];
     const startsWith: string[] = [];
     const contains: string[] = [];
     for (const term of suggestions) {
       const t = term.toLowerCase();
       if (existing.has(t)) continue;
-      if (t === q) exact.push(term);
-      else if (t.startsWith(q)) startsWith.push(term);
+      if (t === q) continue; // skip exact matches — user already has the right word
+      if (t.startsWith(q)) startsWith.push(term);
       else if (t.includes(q)) contains.push(term);
-      if (exact.length + startsWith.length + contains.length >= maxSuggestions * 2) {
+      if (startsWith.length + contains.length >= maxSuggestions * 2) {
         break;
       }
     }
-    return [...exact, ...startsWith, ...contains].slice(0, maxSuggestions);
+    return [...startsWith, ...contains].slice(0, maxSuggestions);
   }, [draft, suggestions, value, maxSuggestions]);
 
+  // Reset highlight when draft changes
   React.useEffect(() => {
-    setActiveSuggestion(0);
+    setActiveSuggestion(-1);
   }, [draft]);
 
   const commit = (text: string) => {
@@ -71,26 +73,37 @@ export function TagInput({
     if (!trimmed) return;
     onAdd(trimmed);
     setDraft("");
+    setActiveSuggestion(-1);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
-      if (filteredSuggestions.length > 0 && filteredSuggestions[activeSuggestion]) {
-        commit(filteredSuggestions[activeSuggestion]);
+      // If user has explicitly arrowed into the suggestions, use the
+      // highlighted one. Otherwise add the literal text they typed.
+      if (
+        activeSuggestion >= 0 &&
+        filteredSuggestions[activeSuggestion] !== undefined
+      ) {
+        commit(filteredSuggestions[activeSuggestion]!);
       } else {
         commit(draft);
       }
+    } else if (e.key === "Tab" && filteredSuggestions[0] && draft.trim()) {
+      // Tab autocompletes to the first suggestion (familiar shell-like UX)
+      e.preventDefault();
+      commit(filteredSuggestions[0]);
     } else if (e.key === "ArrowDown" && filteredSuggestions.length > 0) {
       e.preventDefault();
       setActiveSuggestion((i) => Math.min(i + 1, filteredSuggestions.length - 1));
     } else if (e.key === "ArrowUp" && filteredSuggestions.length > 0) {
       e.preventDefault();
-      setActiveSuggestion((i) => Math.max(i - 1, 0));
+      setActiveSuggestion((i) => Math.max(i - 1, -1));
     } else if (e.key === "Backspace" && draft === "" && value.length > 0) {
       onRemove(value.length - 1);
     } else if (e.key === "Escape") {
       setDraft("");
+      setActiveSuggestion(-1);
     }
   };
 
@@ -177,6 +190,11 @@ export function TagInput({
                 </li>
               ))}
             </ul>
+            <div className="border-t border-border px-3 py-1.5 text-[10px] text-muted-foreground">
+              <kbd className="font-mono">↵</kbd> add typed text ·{" "}
+              <kbd className="font-mono">Tab</kbd> first match ·{" "}
+              <kbd className="font-mono">↑↓</kbd> navigate
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

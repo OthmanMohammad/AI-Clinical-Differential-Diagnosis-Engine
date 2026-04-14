@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -37,7 +36,6 @@ interface GraphToolbarProps {
   onZoomOut: () => void;
   onSearch: () => void;
   onExportPng: () => void;
-  onExportSvg: () => void;
   onToggleFullscreen: () => void;
   fullscreen: boolean;
   className?: string;
@@ -51,7 +49,6 @@ export function GraphToolbar({
   onZoomOut,
   onSearch,
   onExportPng,
-  onExportSvg,
   onToggleFullscreen,
   fullscreen,
   className,
@@ -136,26 +133,14 @@ export function GraphToolbar({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label="Export">
-                <Download className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Export</TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem onClick={onExportPng} className="text-xs">
-            Export PNG
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onExportSvg} className="text-xs">
-            Export SVG
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="ghost" size="icon-sm" onClick={onExportPng} aria-label="Export PNG">
+            <Download className="h-3.5 w-3.5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Export PNG</TooltipContent>
+      </Tooltip>
 
       <div className="mx-0.5 h-4 w-px bg-border" />
 

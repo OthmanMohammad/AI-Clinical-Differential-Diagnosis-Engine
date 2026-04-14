@@ -207,7 +207,9 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
 
       const graph = new Graph({
         container,
-        background: getBackgroundColor(),
+        // Transparent — let the container's CSS background show through so
+        // theme switching works without re-instantiating the graph.
+        background: "transparent",
         autoFit: "view",
         padding: 32,
         data,
@@ -307,10 +309,11 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       const graph = graphRef.current;
       if (!graph) return;
       safeCall("set_data", () => graph.setData(data));
-      safeCall("set_options_bg", () =>
-        graph.setOptions({ background: getBackgroundColor() }),
-      );
+      // Re-run the layout so newly-revealed nodes get positioned. Without
+      // this they all spawn at (0,0) stacked on top of each other.
+      safeCall("relayout", () => graph.layout());
       safeCall("redraw", () => graph.draw());
+      safeCall("fit_after_data", () => graph.fitView());
     }, [data]);
 
     // ---- Re-apply layout when it changes ----
@@ -345,14 +348,16 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
           if (!graph) return;
           safeCall("focus_node", () => graph.focusElement(id, true));
         },
-        exportImage: async (format: "png" | "svg") => {
+        exportImage: async (_format: "png" | "svg") => {
           const graph = graphRef.current;
           if (!graph) return;
           try {
-            // G6 v5's toDataURL returns a Promise<string>
+            // G6 v5: toDataURL returns Promise<string>. Use mode "overall"
+            // and pixelRatio 2 for retina-quality output.
             const result = graph.toDataURL({
-              type: format === "svg" ? "image/svg+xml" : "image/png",
-              mode: "viewport" as const,
+              mode: "overall" as const,
+              type: "image/png",
+              encoderOptions: 1,
             } as Record<string, unknown>);
             const dataUrl =
               result && typeof (result as Promise<string>).then === "function"
@@ -364,16 +369,16 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
             }
 
             const link = document.createElement("a");
-            link.download = `pathodx-graph-${Date.now()}.${format}`;
+            link.download = `pathodx-graph-${Date.now()}.png`;
             link.href = dataUrl;
             document.body.appendChild(link);
             link.click();
             link.remove();
           } catch (err) {
             logger.warn("graph.export_failed", {
-              format,
               error: (err as Error).message,
             });
+            throw err;
           }
         },
         setLayout: () => {
