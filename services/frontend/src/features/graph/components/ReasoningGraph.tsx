@@ -91,6 +91,10 @@ interface BuiltData {
  * their positions) but rendered with visibility: hidden. Toggling a type
  * back on then just makes the existing nodes visible in place, instead of
  * spawning fresh nodes at the origin.
+ *
+ * Edges that reference nodes outside the current node set are dropped —
+ * the backend's graph traversal caps nodes and edges separately, so some
+ * edges in the response point to nodes that didn't make the cap.
  */
 function buildGraphData(
   nodes: GraphNode[],
@@ -102,6 +106,12 @@ function buildGraphData(
   const fg = getForegroundColor();
   const bg = getBackgroundColor();
   const pathSet = new Set((topPath ?? []).map((n) => n.toLowerCase()));
+
+  // Index nodes for fast lookup AND to reject dangling edges
+  const nodeById = new Map<string, GraphNode>();
+  for (const n of nodes) {
+    nodeById.set(n.id, n);
+  }
 
   const g6Nodes = nodes.map((n) => {
     const isHidden = hiddenTypes.has(n.type);
@@ -137,31 +147,30 @@ function buildGraphData(
     };
   });
 
-  const g6Edges = edges.map((e, i) => {
-    const src = nodes.find((n) => n.id === e.source);
-    const tgt = nodes.find((n) => n.id === e.target);
-    const isHidden =
-      !src || !tgt || hiddenTypes.has(src.type) || hiddenTypes.has(tgt.type);
-    const onPath =
-      src &&
-      tgt &&
-      pathSet.has(src.name.toLowerCase()) &&
-      pathSet.has(tgt.name.toLowerCase());
-    return {
-      id: `e-${i}`,
-      source: e.source,
-      target: e.target,
-      data: { type: e.type, onPath },
-      style: {
-        stroke: onPath ? getPrimaryColor() : getMutedColor(),
-        lineWidth: onPath ? 2.5 : 1,
-        strokeOpacity: onPath ? 0.95 : 0.4,
-        endArrow: true,
-        endArrowSize: 6,
-        visibility: isHidden ? "hidden" : "visible",
-      },
-    };
-  });
+  const g6Edges = edges
+    .filter((e) => nodeById.has(e.source) && nodeById.has(e.target))
+    .map((e, i) => {
+      const src = nodeById.get(e.source)!;
+      const tgt = nodeById.get(e.target)!;
+      const isHidden = hiddenTypes.has(src.type) || hiddenTypes.has(tgt.type);
+      const onPath =
+        pathSet.has(src.name.toLowerCase()) &&
+        pathSet.has(tgt.name.toLowerCase());
+      return {
+        id: `e-${i}`,
+        source: e.source,
+        target: e.target,
+        data: { type: e.type, onPath },
+        style: {
+          stroke: onPath ? getPrimaryColor() : getMutedColor(),
+          lineWidth: onPath ? 2.5 : 1,
+          strokeOpacity: onPath ? 0.95 : 0.4,
+          endArrow: true,
+          endArrowSize: 6,
+          visibility: isHidden ? "hidden" : "visible",
+        },
+      };
+    });
 
   return { nodes: g6Nodes, edges: g6Edges };
 }
