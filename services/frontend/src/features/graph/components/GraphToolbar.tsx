@@ -66,9 +66,7 @@ export function GraphToolbar({
             <Fullscreen className="h-3.5 w-3.5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="bottom">
-          Fit to screen <Kbd className="ml-1">0</Kbd>
-        </TooltipContent>
+        <TooltipContent side="bottom">Fit to screen</TooltipContent>
       </Tooltip>
 
       <Tooltip>
@@ -77,9 +75,7 @@ export function GraphToolbar({
             <ZoomIn className="h-3.5 w-3.5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="bottom">
-          Zoom in <Kbd className="ml-1">+</Kbd>
-        </TooltipContent>
+        <TooltipContent side="bottom">Zoom in</TooltipContent>
       </Tooltip>
 
       <Tooltip>
@@ -88,9 +84,7 @@ export function GraphToolbar({
             <ZoomOut className="h-3.5 w-3.5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="bottom">
-          Zoom out <Kbd className="ml-1">-</Kbd>
-        </TooltipContent>
+        <TooltipContent side="bottom">Zoom out</TooltipContent>
       </Tooltip>
 
       <div className="mx-0.5 h-4 w-px bg-border" />
@@ -101,9 +95,7 @@ export function GraphToolbar({
             <Search className="h-3.5 w-3.5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="bottom">
-          Search nodes <Kbd className="ml-1">Ctrl F</Kbd>
-        </TooltipContent>
+        <TooltipContent side="bottom">Search nodes</TooltipContent>
       </Tooltip>
 
       <DropdownMenu>

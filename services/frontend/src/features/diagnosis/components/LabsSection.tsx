@@ -13,14 +13,27 @@ const COMMON_LABS = [
   "Hemoglobin",
   "Platelets",
   "Glucose",
+  "HbA1c",
   "Creatinine",
   "BUN",
   "Sodium",
   "Potassium",
+  "Chloride",
+  "Bicarbonate",
+  "Calcium",
+  "Magnesium",
   "ALT",
   "AST",
+  "Alkaline Phosphatase",
+  "Total Bilirubin",
+  "Albumin",
   "CRP",
   "ESR",
+  "Troponin",
+  "BNP",
+  "TSH",
+  "Lactate",
+  "INR",
 ];
 
 export function LabsSection() {
@@ -32,14 +45,60 @@ export function LabsSection() {
 
   const [draftKey, setDraftKey] = React.useState("");
   const [draftValue, setDraftValue] = React.useState("");
+  const [keyFocused, setKeyFocused] = React.useState(false);
+  const [activeSuggestion, setActiveSuggestion] = React.useState(0);
+
+  const nameRef = React.useRef<HTMLInputElement>(null);
+  const valueRef = React.useRef<HTMLInputElement>(null);
+
+  const filteredLabs = React.useMemo(() => {
+    const q = draftKey.trim().toLowerCase();
+    if (q.length === 0) return COMMON_LABS;
+    return COMMON_LABS.filter((l) => l.toLowerCase().includes(q));
+  }, [draftKey]);
+
+  React.useEffect(() => {
+    setActiveSuggestion(0);
+  }, [draftKey]);
 
   const commit = () => {
     const key = draftKey.trim();
     const value = Number(draftValue);
-    if (!key || Number.isNaN(value)) return;
+    if (!key || draftValue === "" || Number.isNaN(value)) return;
     addLab(key, value);
     setDraftKey("");
     setDraftValue("");
+    // After committing, refocus the name field for the next lab entry
+    setTimeout(() => nameRef.current?.focus(), 10);
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault();
+      // If the user has highlighted a suggestion, accept it
+      if (filteredLabs[activeSuggestion]) {
+        setDraftKey(filteredLabs[activeSuggestion]);
+      }
+      // Then advance to the value field
+      setTimeout(() => valueRef.current?.focus(), 10);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveSuggestion((i) => Math.min(i + 1, filteredLabs.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveSuggestion((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Escape") {
+      setDraftKey("");
+    }
+  };
+
+  const handleValueKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      commit();
+    } else if (e.key === "Escape") {
+      setDraftValue("");
+    }
   };
 
   return (
@@ -100,29 +159,69 @@ export function LabsSection() {
               )}
 
               <div className="space-y-1.5">
-                <Label className="text-[10px]">Add lab</Label>
-                <div className="flex gap-1.5">
+                <Label className="text-[10px]">Add lab test</Label>
+                <div className="relative flex gap-1.5">
+                  <div className="relative flex-1">
+                    <Input
+                      ref={nameRef}
+                      value={draftKey}
+                      onChange={(e) => setDraftKey(e.target.value)}
+                      onFocus={() => setKeyFocused(true)}
+                      onBlur={() => setTimeout(() => setKeyFocused(false), 120)}
+                      onKeyDown={handleNameKeyDown}
+                      placeholder="Lab test"
+                      className="h-8 text-xs"
+                      autoComplete="off"
+                    />
+                    <AnimatePresence>
+                      {keyFocused && filteredLabs.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.12 }}
+                          style={{
+                            backgroundColor: "hsl(var(--popover))",
+                            color: "hsl(var(--popover-foreground))",
+                          }}
+                          className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-md border border-border shadow-2xl"
+                        >
+                          <ul role="listbox" className="py-1">
+                            {filteredLabs.map((l, i) => (
+                              <li
+                                key={l}
+                                role="option"
+                                aria-selected={i === activeSuggestion}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  setDraftKey(l);
+                                  setTimeout(() => valueRef.current?.focus(), 10);
+                                }}
+                                onMouseEnter={() => setActiveSuggestion(i)}
+                                className={cn(
+                                  "cursor-pointer px-3 py-1 text-xs transition-colors",
+                                  i === activeSuggestion
+                                    ? "bg-accent text-accent-foreground"
+                                    : "text-foreground",
+                                )}
+                              >
+                                {l}
+                              </li>
+                            ))}
+                          </ul>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                   <Input
-                    list="lab-suggestions"
-                    value={draftKey}
-                    onChange={(e) => setDraftKey(e.target.value)}
-                    placeholder="Name"
-                    className="h-8 flex-1 text-xs"
-                    onKeyDown={(e) => e.key === "Enter" && commit()}
-                  />
-                  <datalist id="lab-suggestions">
-                    {COMMON_LABS.map((l) => (
-                      <option key={l} value={l} />
-                    ))}
-                  </datalist>
-                  <Input
+                    ref={valueRef}
                     type="number"
                     step="any"
                     value={draftValue}
                     onChange={(e) => setDraftValue(e.target.value)}
                     placeholder="Value"
                     className="h-8 w-20 text-xs"
-                    onKeyDown={(e) => e.key === "Enter" && commit()}
+                    onKeyDown={handleValueKeyDown}
                   />
                   <Button
                     type="button"

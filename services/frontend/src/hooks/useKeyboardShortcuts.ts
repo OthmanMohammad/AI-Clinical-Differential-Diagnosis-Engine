@@ -1,8 +1,9 @@
 /**
- * Global keyboard shortcut registration.
+ * Global keyboard shortcuts.
  *
- * Uses react-hotkeys-hook under the hood. Exposes a single hook that wires
- * up every application-level shortcut in one place for discoverability.
+ * Curated list — only shortcuts that actually work cross-browser and
+ * provide real value. Avoid sequences that conflict with browser
+ * defaults (Ctrl+/, Ctrl+F outside the graph, etc.).
  */
 
 import { useHotkeys } from "react-hotkeys-hook";
@@ -17,7 +18,7 @@ export function useGlobalShortcuts() {
   const toggleHelp = useWorkspaceStore((s) => s.toggleHelp);
   const { setTheme, resolvedTheme } = useTheme();
 
-  // Command palette
+  // Cmd/Ctrl+K — Command palette
   useHotkeys(
     "mod+k",
     (e) => {
@@ -27,15 +28,17 @@ export function useGlobalShortcuts() {
     { enableOnFormTags: true },
   );
 
-  // Help dialog
+  // ? — Help dialog
   useHotkeys("shift+/", (e) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
     e.preventDefault();
     toggleHelp();
   });
 
-  // Theme toggle
+  // Cmd/Ctrl+Shift+L — Toggle theme (avoids browser conflict with Ctrl+Shift+T)
   useHotkeys(
-    "mod+shift+t",
+    "mod+shift+l",
     (e) => {
       e.preventDefault();
       setTheme(resolvedTheme === "dark" ? "light" : "dark");
@@ -43,16 +46,15 @@ export function useGlobalShortcuts() {
     { enableOnFormTags: true },
   );
 
-  // Fullscreen graph
+  // F — Fullscreen graph (only when not typing)
   useHotkeys("f", (e) => {
-    // Don't fire while typing in form fields
     const target = e.target as HTMLElement;
     if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
     e.preventDefault();
     toggleGraphFullscreen();
   });
 
-  // Escape — close palette and exit fullscreen
+  // Escape — close palette / exit fullscreen
   useHotkeys(
     "esc",
     () => {

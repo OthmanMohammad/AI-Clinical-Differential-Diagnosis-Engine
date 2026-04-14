@@ -25,34 +25,25 @@ interface ShortcutGroup {
 
 const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
-    title: "General",
+    title: "Workspace",
     shortcuts: [
       { keys: ["Ctrl", "K"], description: "Open command palette" },
       { keys: ["?"], description: "Show this help" },
       { keys: ["Esc"], description: "Close dialog / exit fullscreen" },
+      { keys: ["Ctrl", "Shift", "L"], description: "Toggle theme" },
     ],
   },
   {
     title: "Diagnosis",
     shortcuts: [
       { keys: ["Ctrl", "Enter"], description: "Submit diagnosis" },
-      { keys: ["Ctrl", "/"], description: "Focus symptom input" },
-      { keys: ["Ctrl", "N"], description: "New diagnosis (clear form)" },
     ],
   },
   {
     title: "Graph",
     shortcuts: [
       { keys: ["F"], description: "Toggle fullscreen graph" },
-      { keys: ["Ctrl", "F"], description: "Search graph nodes" },
-      { keys: ["+"], description: "Zoom in" },
-      { keys: ["-"], description: "Zoom out" },
-      { keys: ["0"], description: "Reset zoom / fit to screen" },
     ],
-  },
-  {
-    title: "Appearance",
-    shortcuts: [{ keys: ["Ctrl", "Shift", "T"], description: "Toggle theme" }],
   },
 ];
 

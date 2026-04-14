@@ -4,7 +4,6 @@
  */
 
 import * as React from "react";
-import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 
 import { GraphToolbar } from "@/features/graph/components/GraphToolbar";
@@ -36,19 +35,6 @@ export function GraphPanel({ response, topPath }: GraphPanelProps) {
 
   const graphFullscreen = useWorkspaceStore((s) => s.graphFullscreen);
   const toggleFullscreen = useWorkspaceStore((s) => s.toggleGraphFullscreen);
-
-  // Graph shortcuts (only fire when no dialog/input is focused)
-  useHotkeys("0", () => graphRef.current?.fitView());
-  useHotkeys("equal", () => graphRef.current?.zoomIn());
-  useHotkeys("minus", () => graphRef.current?.zoomOut());
-  useHotkeys(
-    "mod+f",
-    (e) => {
-      e.preventDefault();
-      setSearchOpen(true);
-    },
-    { enableOnFormTags: true },
-  );
 
   const handleLayoutChange = (next: LayoutType) => {
     setLayout(next);

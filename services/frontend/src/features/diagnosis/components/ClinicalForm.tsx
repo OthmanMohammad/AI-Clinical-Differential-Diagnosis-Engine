@@ -58,15 +58,6 @@ export function ClinicalForm({ isSubmitting, onSubmit }: ClinicalFormProps) {
   const { data: medicalTerms = [] } = useMedicalTerms();
   const symptomInputRef = React.useRef<HTMLInputElement>(null);
 
-  useHotkeys(
-    "mod+/",
-    (e) => {
-      e.preventDefault();
-      symptomInputRef.current?.focus();
-    },
-    { enableOnFormTags: true },
-  );
-
   const handleSubmit = React.useCallback(() => {
     const parsed = patientIntakeSchema.safeParse(toPayload());
     if (!parsed.success) {
@@ -111,7 +102,6 @@ export function ClinicalForm({ isSubmitting, onSubmit }: ClinicalFormProps) {
               <Label htmlFor="symptoms">
                 Symptoms <span className="text-destructive">*</span>
               </Label>
-              <Kbd>Ctrl /</Kbd>
             </div>
             <TagInput
               value={symptoms}
