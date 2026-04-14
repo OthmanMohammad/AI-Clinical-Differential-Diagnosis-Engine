@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, FlaskConical, Plus, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -36,6 +37,40 @@ const COMMON_LABS = [
   "INR",
 ];
 
+interface DropdownPos {
+  left: number;
+  top?: number;
+  bottom?: number;
+  width: number;
+  maxHeight: number;
+  placement: "bottom" | "top";
+}
+
+/** Compute a viewport-relative position that auto-flips when the input is
+ *  near the bottom of the viewport. Used by the portal-rendered dropdown
+ *  so it can escape every parent overflow and still cling to the input. */
+function computePos(el: HTMLElement): DropdownPos {
+  const rect = el.getBoundingClientRect();
+  const vh = window.innerHeight;
+  const GAP = 4;
+  const MAX = 320; // equivalent to max-h-80
+  const EDGE = 8;
+  const spaceBelow = vh - rect.bottom - EDGE;
+  const spaceAbove = rect.top - EDGE;
+  // Prefer opening downward unless there's clearly more room above.
+  const openDown = spaceBelow >= 200 || spaceBelow >= spaceAbove;
+  const avail = openDown ? spaceBelow : spaceAbove;
+  const maxHeight = Math.max(120, Math.min(MAX, avail - GAP));
+  return {
+    left: rect.left,
+    width: rect.width,
+    top: openDown ? rect.bottom + GAP : undefined,
+    bottom: openDown ? undefined : vh - rect.top + GAP,
+    maxHeight,
+    placement: openDown ? "bottom" : "top",
+  };
+}
+
 export function LabsSection() {
   const labs = useIntakeStore((s) => s.labs);
   const addLab = useIntakeStore((s) => s.addLab);
@@ -47,11 +82,7 @@ export function LabsSection() {
   const [draftValue, setDraftValue] = React.useState("");
   const [keyFocused, setKeyFocused] = React.useState(false);
   const [activeSuggestion, setActiveSuggestion] = React.useState(0);
-  // Once the accordion has finished its open animation we let its overflow
-  // go visible so the autocomplete dropdown can extend below the card edge
-  // without being clipped. Reset to hidden at the start of any animation
-  // (including collapse) so the content doesn't spill during the transition.
-  const [accordionOpenFully, setAccordionOpenFully] = React.useState(false);
+  const [dropdownPos, setDropdownPos] = React.useState<DropdownPos | null>(null);
 
   const nameRef = React.useRef<HTMLInputElement>(null);
   const valueRef = React.useRef<HTMLInputElement>(null);
@@ -60,12 +91,6 @@ export function LabsSection() {
   // auto-scroll on keyboard nav — mouse hover changes must NOT trigger
   // scrollIntoView, otherwise they fight the user's wheel scroll.
   const navSourceRef = React.useRef<"keyboard" | "mouse">("mouse");
-  // Capture the latest `expanded` value for use inside framer-motion
-  // callbacks, which otherwise close over stale values from first render.
-  const expandedRef = React.useRef(expanded);
-  React.useEffect(() => {
-    expandedRef.current = expanded;
-  }, [expanded]);
 
   const filteredLabs = React.useMemo(() => {
     const q = draftKey.trim().toLowerCase();
@@ -87,6 +112,39 @@ export function LabsSection() {
       el.scrollIntoView({ block: "nearest" });
     }
   }, [activeSuggestion]);
+
+  // ---- Portal positioning ----
+  // The dropdown renders at document.body with position: fixed so it
+  // escapes every parent overflow (Radix ScrollArea, workspace panel,
+  // labs accordion, ...). We recompute its rect on every scroll/resize
+  // so it stays glued to the input, and throttle with rAF to avoid
+  // hammering React during a drag-scroll.
+  React.useLayoutEffect(() => {
+    if (!keyFocused) return;
+    if (!nameRef.current) return;
+
+    let rafId: number | null = null;
+    const update = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (nameRef.current) {
+          setDropdownPos(computePos(nameRef.current));
+        }
+      });
+    };
+
+    update();
+    // capture: true catches scrolls from Radix ScrollArea's inner viewport
+    // and any other nested scrollable ancestors that don't bubble to window.
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [keyFocused]);
 
   const commit = () => {
     const key = draftKey.trim();
@@ -130,6 +188,79 @@ export function LabsSection() {
     }
   };
 
+  const dropdownOpen =
+    keyFocused && filteredLabs.length > 0 && dropdownPos !== null;
+
+  const dropdownNode = (
+    <AnimatePresence>
+      {dropdownOpen && dropdownPos && (
+        <motion.div
+          key="labs-dropdown"
+          initial={{
+            opacity: 0,
+            y: dropdownPos.placement === "bottom" ? -4 : 4,
+          }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{
+            opacity: 0,
+            y: dropdownPos.placement === "bottom" ? -4 : 4,
+          }}
+          transition={{ duration: 0.12 }}
+          style={{
+            position: "fixed",
+            left: dropdownPos.left,
+            top: dropdownPos.top,
+            bottom: dropdownPos.bottom,
+            width: dropdownPos.width,
+            maxHeight: dropdownPos.maxHeight,
+            backgroundColor: "hsl(var(--popover))",
+            color: "hsl(var(--popover-foreground))",
+          }}
+          className="z-[60] overflow-y-auto overscroll-contain rounded-md border border-border shadow-2xl"
+        >
+          <ul role="listbox" className="py-1">
+            {filteredLabs.map((l, i) => {
+              const isActive = i === activeSuggestion;
+              return (
+                <li
+                  key={l}
+                  ref={(el) => {
+                    suggestionRefs.current[i] = el;
+                  }}
+                  role="option"
+                  aria-selected={isActive}
+                  onMouseDown={(e) => {
+                    // preventDefault keeps the input focused so blur
+                    // doesn't fire and unmount the dropdown before
+                    // our click handler runs.
+                    e.preventDefault();
+                    setDraftKey(l);
+                    setTimeout(() => valueRef.current?.focus(), 10);
+                  }}
+                  onMouseEnter={() => {
+                    navSourceRef.current = "mouse";
+                    setActiveSuggestion(i);
+                  }}
+                  style={
+                    isActive
+                      ? {
+                          backgroundColor: "hsl(var(--primary))",
+                          color: "hsl(var(--primary-foreground))",
+                        }
+                      : undefined
+                  }
+                  className="cursor-pointer px-3 py-1 text-xs font-medium transition-colors hover:bg-muted/60"
+                >
+                  {l}
+                </li>
+              );
+            })}
+          </ul>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   return (
     <div className="rounded-md border border-border">
       <button
@@ -160,13 +291,7 @@ export function LabsSection() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            onAnimationStart={() => setAccordionOpenFully(false)}
-            onAnimationComplete={() => {
-              // Only flip to visible after the OPEN animation completes.
-              // On collapse, `expanded` is already false by this point.
-              if (expandedRef.current) setAccordionOpenFully(true);
-            }}
-            style={{ overflow: accordionOpenFully ? "visible" : "hidden" }}
+            className="overflow-hidden"
           >
             <div className="space-y-2 border-t border-border p-3">
               {labs.length > 0 && (
@@ -195,8 +320,8 @@ export function LabsSection() {
 
               <div className="space-y-1.5">
                 <Label className="text-[10px]">Add lab test</Label>
-                <div className="relative flex gap-1.5">
-                  <div className="relative flex-1">
+                <div className="flex gap-1.5">
+                  <div className="flex-1">
                     <Input
                       ref={nameRef}
                       value={draftKey}
@@ -207,58 +332,9 @@ export function LabsSection() {
                       placeholder="Lab test"
                       className="h-8 text-xs"
                       autoComplete="off"
+                      aria-autocomplete="list"
+                      aria-expanded={dropdownOpen}
                     />
-                    <AnimatePresence>
-                      {keyFocused && filteredLabs.length > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          transition={{ duration: 0.12 }}
-                          style={{
-                            backgroundColor: "hsl(var(--popover))",
-                            color: "hsl(var(--popover-foreground))",
-                          }}
-                          className="absolute left-0 right-0 top-full z-30 mt-1 max-h-80 overflow-y-auto overscroll-contain rounded-md border border-border shadow-2xl"
-                        >
-                          <ul role="listbox" className="py-1">
-                            {filteredLabs.map((l, i) => {
-                              const isActive = i === activeSuggestion;
-                              return (
-                                <li
-                                  key={l}
-                                  ref={(el) => {
-                                    suggestionRefs.current[i] = el;
-                                  }}
-                                  role="option"
-                                  aria-selected={isActive}
-                                  onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    setDraftKey(l);
-                                    setTimeout(() => valueRef.current?.focus(), 10);
-                                  }}
-                                  onMouseEnter={() => {
-                                    navSourceRef.current = "mouse";
-                                    setActiveSuggestion(i);
-                                  }}
-                                  style={
-                                    isActive
-                                      ? {
-                                          backgroundColor: "hsl(var(--primary))",
-                                          color: "hsl(var(--primary-foreground))",
-                                        }
-                                      : undefined
-                                  }
-                                  className="cursor-pointer px-3 py-1 text-xs font-medium transition-colors hover:bg-muted/60"
-                                >
-                                  {l}
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
                   <Input
                     ref={valueRef}
@@ -285,6 +361,9 @@ export function LabsSection() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {typeof document !== "undefined" &&
+        createPortal(dropdownNode, document.body)}
     </div>
   );
 }
