@@ -38,6 +38,18 @@ def get_embedder() -> TextEmbedding:
     return _embedder
 
 
+def preload_embedder() -> None:
+    """Eagerly load the embedding model + warm it up with a dummy query.
+    Call this at app startup so the first request doesn't pay the cold
+    model load cost (~3 seconds for bge-small)."""
+    if _embedder is None:
+        logger.info("preloading_embedding_model")
+        embedder = get_embedder()
+        # Warm up the model — first inference is slower than subsequent ones
+        list(embedder.embed(["warmup query"]))
+        logger.info("embedding_model_preloaded")
+
+
 def embed_text(text: str) -> list[float]:
     """Embed a single text string using fastembed."""
     embedder = get_embedder()

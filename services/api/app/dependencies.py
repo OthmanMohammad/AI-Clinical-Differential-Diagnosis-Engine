@@ -75,6 +75,17 @@ def get_qdrant() -> AsyncQdrantClient:
     return _qdrant_client
 
 
+def get_neo4j_or_none() -> AsyncDriver | None:
+    """Lifespan-safe accessor that returns None instead of raising HTTPException.
+    Used by startup tasks that need the driver but cannot raise HTTP errors."""
+    return _neo4j_driver
+
+
+def get_qdrant_or_none() -> AsyncQdrantClient | None:
+    """Lifespan-safe accessor for the Qdrant client."""
+    return _qdrant_client
+
+
 async def verify_api_key(
     request: Request,
     api_key: str | None = Security(api_key_header),

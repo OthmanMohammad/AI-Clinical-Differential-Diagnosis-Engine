@@ -149,6 +149,15 @@ def get_nlp() -> Language:
     return _nlp
 
 
+def preload_nlp() -> None:
+    """Eagerly load the NLP pipeline. Call this at app startup so the
+    first request doesn't pay the ~30 second model load cost."""
+    if _nlp is None:
+        logger.info("preloading_nlp_pipeline")
+        get_nlp()
+        logger.info("nlp_pipeline_preloaded")
+
+
 def extract_affirmed_concepts(text: str) -> set[str]:
     """Return only medical concepts that are affirmed —
     not negated, not historical, not hypothetical."""

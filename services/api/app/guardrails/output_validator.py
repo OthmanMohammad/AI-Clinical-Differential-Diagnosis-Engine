@@ -6,12 +6,19 @@ All gates run (except 6.1 which is a hard stop on schema failure).
 from __future__ import annotations
 
 import re
+import time
 from typing import TYPE_CHECKING
 
 import structlog
 
 from app.models.diagnosis import DISCLAIMER_TEXT, DifferentialDiagnosis, DiagnosisResponse
 from app.observability.metrics import GATE_TRIGGERS
+
+# Cache of (disease_name, token_set) tuples loaded once and refreshed
+# every CACHE_TTL_SECONDS. Avoids hammering Neo4j on every request.
+_disease_cache: list[tuple[str, frozenset[str]]] | None = None
+_disease_cache_loaded_at: float = 0.0
+_DISEASE_CACHE_TTL = 300.0  # 5 minutes
 
 if TYPE_CHECKING:
     from neo4j import AsyncDriver
@@ -85,30 +92,11 @@ async def gate_hallucination_check(
             item.verified_in_graph = False
         return diagnosis
 
-    # Pull candidate diseases that share at least one token with the LLM names
-    candidates: list[tuple[str, frozenset[str]]] = []
+    # Use the cached disease list (loaded once + refreshed every 5 min)
     try:
-        async with neo4j_driver.session() as session:
-            result = await session.run(
-                """
-                MATCH (d:Disease)
-                WHERE d.name IS NOT NULL
-                  AND ANY(t IN $tokens WHERE toLower(d.name) CONTAINS t)
-                RETURN d.name AS name
-                LIMIT 4000
-                """,
-                tokens=list(all_query_tokens),
-            )
-            data = await result.data()
-            for record in data:
-                cand_name = record.get("name")
-                if not cand_name:
-                    continue
-                cand_tokens = frozenset(_meaningful_tokens(cand_name))
-                if cand_tokens:
-                    candidates.append((cand_name, cand_tokens))
+        candidates = await _get_disease_cache(neo4j_driver)
     except Exception as exc:  # noqa: BLE001
-        logger.warning("hallucination_check_query_failed", error=str(exc))
+        logger.warning("hallucination_cache_load_failed", error=str(exc))
         # On query failure, default to "verified" to avoid flooding the UI
         # with false negatives. The disclaimer still applies.
         return diagnosis
@@ -173,6 +161,52 @@ def _meaningful_tokens(name: str) -> list[str]:
     """Strip stopwords + tokenize for fuzzy disease matching."""
     raw = re.findall(r"[a-zA-Z0-9]+", name.lower())
     return [t for t in raw if t not in _STOPWORDS and len(t) > 1]
+
+
+async def _get_disease_cache(
+    neo4j_driver: AsyncDriver,
+) -> list[tuple[str, frozenset[str]]]:
+    """Return the cached list of (disease_name, token_set) tuples.
+
+    Loads the entire PrimeKG disease set from Neo4j on first call and
+    refreshes every _DISEASE_CACHE_TTL seconds. Pulling all ~17k diseases
+    is a one-time ~200ms hit; subsequent requests are zero-cost lookups.
+    """
+    global _disease_cache, _disease_cache_loaded_at
+    now = time.monotonic()
+    if _disease_cache is not None and (now - _disease_cache_loaded_at) < _DISEASE_CACHE_TTL:
+        return _disease_cache
+
+    logger.info("loading_disease_cache")
+    candidates: list[tuple[str, frozenset[str]]] = []
+    async with neo4j_driver.session() as session:
+        result = await session.run(
+            """
+            MATCH (d:Disease)
+            WHERE d.name IS NOT NULL
+            RETURN d.name AS name
+            """
+        )
+        async for record in result:
+            cand_name = record.get("name")
+            if not cand_name:
+                continue
+            cand_tokens = frozenset(_meaningful_tokens(cand_name))
+            if cand_tokens:
+                candidates.append((cand_name, cand_tokens))
+
+    _disease_cache = candidates
+    _disease_cache_loaded_at = now
+    logger.info("disease_cache_loaded", count=len(candidates))
+    return candidates
+
+
+async def preload_disease_cache(neo4j_driver: AsyncDriver) -> None:
+    """Eagerly populate the disease cache at app startup."""
+    try:
+        await _get_disease_cache(neo4j_driver)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("disease_cache_preload_failed", error=str(exc))
 
 
 def gate_treatment_filter(diagnosis: DifferentialDiagnosis) -> tuple[DifferentialDiagnosis, bool]:
