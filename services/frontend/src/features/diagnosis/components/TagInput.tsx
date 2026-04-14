@@ -40,9 +40,10 @@ export function TagInput({
 }: TagInputProps) {
   const [draft, setDraft] = React.useState("");
   const [focused, setFocused] = React.useState(false);
-  // -1 means "no suggestion is highlighted" — Enter will add the literal text.
-  // Becomes >= 0 when the user explicitly arrows down into the dropdown.
-  const [activeSuggestion, setActiveSuggestion] = React.useState(-1);
+  // The currently highlighted item in the dropdown.
+  // 0 = the "Add literal" row at the top
+  // 1..N = suggestions
+  const [activeIndex, setActiveIndex] = React.useState(0);
 
   const filteredSuggestions = React.useMemo(() => {
     const q = draft.trim().toLowerCase();
@@ -53,7 +54,7 @@ export function TagInput({
     for (const term of suggestions) {
       const t = term.toLowerCase();
       if (existing.has(t)) continue;
-      if (t === q) continue; // skip exact matches — user already has the right word
+      if (t === q) continue; // skip exact matches — would be a no-op
       if (t.startsWith(q)) startsWith.push(term);
       else if (t.includes(q)) contains.push(term);
       if (startsWith.length + contains.length >= maxSuggestions * 2) {
@@ -63,9 +64,12 @@ export function TagInput({
     return [...startsWith, ...contains].slice(0, maxSuggestions);
   }, [draft, suggestions, value, maxSuggestions]);
 
-  // Reset highlight when draft changes
+  // Total options in the dropdown: 1 (literal "Add") + suggestions.length
+  const totalOptions = 1 + filteredSuggestions.length;
+
+  // Reset highlight when draft changes — always default to the "Add literal" row
   React.useEffect(() => {
-    setActiveSuggestion(-1);
+    setActiveIndex(0);
   }, [draft]);
 
   const commit = (text: string) => {
@@ -73,37 +77,38 @@ export function TagInput({
     if (!trimmed) return;
     onAdd(trimmed);
     setDraft("");
-    setActiveSuggestion(-1);
+    setActiveIndex(0);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
-      // If user has explicitly arrowed into the suggestions, use the
-      // highlighted one. Otherwise add the literal text they typed.
-      if (
-        activeSuggestion >= 0 &&
-        filteredSuggestions[activeSuggestion] !== undefined
-      ) {
-        commit(filteredSuggestions[activeSuggestion]!);
-      } else {
+      if (activeIndex === 0) {
+        // The "Add literal" row is highlighted (default)
         commit(draft);
+      } else {
+        const suggestion = filteredSuggestions[activeIndex - 1];
+        if (suggestion !== undefined) {
+          commit(suggestion);
+        } else {
+          commit(draft);
+        }
       }
     } else if (e.key === "Tab" && filteredSuggestions[0] && draft.trim()) {
       // Tab autocompletes to the first suggestion (familiar shell-like UX)
       e.preventDefault();
       commit(filteredSuggestions[0]);
-    } else if (e.key === "ArrowDown" && filteredSuggestions.length > 0) {
+    } else if (e.key === "ArrowDown" && totalOptions > 0) {
       e.preventDefault();
-      setActiveSuggestion((i) => Math.min(i + 1, filteredSuggestions.length - 1));
-    } else if (e.key === "ArrowUp" && filteredSuggestions.length > 0) {
+      setActiveIndex((i) => Math.min(i + 1, totalOptions - 1));
+    } else if (e.key === "ArrowUp" && totalOptions > 0) {
       e.preventDefault();
-      setActiveSuggestion((i) => Math.max(i - 1, -1));
+      setActiveIndex((i) => Math.max(i - 1, 0));
     } else if (e.key === "Backspace" && draft === "" && value.length > 0) {
       onRemove(value.length - 1);
     } else if (e.key === "Escape") {
       setDraft("");
-      setActiveSuggestion(-1);
+      setActiveIndex(0);
     }
   };
 
@@ -156,7 +161,7 @@ export function TagInput({
       </div>
 
       <AnimatePresence>
-        {focused && filteredSuggestions.length > 0 && (
+        {focused && draft.trim().length >= 2 && (
           <motion.div
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
@@ -169,31 +174,66 @@ export function TagInput({
             className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-md border border-border shadow-2xl"
           >
             <ul role="listbox" className="max-h-64 overflow-y-auto py-1">
-              {filteredSuggestions.map((s, i) => (
-                <li
-                  key={s}
-                  role="option"
-                  aria-selected={i === activeSuggestion}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    commit(s);
-                  }}
-                  onMouseEnter={() => setActiveSuggestion(i)}
-                  className={cn(
-                    "cursor-pointer px-3 py-1.5 text-sm transition-colors",
-                    i === activeSuggestion
-                      ? "bg-accent text-accent-foreground"
-                      : "text-foreground",
-                  )}
-                >
-                  {s}
-                </li>
-              ))}
+              {/* "Add literal" row — always first, default highlighted */}
+              <li
+                role="option"
+                aria-selected={activeIndex === 0}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  commit(draft);
+                }}
+                onMouseEnter={() => setActiveIndex(0)}
+                className={cn(
+                  "flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm transition-colors",
+                  activeIndex === 0
+                    ? "bg-accent text-accent-foreground"
+                    : "text-foreground",
+                )}
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Add</span>
+                  <span className="font-medium">&ldquo;{draft.trim()}&rdquo;</span>
+                </span>
+                <kbd className="font-mono text-[10px] opacity-70">↵</kbd>
+              </li>
+              {filteredSuggestions.length > 0 && (
+                <>
+                  <li
+                    aria-hidden
+                    className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
+                    Suggestions
+                  </li>
+                  {filteredSuggestions.map((s, i) => {
+                    const idx = i + 1;
+                    return (
+                      <li
+                        key={s}
+                        role="option"
+                        aria-selected={idx === activeIndex}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          commit(s);
+                        }}
+                        onMouseEnter={() => setActiveIndex(idx)}
+                        className={cn(
+                          "cursor-pointer px-3 py-1.5 text-sm transition-colors",
+                          idx === activeIndex
+                            ? "bg-accent text-accent-foreground"
+                            : "text-foreground",
+                        )}
+                      >
+                        {s}
+                      </li>
+                    );
+                  })}
+                </>
+              )}
             </ul>
             <div className="border-t border-border px-3 py-1.5 text-[10px] text-muted-foreground">
-              <kbd className="font-mono">↵</kbd> add typed text ·{" "}
-              <kbd className="font-mono">Tab</kbd> first match ·{" "}
-              <kbd className="font-mono">↑↓</kbd> navigate
+              <kbd className="font-mono">↵</kbd> add highlighted ·{" "}
+              <kbd className="font-mono">↑↓</kbd> navigate ·{" "}
+              <kbd className="font-mono">Tab</kbd> first match
             </div>
           </motion.div>
         )}

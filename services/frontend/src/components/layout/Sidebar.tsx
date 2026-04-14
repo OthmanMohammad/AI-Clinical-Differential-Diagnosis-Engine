@@ -1,5 +1,4 @@
 import {
-  Activity,
   BookOpen,
   FlaskConical,
   History,
@@ -8,22 +7,21 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
-  href?: string;
   active?: boolean;
+  comingSoon?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
   { icon: Stethoscope, label: "Diagnose", active: true },
-  { icon: History, label: "History" },
-  { icon: FlaskConical, label: "Eval" },
-  { icon: BookOpen, label: "Knowledge Graph" },
+  { icon: History, label: "History", comingSoon: true },
+  { icon: FlaskConical, label: "Evaluation", comingSoon: true },
+  { icon: BookOpen, label: "Knowledge Graph", comingSoon: true },
 ];
 
 export function Sidebar() {
@@ -31,23 +29,12 @@ export function Sidebar() {
     <aside className="flex w-14 shrink-0 flex-col border-r border-border bg-card">
       <nav className="flex flex-1 flex-col items-center gap-1 p-2">
         {NAV_ITEMS.map((item, idx) => (
-          <SidebarItem
-            key={item.label}
-            {...item}
-            delay={idx * 0.04}
-          />
+          <SidebarItem key={item.label} {...item} delay={idx * 0.04} />
         ))}
       </nav>
 
       <div className="flex flex-col items-center gap-1 p-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Settings">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">Settings</TooltipContent>
-        </Tooltip>
+        <SidebarItem icon={Settings} label="Settings" comingSoon delay={0.2} />
       </div>
     </aside>
   );
@@ -57,7 +44,13 @@ interface SidebarItemProps extends NavItem {
   delay?: number;
 }
 
-function SidebarItem({ icon: Icon, label, active, delay = 0 }: SidebarItemProps) {
+function SidebarItem({
+  icon: Icon,
+  label,
+  active,
+  comingSoon,
+  delay = 0,
+}: SidebarItemProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -66,14 +59,17 @@ function SidebarItem({ icon: Icon, label, active, delay = 0 }: SidebarItemProps)
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay, duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           type="button"
+          disabled={comingSoon && !active}
           className={cn(
             "relative flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors",
-            "hover:bg-accent hover:text-accent-foreground",
+            !comingSoon && "hover:bg-accent hover:text-accent-foreground",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             active && "bg-primary/10 text-primary",
+            comingSoon && !active && "cursor-not-allowed opacity-40",
           )}
           aria-label={label}
           aria-current={active ? "page" : undefined}
+          aria-disabled={comingSoon}
         >
           <Icon className="h-4 w-4" />
           {active && (
@@ -86,8 +82,12 @@ function SidebarItem({ icon: Icon, label, active, delay = 0 }: SidebarItemProps)
         </motion.button>
       </TooltipTrigger>
       <TooltipContent side="right" className="flex items-center gap-2">
-        <Activity className="h-3 w-3" />
         {label}
+        {comingSoon && (
+          <span className="rounded bg-muted px-1 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+            soon
+          </span>
+        )}
       </TooltipContent>
     </Tooltip>
   );
