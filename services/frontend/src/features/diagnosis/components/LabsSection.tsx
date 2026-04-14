@@ -50,6 +50,7 @@ export function LabsSection() {
 
   const nameRef = React.useRef<HTMLInputElement>(null);
   const valueRef = React.useRef<HTMLInputElement>(null);
+  const suggestionRefs = React.useRef<Array<HTMLLIElement | null>>([]);
 
   const filteredLabs = React.useMemo(() => {
     const q = draftKey.trim().toLowerCase();
@@ -60,6 +61,13 @@ export function LabsSection() {
   React.useEffect(() => {
     setActiveSuggestion(0);
   }, [draftKey]);
+
+  React.useEffect(() => {
+    const el = suggestionRefs.current[activeSuggestion];
+    if (el) {
+      el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [activeSuggestion]);
 
   const commit = () => {
     const key = draftKey.trim();
@@ -192,6 +200,9 @@ export function LabsSection() {
                               return (
                                 <li
                                   key={l}
+                                  ref={(el) => {
+                                    suggestionRefs.current[i] = el;
+                                  }}
                                   role="option"
                                   aria-selected={isActive}
                                   onMouseDown={(e) => {
@@ -200,12 +211,15 @@ export function LabsSection() {
                                     setTimeout(() => valueRef.current?.focus(), 10);
                                   }}
                                   onMouseEnter={() => setActiveSuggestion(i)}
-                                  className={cn(
-                                    "cursor-pointer px-3 py-1 text-xs transition-colors",
+                                  style={
                                     isActive
-                                      ? "bg-primary font-medium text-primary-foreground"
-                                      : "text-foreground hover:bg-muted",
-                                  )}
+                                      ? {
+                                          backgroundColor: "hsl(var(--primary))",
+                                          color: "hsl(var(--primary-foreground))",
+                                        }
+                                      : undefined
+                                  }
+                                  className="cursor-pointer px-3 py-1 text-xs font-medium transition-colors hover:bg-muted/60"
                                 >
                                   {l}
                                 </li>

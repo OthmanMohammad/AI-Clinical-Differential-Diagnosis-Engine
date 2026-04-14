@@ -45,6 +45,10 @@ export function TagInput({
   // 1..N = suggestions
   const [activeIndex, setActiveIndex] = React.useState(0);
 
+  // Refs for every dropdown row so we can auto-scroll the active one
+  // into view when it changes via keyboard navigation.
+  const itemRefs = React.useRef<Array<HTMLLIElement | null>>([]);
+
   const filteredSuggestions = React.useMemo(() => {
     const q = draft.trim().toLowerCase();
     if (q.length < 2 || suggestions.length === 0) return [];
@@ -71,6 +75,14 @@ export function TagInput({
   React.useEffect(() => {
     setActiveIndex(0);
   }, [draft]);
+
+  // Scroll the active item into view when keyboard navigation changes it
+  React.useEffect(() => {
+    const el = itemRefs.current[activeIndex];
+    if (el) {
+      el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [activeIndex]);
 
   const commit = (text: string) => {
     const trimmed = text.trim();
@@ -176,6 +188,9 @@ export function TagInput({
             <ul role="listbox" className="max-h-64 overflow-y-auto py-1">
               {/* "Add literal" row — always first, default highlighted */}
               <li
+                ref={(el) => {
+                  itemRefs.current[0] = el;
+                }}
                 role="option"
                 aria-selected={activeIndex === 0}
                 onMouseDown={(e) => {
@@ -183,36 +198,21 @@ export function TagInput({
                   commit(draft);
                 }}
                 onMouseEnter={() => setActiveIndex(0)}
-                className={cn(
-                  "flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm font-medium transition-colors",
+                style={
                   activeIndex === 0
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-muted",
-                )}
+                    ? {
+                        backgroundColor: "hsl(var(--primary))",
+                        color: "hsl(var(--primary-foreground))",
+                      }
+                    : undefined
+                }
+                className="flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm font-medium transition-colors hover:bg-muted/60"
               >
                 <span className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      "text-xs",
-                      activeIndex === 0
-                        ? "text-primary-foreground/80"
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    Add
-                  </span>
+                  <span className="text-xs opacity-80">Add</span>
                   <span className="font-semibold">&ldquo;{draft.trim()}&rdquo;</span>
                 </span>
-                <kbd
-                  className={cn(
-                    "font-mono text-[10px]",
-                    activeIndex === 0
-                      ? "text-primary-foreground/80"
-                      : "opacity-70",
-                  )}
-                >
-                  ↵
-                </kbd>
+                <kbd className="font-mono text-[10px] opacity-80">↵</kbd>
               </li>
               {filteredSuggestions.length > 0 && (
                 <>
@@ -228,6 +228,9 @@ export function TagInput({
                     return (
                       <li
                         key={s}
+                        ref={(el) => {
+                          itemRefs.current[idx] = el;
+                        }}
                         role="option"
                         aria-selected={isActive}
                         onMouseDown={(e) => {
@@ -235,12 +238,15 @@ export function TagInput({
                           commit(s);
                         }}
                         onMouseEnter={() => setActiveIndex(idx)}
-                        className={cn(
-                          "cursor-pointer px-3 py-1.5 text-sm transition-colors",
+                        style={
                           isActive
-                            ? "bg-primary font-medium text-primary-foreground"
-                            : "text-foreground hover:bg-muted",
-                        )}
+                            ? {
+                                backgroundColor: "hsl(var(--primary))",
+                                color: "hsl(var(--primary-foreground))",
+                              }
+                            : undefined
+                        }
+                        className="cursor-pointer px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted/60"
                       >
                         {s}
                       </li>
