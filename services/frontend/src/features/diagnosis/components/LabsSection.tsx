@@ -47,10 +47,25 @@ export function LabsSection() {
   const [draftValue, setDraftValue] = React.useState("");
   const [keyFocused, setKeyFocused] = React.useState(false);
   const [activeSuggestion, setActiveSuggestion] = React.useState(0);
+  // Once the accordion has finished its open animation we let its overflow
+  // go visible so the autocomplete dropdown can extend below the card edge
+  // without being clipped. Reset to hidden at the start of any animation
+  // (including collapse) so the content doesn't spill during the transition.
+  const [accordionOpenFully, setAccordionOpenFully] = React.useState(false);
 
   const nameRef = React.useRef<HTMLInputElement>(null);
   const valueRef = React.useRef<HTMLInputElement>(null);
   const suggestionRefs = React.useRef<Array<HTMLLIElement | null>>([]);
+  // Tracks what caused the last change to `activeSuggestion` so we only
+  // auto-scroll on keyboard nav — mouse hover changes must NOT trigger
+  // scrollIntoView, otherwise they fight the user's wheel scroll.
+  const navSourceRef = React.useRef<"keyboard" | "mouse">("mouse");
+  // Capture the latest `expanded` value for use inside framer-motion
+  // callbacks, which otherwise close over stale values from first render.
+  const expandedRef = React.useRef(expanded);
+  React.useEffect(() => {
+    expandedRef.current = expanded;
+  }, [expanded]);
 
   const filteredLabs = React.useMemo(() => {
     const q = draftKey.trim().toLowerCase();
@@ -60,12 +75,16 @@ export function LabsSection() {
 
   React.useEffect(() => {
     setActiveSuggestion(0);
+    navSourceRef.current = "mouse";
   }, [draftKey]);
 
   React.useEffect(() => {
+    // Only auto-scroll on keyboard navigation — smooth-scrolling on every
+    // mouse hover fights the wheel scroll and makes the dropdown feel stuck.
+    if (navSourceRef.current !== "keyboard") return;
     const el = suggestionRefs.current[activeSuggestion];
     if (el) {
-      el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      el.scrollIntoView({ block: "nearest" });
     }
   }, [activeSuggestion]);
 
@@ -91,9 +110,11 @@ export function LabsSection() {
       setTimeout(() => valueRef.current?.focus(), 10);
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
+      navSourceRef.current = "keyboard";
       setActiveSuggestion((i) => Math.min(i + 1, filteredLabs.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
+      navSourceRef.current = "keyboard";
       setActiveSuggestion((i) => Math.max(i - 1, 0));
     } else if (e.key === "Escape") {
       setDraftKey("");
@@ -139,7 +160,13 @@ export function LabsSection() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="overflow-hidden"
+            onAnimationStart={() => setAccordionOpenFully(false)}
+            onAnimationComplete={() => {
+              // Only flip to visible after the OPEN animation completes.
+              // On collapse, `expanded` is already false by this point.
+              if (expandedRef.current) setAccordionOpenFully(true);
+            }}
+            style={{ overflow: accordionOpenFully ? "visible" : "hidden" }}
           >
             <div className="space-y-2 border-t border-border p-3">
               {labs.length > 0 && (
@@ -192,7 +219,7 @@ export function LabsSection() {
                             backgroundColor: "hsl(var(--popover))",
                             color: "hsl(var(--popover-foreground))",
                           }}
-                          className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-md border border-border shadow-2xl"
+                          className="absolute left-0 right-0 top-full z-30 mt-1 max-h-80 overflow-y-auto overscroll-contain rounded-md border border-border shadow-2xl"
                         >
                           <ul role="listbox" className="py-1">
                             {filteredLabs.map((l, i) => {
@@ -210,7 +237,10 @@ export function LabsSection() {
                                     setDraftKey(l);
                                     setTimeout(() => valueRef.current?.focus(), 10);
                                   }}
-                                  onMouseEnter={() => setActiveSuggestion(i)}
+                                  onMouseEnter={() => {
+                                    navSourceRef.current = "mouse";
+                                    setActiveSuggestion(i);
+                                  }}
                                   style={
                                     isActive
                                       ? {
