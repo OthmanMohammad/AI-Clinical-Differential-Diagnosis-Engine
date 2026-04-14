@@ -31,6 +31,14 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
 
+    # Allowed CORS origins. Comma-separated string in env var.
+    # Locked down for production — only your frontend's URL should be in here.
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    # Maximum request body size in bytes (default 64 KB — plenty for a
+    # clinical intake but small enough to prevent abuse).
+    max_request_body_bytes: int = 65_536
+
     # Neo4j
     neo4j_uri: str = "neo4j://localhost:7687"
     neo4j_user: str = "neo4j"
@@ -87,6 +95,15 @@ class Settings(BaseSettings):
     @property
     def fallback_llms(self) -> list[str]:
         return self.llm_fallbacks[1:]
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        """Parse the comma-separated CORS origins string into a list."""
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def is_production(self) -> bool:
+        return self.environment == "production"
 
 
 @lru_cache(maxsize=1)
