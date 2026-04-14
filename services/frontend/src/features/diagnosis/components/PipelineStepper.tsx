@@ -1,11 +1,10 @@
 /**
  * Pipeline progress stepper — animates through the backend pipeline stages
- * while a diagnosis is in flight. Gives the user real-time feedback instead
- * of a generic spinner.
+ * while a diagnosis is in flight.
  */
 
-import { AlertCircle, Check, Loader2, MinusCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AlertCircle, Check, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 import {
   getStageLabel,
@@ -57,35 +56,28 @@ function StepRow({ stage, index }: StepRowProps) {
               stage.status === "complete" && "text-foreground/80",
               stage.status === "pending" && "text-muted-foreground",
               stage.status === "error" && "text-destructive",
-              stage.status === "skipped" && "text-muted-foreground/60 line-through",
             )}
           >
             {label}
           </span>
-          {stage.elapsedMs != null && (
+          {stage.elapsedMs != null && stage.status === "complete" && (
             <span className="font-mono text-[10px] text-muted-foreground/70">
               {formatDuration(stage.elapsedMs)}
             </span>
           )}
         </div>
-        <AnimatePresence>
-          {stage.detail && stage.status === "complete" && (
-            <motion.p
-              initial={{ opacity: 0, y: -2 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: 0.1 }}
-              className="mt-0.5 text-[11px] text-muted-foreground"
-            >
-              {stage.detail}
-            </motion.p>
-          )}
-        </AnimatePresence>
       </div>
     </li>
   );
 }
 
-function StepIcon({ status, index }: { status: StageStatus["status"]; index: number }) {
+function StepIcon({
+  status,
+  index,
+}: {
+  status: StageStatus["status"];
+  index: number;
+}) {
   return (
     <motion.div
       initial={{ scale: 0.6, opacity: 0 }}
@@ -98,13 +90,11 @@ function StepIcon({ status, index }: { status: StageStatus["status"]; index: num
         status === "complete" &&
           "border-[hsl(var(--success))] bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]",
         status === "error" && "border-destructive bg-destructive/15 text-destructive",
-        status === "skipped" && "border-border bg-background text-muted-foreground/50",
       )}
     >
       {status === "running" && <Loader2 className="h-3 w-3 animate-spin" />}
       {status === "complete" && <Check className="h-3 w-3" strokeWidth={3} />}
       {status === "error" && <AlertCircle className="h-3 w-3" />}
-      {status === "skipped" && <MinusCircle className="h-3 w-3" />}
       {status === "pending" && (
         <span className="h-1.5 w-1.5 rounded-full bg-current opacity-40" />
       )}

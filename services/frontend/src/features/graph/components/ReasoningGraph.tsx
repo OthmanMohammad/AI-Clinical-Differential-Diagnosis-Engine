@@ -190,6 +190,9 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
   ) {
     const containerRef = React.useRef<HTMLDivElement>(null);
     const graphRef = React.useRef<Graph | null>(null);
+    const resizeObserverDebounce = React.useRef<ReturnType<typeof setTimeout> | null>(
+      null,
+    );
     const { resolvedTheme } = useTheme();
 
     // Latest values exposed via refs so the G6 instance can read them
@@ -304,11 +307,31 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
 
       safeCall("render", () => graph.render());
 
+      // Track container size changes (panel resize, fullscreen toggle, etc.)
+      // The window resize handler only fires on viewport changes — it
+      // misses Workspace panel drags. ResizeObserver catches every layout
+      // change to the graph container.
       const handleResize = () => safeCall("resize", () => graph.resize());
       window.addEventListener("resize", handleResize);
 
+      const resizeObserver = new ResizeObserver(() => {
+        // Debounce slightly so we don't thrash during a continuous drag
+        if (resizeObserverDebounce.current) {
+          clearTimeout(resizeObserverDebounce.current);
+        }
+        resizeObserverDebounce.current = setTimeout(() => {
+          safeCall("resize_observer", () => graph.resize());
+        }, 60);
+      });
+      resizeObserver.observe(container);
+
       return () => {
         window.removeEventListener("resize", handleResize);
+        resizeObserver.disconnect();
+        if (resizeObserverDebounce.current) {
+          clearTimeout(resizeObserverDebounce.current);
+          resizeObserverDebounce.current = null;
+        }
         try {
           graph.destroy();
         } catch (err) {

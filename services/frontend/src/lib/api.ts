@@ -1,8 +1,8 @@
 /**
  * HTTP client for the PathoDX backend.
  *
- * All requests go through this module so we have a single place to add
- * authentication, tracing, and error normalization.
+ * Single typed entry point. All requests are normalized to either a
+ * successful JSON response or an `ApiError` with a usable detail string.
  */
 
 import type { DiagnosisResponse, PatientIntake } from "@/types/api";
@@ -21,7 +21,8 @@ if (API_KEY) {
 }
 
 /**
- * Normalized API error — carries the HTTP status and a structured detail.
+ * Normalized API error — carries the HTTP status, structured detail, and
+ * the upstream request ID for log correlation.
  */
 export class ApiError extends Error {
   readonly status: number;
@@ -69,6 +70,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   try {
     response = await fetch(url, init);
   } catch (err) {
+    if ((err as Error).name === "AbortError") {
+      throw err;
+    }
     logger.error("api.network_error", { url, error: (err as Error).message });
     throw new ApiError(0, "Network request failed");
   }
@@ -95,7 +99,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   logger.debug("api.success", { url, status: response.status, elapsed, requestId });
 
-  // Caller may pass an empty-body endpoint; handle gracefully.
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
     return {} as T;
@@ -117,142 +120,8 @@ export const api = {
     });
   },
 
-  /** Health check. */
+  /** Health check (liveness). */
   health(signal?: AbortSignal): Promise<{ status: string; service: string }> {
     return request<{ status: string; service: string }>("/health", { signal });
   },
-
-  /**
-   * Streaming diagnosis via Server-Sent Events.
-   * Returns an AbortController so the caller can cancel.
-   *
-   * The stream emits JSON events with shape `{ type: string; data: unknown }`.
-   */
-  diagnoseStream(
-    intake: PatientIntake,
-    callbacks: StreamCallbacks,
-  ): AbortController {
-    const controller = new AbortController();
-    void runDiagnoseStream(intake, callbacks, controller.signal);
-    return controller;
-  },
 };
-
-// ---------------------------------------------------------------------------
-// SSE streaming implementation
-// ---------------------------------------------------------------------------
-
-export interface StreamEvent {
-  type:
-    | "stage_start"
-    | "stage_end"
-    | "emergency"
-    | "diagnosis_ready"
-    | "error"
-    | "done";
-  stage?: string;
-  elapsed_ms?: number;
-  data?: unknown;
-  message?: string;
-}
-
-export interface StreamCallbacks {
-  onEvent(event: StreamEvent): void;
-  onDone(response: DiagnosisResponse): void;
-  onError(error: ApiError | Error): void;
-}
-
-async function runDiagnoseStream(
-  intake: PatientIntake,
-  callbacks: StreamCallbacks,
-  signal: AbortSignal,
-): Promise<void> {
-  const url = `${API_BASE}/api/v1/diagnose/stream`;
-
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      method: "POST",
-      headers: { ...DEFAULT_HEADERS, Accept: "text/event-stream" },
-      body: JSON.stringify(intake),
-      signal,
-    });
-  } catch (err) {
-    if ((err as Error).name === "AbortError") return;
-    callbacks.onError(new ApiError(0, "Network request failed"));
-    return;
-  }
-
-  if (!response.ok) {
-    let detail: unknown;
-    try {
-      detail = await response.json();
-    } catch {
-      detail = response.statusText;
-    }
-    callbacks.onError(new ApiError(response.status, detail));
-    return;
-  }
-
-  const body = response.body;
-  if (!body) {
-    callbacks.onError(new ApiError(0, "Empty response body"));
-    return;
-  }
-
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let finalResponse: DiagnosisResponse | null = null;
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-
-      // SSE frames are separated by blank lines.
-      let frameEnd: number;
-      while ((frameEnd = buffer.indexOf("\n\n")) !== -1) {
-        const frame = buffer.slice(0, frameEnd);
-        buffer = buffer.slice(frameEnd + 2);
-
-        const dataLine = frame
-          .split("\n")
-          .find((line) => line.startsWith("data:"));
-        if (!dataLine) continue;
-
-        const payload = dataLine.slice(5).trim();
-        if (!payload) continue;
-
-        try {
-          const event = JSON.parse(payload) as StreamEvent;
-          callbacks.onEvent(event);
-          if (event.type === "diagnosis_ready") {
-            finalResponse = event.data as DiagnosisResponse;
-          }
-          if (event.type === "error") {
-            callbacks.onError(new ApiError(500, event.message ?? "Stream error"));
-            return;
-          }
-        } catch (err) {
-          logger.warn("stream.parse_error", {
-            payload,
-            error: (err as Error).message,
-          });
-        }
-      }
-    }
-  } catch (err) {
-    if ((err as Error).name === "AbortError") return;
-    callbacks.onError(err as Error);
-    return;
-  } finally {
-    reader.releaseLock();
-  }
-
-  if (finalResponse) {
-    callbacks.onDone(finalResponse);
-  }
-}

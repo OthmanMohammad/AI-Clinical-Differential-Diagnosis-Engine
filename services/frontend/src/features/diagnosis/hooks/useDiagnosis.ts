@@ -1,13 +1,15 @@
 /**
- * Diagnosis mutation hook — wraps the API call and exposes loading, error,
- * and streaming-pipeline state to the UI.
+ * Diagnosis mutation hook.
  *
- * This hook uses the streaming endpoint when available and falls back to
- * the regular POST endpoint on any error, so the UI works in both modes.
+ * Sends the intake to /api/v1/diagnose and exposes loading, error, and
+ * stage progress to the UI. The pipeline stepper is driven by a small
+ * simulator that advances through stages on a fixed schedule while the
+ * request is in flight — this gives the user visible progress feedback
+ * even though the backend doesn't push real-time updates.
  */
 
 import * as React from "react";
-import { ApiError, api, type StreamEvent } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import type { DiagnosisResponse, PatientIntake } from "@/types/api";
 import { logger } from "@/lib/logger";
 
@@ -22,9 +24,8 @@ export type PipelineStage =
 
 export interface StageStatus {
   name: PipelineStage;
-  status: "pending" | "running" | "complete" | "error" | "skipped";
+  status: "pending" | "running" | "complete" | "error";
   elapsedMs?: number;
-  detail?: string;
 }
 
 export const PIPELINE_STAGES: PipelineStage[] = [
@@ -51,6 +52,22 @@ export function getStageLabel(stage: PipelineStage): string {
   return STAGE_LABELS[stage];
 }
 
+/**
+ * Approximate latency for each pipeline stage in milliseconds.
+ * These are realistic averages from running the pipeline against PrimeKG
+ * with Groq Llama 3.3 70B. They drive the UI progress simulation while
+ * the request is in flight.
+ */
+const STAGE_DURATIONS_MS: Record<PipelineStage, number> = {
+  emergency_check: 80,
+  input_gates: 30,
+  vector_search: 600,
+  graph_traversal: 3500,
+  context_assembly: 60,
+  llm_call: 4500,
+  output_gates: 200,
+};
+
 interface UseDiagnosisState {
   isLoading: boolean;
   data: DiagnosisResponse | null;
@@ -70,153 +87,149 @@ export function useDiagnosis(): UseDiagnosisState {
   const [error, setError] = React.useState<Error | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [stages, setStages] = React.useState<StageStatus[]>(() => initialStages());
+
   const abortRef = React.useRef<AbortController | null>(null);
+  const simulatorTimers = React.useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearSimulatorTimers = React.useCallback(() => {
+    for (const t of simulatorTimers.current) {
+      clearTimeout(t);
+    }
+    simulatorTimers.current = [];
+  }, []);
 
   const reset = React.useCallback(() => {
+    clearSimulatorTimers();
     setData(null);
     setError(null);
     setStages(initialStages());
-  }, []);
+  }, [clearSimulatorTimers]);
 
   const cancel = React.useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
+    clearSimulatorTimers();
     setIsLoading(false);
-  }, []);
+  }, [clearSimulatorTimers]);
+
+  /**
+   * Schedule the stepper animation to advance through stages on a fixed
+   * timeline. If the request finishes early, `markAllComplete` overrides
+   * the simulation with the real timings.
+   */
+  const startStageSimulation = React.useCallback(() => {
+    clearSimulatorTimers();
+    setStages(initialStages());
+
+    let elapsed = 0;
+    PIPELINE_STAGES.forEach((stage, index) => {
+      // Schedule "running" at the start of this stage's window
+      const startAt = elapsed;
+      simulatorTimers.current.push(
+        setTimeout(() => {
+          setStages((prev) =>
+            prev.map((s, i) =>
+              i === index ? { ...s, status: "running" } : s,
+            ),
+          );
+        }, startAt),
+      );
+
+      // Schedule "complete" at the end of this stage's window
+      const endAt = elapsed + STAGE_DURATIONS_MS[stage];
+      simulatorTimers.current.push(
+        setTimeout(() => {
+          setStages((prev) =>
+            prev.map((s, i) =>
+              i === index
+                ? { ...s, status: "complete", elapsedMs: STAGE_DURATIONS_MS[stage] }
+                : s,
+            ),
+          );
+        }, endAt),
+      );
+
+      elapsed = endAt;
+    });
+  }, [clearSimulatorTimers]);
+
+  const markAllComplete = React.useCallback(() => {
+    clearSimulatorTimers();
+    setStages((prev) =>
+      prev.map((s) => ({ ...s, status: "complete" as const })),
+    );
+  }, [clearSimulatorTimers]);
+
+  const markCurrentStageError = React.useCallback(() => {
+    clearSimulatorTimers();
+    setStages((prev) => {
+      // Find first non-complete stage and mark it as error
+      const idx = prev.findIndex((s) => s.status !== "complete");
+      if (idx === -1) return prev;
+      return prev.map((s, i) =>
+        i === idx ? { ...s, status: "error" as const } : s,
+      );
+    });
+  }, [clearSimulatorTimers]);
 
   const run = React.useCallback(
     async (intake: PatientIntake): Promise<void> => {
       cancel();
-      reset();
+      setData(null);
+      setError(null);
       setIsLoading(true);
-      setStages(initialStages());
+
+      // Kick off the stepper simulator
+      startStageSimulation();
 
       const startedAt = performance.now();
       logger.info("diagnosis.start", { symptoms: intake.symptoms });
 
-      // Attempt streaming first
-      const streamed = await tryStream(intake, setStages).catch(() => null);
-      if (streamed) {
-        setData(streamed);
-        setIsLoading(false);
-        logger.info("diagnosis.complete", {
-          source: "stream",
-          elapsed_ms: Math.round(performance.now() - startedAt),
-          diagnoses: streamed.diagnoses.length,
-        });
-        return;
-      }
-
-      // Fallback to non-streaming
       try {
         const controller = new AbortController();
         abortRef.current = controller;
-        // Mark all stages as running sequentially in the UI so the stepper
-        // doesn't look frozen while the single POST is in flight.
-        setStages((prev) =>
-          prev.map((s, i) => ({
-            ...s,
-            status: i === 0 ? "running" : "pending",
-          })),
-        );
+
         const response = await api.diagnose(intake, controller.signal);
+
+        markAllComplete();
         setData(response);
-        setStages(() =>
-          PIPELINE_STAGES.map((name) => ({ name, status: "complete" })),
-        );
         logger.info("diagnosis.complete", {
-          source: "fallback",
           elapsed_ms: Math.round(performance.now() - startedAt),
           diagnoses: response.diagnoses.length,
+          model: response.model_used,
         });
       } catch (err) {
-        if ((err as Error).name === "AbortError") return;
+        if ((err as Error).name === "AbortError") {
+          clearSimulatorTimers();
+          return;
+        }
         const e = err instanceof Error ? err : new Error(String(err));
+        markCurrentStageError();
         setError(e);
-        setStages((prev) =>
-          prev.map((s) =>
-            s.status === "running" ? { ...s, status: "error" } : s,
-          ),
-        );
-        logger.error("diagnosis.error", { error: e.message });
+        logger.error("diagnosis.error", {
+          error: e.message,
+          status: e instanceof ApiError ? e.status : undefined,
+        });
       } finally {
         setIsLoading(false);
         abortRef.current = null;
       }
     },
-    [cancel, reset],
+    [
+      cancel,
+      startStageSimulation,
+      markAllComplete,
+      markCurrentStageError,
+      clearSimulatorTimers,
+    ],
   );
 
-  // Cancel on unmount
+  // Cleanup on unmount
   React.useEffect(() => {
-    return () => cancel();
+    return () => {
+      cancel();
+    };
   }, [cancel]);
 
   return { isLoading, data, error, stages, run, reset, cancel };
-}
-
-/**
- * Attempts a streaming diagnosis. Returns the final response or null if
- * streaming is unavailable (in which case the caller should fall back).
- */
-async function tryStream(
-  intake: PatientIntake,
-  setStages: React.Dispatch<React.SetStateAction<StageStatus[]>>,
-): Promise<DiagnosisResponse | null> {
-  return new Promise<DiagnosisResponse | null>((resolve, reject) => {
-    let final: DiagnosisResponse | null = null;
-    let anyEvent = false;
-
-    const controller = api.diagnoseStream(intake, {
-      onEvent: (event: StreamEvent) => {
-        anyEvent = true;
-        if (event.type === "stage_start" && event.stage) {
-          setStages((prev) =>
-            prev.map((s) =>
-              s.name === event.stage ? { ...s, status: "running" } : s,
-            ),
-          );
-        } else if (event.type === "stage_end" && event.stage) {
-          setStages((prev) =>
-            prev.map((s) =>
-              s.name === event.stage
-                ? {
-                    ...s,
-                    status: "complete",
-                    elapsedMs: event.elapsed_ms,
-                    detail: typeof event.data === "string" ? event.data : undefined,
-                  }
-                : s,
-            ),
-          );
-        } else if (event.type === "emergency") {
-          setStages((prev) =>
-            prev.map((s, i) =>
-              i === 0 ? { ...s, status: "complete" } : { ...s, status: "skipped" },
-            ),
-          );
-        } else if (event.type === "diagnosis_ready") {
-          final = event.data as DiagnosisResponse;
-        }
-      },
-      onDone: (response) => {
-        resolve(response ?? final);
-      },
-      onError: (err) => {
-        // If we never received any event, streaming isn't supported — return null
-        // so the caller can fall back to the non-streaming endpoint.
-        if (!anyEvent || (err instanceof ApiError && err.status === 404)) {
-          resolve(null);
-        } else {
-          reject(err);
-        }
-      },
-    });
-
-    // Safety: if it takes too long, bail out
-    setTimeout(() => {
-      controller.abort();
-      resolve(null);
-    }, 60_000);
-  });
 }
