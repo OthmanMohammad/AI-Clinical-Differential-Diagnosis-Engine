@@ -1,0 +1,100 @@
+# =============================================================
+# MooseGlove — production stack for Oracle Always Free VM
+#
+# Runs the entire backend self-contained: FastAPI + Neo4j 5 +
+# Qdrant. Local development still uses the default
+# docker-compose.yml — DO NOT mix.
+#
+# Usage on the VM:
+#   cd ~/mooseglove/app
+#   docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env up -d
+#
+# All secrets (NEO4J_PASSWORD, API_KEY, GROQ_API_KEY, ...) come
+# from ~/mooseglove/.env which lives outside the repo.
+# =============================================================
+
+name: mooseglove
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    container_name: api
+    restart: unless-stopped
+    env_file:
+      - ${ENV_FILE:-/home/ubuntu/mooseglove/.env}
+    environment:
+      # Hard-coded for prod — override the dev defaults in the .env
+      ENVIRONMENT: production
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      QDRANT_URL: http://qdrant:6333
+      CORS_ORIGINS: "https://mooseglove.com,https://www.mooseglove.com"
+      LANGFUSE_HOST: https://cloud.langfuse.com
+    ports:
+      # Bound to localhost only — Caddy will reverse-proxy to it in Session 3
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    networks: [mooseglove]
+    logging: *default-logging
+
+  neo4j:
+    image: neo4j:5.25-community
+    container_name: neo4j
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
+      NEO4J_server_memory_heap_initial__size: "2G"
+      NEO4J_server_memory_heap_max__size: "4G"
+      NEO4J_server_memory_pagecache_size: "2G"
+      NEO4J_server_default__listen__address: "0.0.0.0"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+    ports:
+      # Bound to localhost only — for ingestion scripts and debugging
+      - "127.0.0.1:7687:7687"
+      - "127.0.0.1:7474:7474"
+    networks: [mooseglove]
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+    logging: *default-logging
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.0
+    container_name: qdrant
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ports:
+      # Bound to localhost only — for ingestion scripts and debugging
+      - "127.0.0.1:6333:6333"
+    networks: [mooseglove]
+    logging: *default-logging
+
+networks:
+  mooseglove:
+    name: mooseglove
+    driver: bridge
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_import:
+  qdrant_data:
