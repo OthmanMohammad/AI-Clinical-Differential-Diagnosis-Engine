@@ -15,50 +15,56 @@ from app.observability.metrics import NEO4J_LATENCY
 
 logger = structlog.get_logger()
 
-# Edge types allowed in traversal — clinically relevant relationships from PrimeKG
+# Edge types allowed in traversal — clinically relevant relationships
+# from PrimeKG. Must be a subset of what the ingestion script loads
+# (services/ingestion/primekg_loader.py), otherwise the WHERE clauses
+# just filter to nothing.
 ALLOWED_EDGE_TYPES = [
     "disease_phenotype_positive",
     "disease_phenotype_negative",
     "disease_protein",
     "drug_protein",
-    "drug_disease",
     "disease_disease",
-    "exposure_disease",
     "phenotype_phenotype",
 ]
 
-# The production Cypher query — tested in Neo4j Browser before deployment.
-# Directed 3-hop traversal with:
-#   - Parenthesized OR chains (correct operator precedence)
-#   - NULL filtering on OPTIONAL MATCH results
-#   - Hard caps on result size (50 nodes, 200 rels)
+# The production Cypher query.
+#
+# DESIGN NOTES:
+#   * 2-hop traversal, not 3. The third hop produced mostly noise for
+#     differential diagnosis and made the intermediate row count
+#     explode into the tens of millions on the full PrimeKG subset
+#     (48k nodes / 617k edges), blowing Neo4j's per-transaction
+#     memory limit of ~2.8 GiB.
+#
+#   * LIMIT at each hop — the previous version only capped at the
+#     very end of the query, so the cartesian product was fully
+#     materialised in memory before being trimmed. Now we cap
+#     (seed, r1, h1) at 120 rows and (..., r2, h2) at 400 rows, which
+#     keeps per-query memory bounded regardless of graph fan-out.
+#
+#   * Directed edges only, parenthesised label OR, NULL filtering on
+#     the OPTIONAL MATCH second hop. Pure Cypher, no APOC.
 TRAVERSAL_QUERY = """
 MATCH (seed)-[r1]->(h1)
 WHERE elementId(seed) IN $seed_ids
   AND type(r1) IN $allowed_types
-  AND (h1:Disease OR h1:Symptom OR h1:Gene
-       OR h1:Phenotype OR h1:Drug OR h1:Anatomy)
+  AND (h1:Disease OR h1:Phenotype OR h1:Gene OR h1:Drug)
 WITH seed, r1, h1
+LIMIT 120
 
 OPTIONAL MATCH (h1)-[r2]->(h2)
 WHERE type(r2) IN $allowed_types
-  AND (h2:Disease OR h2:Symptom OR h2:Gene
-       OR h2:Phenotype OR h2:Drug OR h2:Anatomy)
+  AND (h2:Disease OR h2:Phenotype OR h2:Gene OR h2:Drug)
+  AND h2 <> seed
 WITH seed, r1, h1, r2, h2
-
-OPTIONAL MATCH (h2)-[r3]->(h3)
-WHERE h2 IS NOT NULL
-  AND type(r3) IN $allowed_types
-  AND (h3:Disease OR h3:Symptom OR h3:Gene
-       OR h3:Phenotype OR h3:Drug OR h3:Anatomy)
+LIMIT 400
 
 WITH
   collect(DISTINCT seed) + collect(DISTINCT h1)
-  + [x IN collect(DISTINCT h2) WHERE x IS NOT NULL]
-  + [x IN collect(DISTINCT h3) WHERE x IS NOT NULL] AS all_nodes,
+  + [x IN collect(DISTINCT h2) WHERE x IS NOT NULL] AS all_nodes,
   collect(DISTINCT r1)
-  + [x IN collect(DISTINCT r2) WHERE x IS NOT NULL]
-  + [x IN collect(DISTINCT r3) WHERE x IS NOT NULL] AS all_rels
+  + [x IN collect(DISTINCT r2) WHERE x IS NOT NULL] AS all_rels
 
 UNWIND all_nodes AS n
 WITH DISTINCT n, all_rels
