@@ -53,7 +53,7 @@ NODE_LABEL_MAP = {
     "symptom": "Symptom",
 }
 
-BATCH_SIZE = 500
+BATCH_SIZE = 2000
 
 
 def load_primekg_csv(path: Path) -> pd.DataFrame:
@@ -129,36 +129,50 @@ def load_nodes(driver, nodes: pd.DataFrame) -> None:
 
 
 def load_edges(driver, df: pd.DataFrame) -> None:
-    """Load edges into Neo4j in batches, grouped by relationship type.
+    """Load edges into Neo4j in batches, grouped by (relation, source_type,
+    target_type) so the MATCH clauses can specify a label and use the
+    per-label uniqueness index directly.
 
-    Groups edges by relation type so each batch uses a single MERGE pattern
-    with UNWIND — no per-edge queries, no CALL subqueries, no APOC.
+    Without labels in the MATCH, Neo4j has to probe every label's
+    primekg_id index for each lookup, which makes ingestion ~100x
+    slower. With labels, each lookup is O(1).
     """
     total_loaded = 0
     total_edges = len(df)
 
-    for rel_type, group in df.groupby("relation"):
-        records = group[["x_index", "y_index"]].to_dict("records")
-        logger.info("Loading edge type: %s (%d edges)", rel_type, len(records))
+    # Group by (relation, src_type, tgt_type) so we can emit queries with
+    # the right labels on each side. A single edge type can connect pairs
+    # of different types (e.g. disease_protein links Disease <-> Gene).
+    grouped = df.groupby(["relation", "x_type", "y_type"])
 
-        for i in range(0, len(records), BATCH_SIZE):
-            batch = records[i : i + BATCH_SIZE]
-            with driver.session() as session:
-                session.run(
-                    f"""
-                    UNWIND $batch AS row
-                    MATCH (a {{primekg_id: row.x_index}})
-                    MATCH (b {{primekg_id: row.y_index}})
-                    MERGE (a)-[:{rel_type}]->(b)
-                    """,
-                    batch=batch,
-                )
-            total_loaded += len(batch)
+    with driver.session() as session:
+        for (rel_type, src_type, tgt_type), group in grouped:
+            src_label = NODE_LABEL_MAP.get(src_type, "Entity")
+            tgt_label = NODE_LABEL_MAP.get(tgt_type, "Entity")
+            records = group[["x_index", "y_index"]].to_dict("records")
+            logger.info(
+                "Loading edges: %s (%s -> %s, %d edges)",
+                rel_type, src_label, tgt_label, len(records),
+            )
 
-            if total_loaded % 5000 < BATCH_SIZE:
-                logger.info(
-                    "Loaded edges: %d/%d (current: %s)", total_loaded, total_edges, rel_type
-                )
+            # Compile the query once per group — reused across batches.
+            query = (
+                "UNWIND $batch AS row "
+                f"MATCH (a:{src_label} {{primekg_id: row.x_index}}) "
+                f"MATCH (b:{tgt_label} {{primekg_id: row.y_index}}) "
+                f"MERGE (a)-[:{rel_type}]->(b)"
+            )
+
+            for i in range(0, len(records), BATCH_SIZE):
+                batch = records[i : i + BATCH_SIZE]
+                session.run(query, batch=batch)
+                total_loaded += len(batch)
+
+                if total_loaded % 20000 < BATCH_SIZE:
+                    logger.info(
+                        "Loaded edges: %d/%d (current: %s)",
+                        total_loaded, total_edges, rel_type,
+                    )
 
     logger.info("All edges loaded: %d", total_loaded)
 
