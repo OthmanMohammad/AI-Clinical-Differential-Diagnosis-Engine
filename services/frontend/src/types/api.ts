@@ -1,4 +1,9 @@
-/** API request/response types — mirrors backend Pydantic models. */
+/**
+ * Backend API types — mirror the Pydantic models from services/api/app/models/.
+ * Single source of truth for request and response shapes.
+ */
+
+export type Sex = "male" | "female" | "other";
 
 export interface Vitals {
   temperature_c?: number | null;
@@ -12,7 +17,7 @@ export interface Vitals {
 export interface PatientIntake {
   symptoms: string[];
   age: number;
-  sex: "male" | "female" | "other";
+  sex: Sex;
   history?: string[];
   medications?: string[];
   vitals?: Vitals | null;
@@ -34,10 +39,18 @@ export interface EmergencyResult {
   message: string;
 }
 
+export type GraphNodeType =
+  | "Disease"
+  | "Symptom"
+  | "Gene"
+  | "Drug"
+  | "Phenotype"
+  | "Anatomy";
+
 export interface GraphNode {
   id: string;
   name: string;
-  type: string;
+  type: GraphNodeType | string;
 }
 
 export interface GraphEdge {
