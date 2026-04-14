@@ -8,10 +8,26 @@ from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Project root — walk up from this file until we find the project marker
-# services/api/app/config.py → services/api/app → services/api → services → <root>
-_THIS_FILE = Path(__file__).resolve()
-PROJECT_ROOT = _THIS_FILE.parents[3]  # services/api/app/config.py is 3 levels deep
+# Project root — walk up from this file looking for the `prompts` and
+# `data` marker directories. Works in both layouts we care about:
+#   - dev:       <repo>/services/api/app/config.py   → PROJECT_ROOT = <repo>
+#   - container: /app/app/config.py                  → PROJECT_ROOT = /app
+# Hardcoding `parents[3]` broke inside Docker because the Dockerfile
+# flattens the tree (`COPY services/api/app ./app`).
+def _find_project_root(start: Path) -> Path:
+    current = start.resolve()
+    if current.is_file():
+        current = current.parent
+    for parent in [current, *current.parents]:
+        if (parent / "prompts").is_dir() and (parent / "data").is_dir():
+            return parent
+    raise RuntimeError(
+        f"Could not locate project root from {start}: no ancestor contains "
+        "both `prompts/` and `data/` directories."
+    )
+
+
+PROJECT_ROOT = _find_project_root(Path(__file__))
 DATA_DIR = PROJECT_ROOT / "data"
 PROMPTS_DIR = PROJECT_ROOT / "prompts"
 

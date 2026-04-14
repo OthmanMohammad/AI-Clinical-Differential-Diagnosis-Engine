@@ -41,6 +41,12 @@ services:
     ports:
       # Bound to localhost only — Caddy will reverse-proxy to it in Session 3
       - "127.0.0.1:8080:8080"
+    volumes:
+      # Mount the repo's data dir read-only so ingestion artefacts like
+      # medical_terms.json (generated post-PrimeKG load) are visible to
+      # the API without rebuilding the image. symptom_synonyms.json is
+      # also in here — it's the hand-curated synonym map checked into git.
+      - ./data:/app/data:ro
     depends_on:
       neo4j:
         condition: service_healthy
