@@ -184,10 +184,10 @@ export function TagInput({
                 }}
                 onMouseEnter={() => setActiveIndex(0)}
                 className={cn(
-                  "flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm transition-colors",
+                  "flex cursor-pointer items-center justify-between gap-2 border-l-2 px-3 py-2 text-sm transition-colors",
                   activeIndex === 0
-                    ? "bg-accent text-accent-foreground"
-                    : "text-foreground",
+                    ? "border-l-primary bg-primary/15 text-foreground"
+                    : "border-l-transparent text-foreground hover:bg-muted/40",
                 )}
               >
                 <span className="flex items-center gap-2">
@@ -206,21 +206,22 @@ export function TagInput({
                   </li>
                   {filteredSuggestions.map((s, i) => {
                     const idx = i + 1;
+                    const isActive = idx === activeIndex;
                     return (
                       <li
                         key={s}
                         role="option"
-                        aria-selected={idx === activeIndex}
+                        aria-selected={isActive}
                         onMouseDown={(e) => {
                           e.preventDefault();
                           commit(s);
                         }}
                         onMouseEnter={() => setActiveIndex(idx)}
                         className={cn(
-                          "cursor-pointer px-3 py-1.5 text-sm transition-colors",
-                          idx === activeIndex
-                            ? "bg-accent text-accent-foreground"
-                            : "text-foreground",
+                          "cursor-pointer border-l-2 px-3 py-1.5 text-sm transition-colors",
+                          isActive
+                            ? "border-l-primary bg-primary/15 text-foreground"
+                            : "border-l-transparent text-foreground hover:bg-muted/40",
                         )}
                       >
                         {s}

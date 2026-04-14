@@ -187,27 +187,30 @@ export function LabsSection() {
                           className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-md border border-border shadow-2xl"
                         >
                           <ul role="listbox" className="py-1">
-                            {filteredLabs.map((l, i) => (
-                              <li
-                                key={l}
-                                role="option"
-                                aria-selected={i === activeSuggestion}
-                                onMouseDown={(e) => {
-                                  e.preventDefault();
-                                  setDraftKey(l);
-                                  setTimeout(() => valueRef.current?.focus(), 10);
-                                }}
-                                onMouseEnter={() => setActiveSuggestion(i)}
-                                className={cn(
-                                  "cursor-pointer px-3 py-1 text-xs transition-colors",
-                                  i === activeSuggestion
-                                    ? "bg-accent text-accent-foreground"
-                                    : "text-foreground",
-                                )}
-                              >
-                                {l}
-                              </li>
-                            ))}
+                            {filteredLabs.map((l, i) => {
+                              const isActive = i === activeSuggestion;
+                              return (
+                                <li
+                                  key={l}
+                                  role="option"
+                                  aria-selected={isActive}
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    setDraftKey(l);
+                                    setTimeout(() => valueRef.current?.focus(), 10);
+                                  }}
+                                  onMouseEnter={() => setActiveSuggestion(i)}
+                                  className={cn(
+                                    "cursor-pointer border-l-2 px-3 py-1 text-xs transition-colors",
+                                    isActive
+                                      ? "border-l-primary bg-primary/15 text-foreground"
+                                      : "border-l-transparent text-foreground hover:bg-muted/40",
+                                  )}
+                                >
+                                  {l}
+                                </li>
+                              );
+                            })}
                           </ul>
                         </motion.div>
                       )}

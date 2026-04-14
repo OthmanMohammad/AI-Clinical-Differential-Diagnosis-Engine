@@ -19,13 +19,21 @@ if TYPE_CHECKING:
 logger = structlog.get_logger()
 
 # Gate 6.3 — Treatment advice keywords
+# Note: deliberately NOT matching bare "\d+ mg" / "\d+ ml" because those
+# patterns false-positive on lab values like "287 mg/dL" or "1.1 mg/dL".
+# Stick to clearly imperative language about prescribing, administering,
+# or treating a patient.
 TREATMENT_KEYWORDS = re.compile(
     r"\b("
-    r"prescribe|administer|dose|dosage|\d+\s*mg|\d+\s*ml|"
-    r"treat\s+with|start\s+on|give\s+the\s+patient|"
-    r"medication\s+regimen|take\s+\d+|inject|infuse|"
+    r"prescribe(?:s|d)?|"
+    r"recommended\s+dose|recommended\s+dosage|"
+    r"treat\s+with|treatment\s+with|start\s+(?:on|with)|"
+    r"give\s+the\s+patient|give\s+\d+\s*mg|"
+    r"medication\s+regimen|drug\s+regimen|"
+    r"take\s+\d+\s*(?:mg|ml|tablet|pill|capsule)|"
+    r"inject(?:ed|ion)?\s+with|infuse\s+with|"
     r"recommend(?:ed)?\s+treatment|therapy\s+with|"
-    r"should\s+(?:take|receive|be\s+given)"
+    r"should\s+(?:take|receive|be\s+given|be\s+prescribed)"
     r")\b",
     re.IGNORECASE,
 )
@@ -49,18 +57,32 @@ async def gate_hallucination_check(
 ) -> DifferentialDiagnosis:
     """Gate 6.2 — Verify every disease_name exists in Neo4j.
 
+    Uses a fuzzy match strategy: a diagnosis is considered "verified"
+    if any of the following hold against PrimeKG disease names:
+      1. Exact case-insensitive match
+      2. Substring match in either direction (handles word reordering
+         and minor variations like "type 2 diabetes mellitus" vs
+         "diabetes mellitus type 2")
+      3. All meaningful tokens of the LLM name are present in some graph
+         disease name (handles "Type 2 Diabetes Mellitus" vs
+         "Diabetes Mellitus, Type 2")
+
     Unverified diseases get verified_in_graph=False + orange badge in UI.
     They are NOT removed — the clinician sees them with a clear marker.
     """
     disease_names = [d.disease_name for d in diagnosis.diagnoses]
 
     async with neo4j_driver.session() as session:
+        # First try exact match for fast path
         result = await session.run(
             """
             UNWIND $names AS name
             OPTIONAL MATCH (d:Disease)
             WHERE toLower(d.name) = toLower(name)
-            RETURN name, d IS NOT NULL AS found
+               OR toLower(d.name) CONTAINS toLower(name)
+               OR toLower(name) CONTAINS toLower(d.name)
+            WITH name, count(d) AS hit_count
+            RETURN name, hit_count > 0 AS found
             """,
             names=disease_names,
         )
@@ -70,6 +92,33 @@ async def gate_hallucination_check(
     for record in records:
         if record["found"]:
             found_set.add(record["name"].lower())
+
+    # Token-based fallback for names that didn't match by substring.
+    # Example: "Diabetes Mellitus Type 2" should match "type 2 diabetes mellitus".
+    unmatched = [
+        item.disease_name
+        for item in diagnosis.diagnoses
+        if item.disease_name.lower() not in found_set
+    ]
+    if unmatched:
+        async with neo4j_driver.session() as session:
+            for name in unmatched:
+                tokens = _meaningful_tokens(name)
+                if not tokens:
+                    continue
+                result = await session.run(
+                    """
+                    MATCH (d:Disease)
+                    WHERE ALL(token IN $tokens
+                              WHERE toLower(d.name) CONTAINS token)
+                    RETURN count(d) > 0 AS found
+                    LIMIT 1
+                    """,
+                    tokens=[t.lower() for t in tokens],
+                )
+                record = await result.single()
+                if record and record["found"]:
+                    found_set.add(name.lower())
 
     hallucination_count = 0
     for item in diagnosis.diagnoses:
@@ -84,6 +133,21 @@ async def gate_hallucination_check(
         GATE_TRIGGERS.labels(gate_name="hallucination_check", result="clean").inc()
 
     return diagnosis
+
+
+# Words to ignore when token-matching disease names — they're too common
+# to be meaningful for matching (every disease has "syndrome" or "disease").
+_STOPWORDS = frozenset({
+    "the", "a", "an", "of", "and", "or", "in", "on", "with", "to", "for",
+    "by", "at", "from", "as", "is", "be", "type", "syndrome", "disease",
+    "disorder",
+})
+
+
+def _meaningful_tokens(name: str) -> list[str]:
+    """Strip stopwords + tokenize for fuzzy disease matching."""
+    raw = re.findall(r"[a-zA-Z0-9]+", name.lower())
+    return [t for t in raw if t not in _STOPWORDS and len(t) > 1]
 
 
 def gate_treatment_filter(diagnosis: DifferentialDiagnosis) -> tuple[DifferentialDiagnosis, bool]:
