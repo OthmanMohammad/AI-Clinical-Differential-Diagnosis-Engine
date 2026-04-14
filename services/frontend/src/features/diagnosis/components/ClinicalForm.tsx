@@ -13,7 +13,6 @@ import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Kbd } from "@/components/ui/kbd";
 import { useIntakeStore } from "@/features/diagnosis/store/intake";
+import { AgeInput } from "@/features/diagnosis/components/AgeInput";
 import { TagInput } from "@/features/diagnosis/components/TagInput";
 import { VitalsSection } from "@/features/diagnosis/components/VitalsSection";
 import { LabsSection } from "@/features/diagnosis/components/LabsSection";
@@ -129,15 +129,10 @@ export function ClinicalForm({ isSubmitting, onSubmit }: ClinicalFormProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="age">Age</Label>
-              <Input
+              <AgeInput
                 id="age"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={130}
                 value={age}
-                onChange={(e) => setField("age", Number(e.target.value))}
-                className="h-9"
+                onChange={(n) => setField("age", n)}
               />
             </div>
             <div className="space-y-1.5">

@@ -105,30 +105,32 @@ export function GraphPanel({ response, topPath }: GraphPanelProps) {
           />
 
           {/* Overlays */}
-          <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
+          <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap items-start justify-between gap-2">
             <GraphLegend
               visibleTypes={visibleTypes}
               onToggle={handleToggleType}
             />
-            <div className="flex flex-col items-end gap-2">
-              <GraphToolbar
-                layout={layout}
-                onLayoutChange={handleLayoutChange}
-                onFit={() => graphRef.current?.fitView()}
-                onZoomIn={() => graphRef.current?.zoomIn()}
-                onZoomOut={() => graphRef.current?.zoomOut()}
-                onSearch={() => setSearchOpen(true)}
-                onExportPng={() => void handleExportPng()}
-                onToggleFullscreen={toggleFullscreen}
-                fullscreen={graphFullscreen}
-              />
-              <GraphSearch
-                nodes={response.graph_nodes}
-                open={searchOpen}
-                onClose={() => setSearchOpen(false)}
-                onSelect={handleSearchSelect}
-              />
-            </div>
+            <GraphToolbar
+              layout={layout}
+              onLayoutChange={handleLayoutChange}
+              onFit={() => graphRef.current?.fitView()}
+              onZoomIn={() => graphRef.current?.zoomIn()}
+              onZoomOut={() => graphRef.current?.zoomOut()}
+              onSearch={() => setSearchOpen(true)}
+              onExportPng={() => void handleExportPng()}
+              onToggleFullscreen={toggleFullscreen}
+              fullscreen={graphFullscreen}
+            />
+          </div>
+
+          {/* Search popover positioned in the top-right */}
+          <div className="pointer-events-none absolute right-3 top-16 flex justify-end">
+            <GraphSearch
+              nodes={response.graph_nodes}
+              open={searchOpen}
+              onClose={() => setSearchOpen(false)}
+              onSelect={handleSearchSelect}
+            />
           </div>
 
           <NodeDetailDrawer

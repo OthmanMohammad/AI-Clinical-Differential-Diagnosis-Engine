@@ -85,7 +85,13 @@ interface BuiltData {
   edges: Array<Record<string, unknown>>;
 }
 
-/** Pure data builder — no closures over component state. */
+/** Pure data builder — no closures over component state.
+ *
+ * Hidden nodes are kept in the data set (so the layout engine remembers
+ * their positions) but rendered with visibility: hidden. Toggling a type
+ * back on then just makes the existing nodes visible in place, instead of
+ * spawning fresh nodes at the origin.
+ */
 function buildGraphData(
   nodes: GraphNode[],
   edges: GraphEdge[],
@@ -97,10 +103,8 @@ function buildGraphData(
   const bg = getBackgroundColor();
   const pathSet = new Set((topPath ?? []).map((n) => n.toLowerCase()));
 
-  const visibleNodes = nodes.filter((n) => !hiddenTypes.has(n.type));
-  const visibleNodeIds = new Set(visibleNodes.map((n) => n.id));
-
-  const g6Nodes = visibleNodes.map((n) => {
+  const g6Nodes = nodes.map((n) => {
+    const isHidden = hiddenTypes.has(n.type);
     const isOnPath = pathSet.has(n.name.toLowerCase());
     const entityType = isEntityType(n.type) ? n.type : "Disease";
     const color = colors[entityType];
@@ -128,34 +132,36 @@ function buildGraphData(
         labelBackgroundPadding: [2, 5, 2, 5] as [number, number, number, number],
         labelBackgroundRadius: 3,
         cursor: "pointer",
+        visibility: isHidden ? "hidden" : "visible",
       },
     };
   });
 
-  const g6Edges = edges
-    .filter((e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target))
-    .map((e, i) => {
-      const src = nodes.find((n) => n.id === e.source);
-      const tgt = nodes.find((n) => n.id === e.target);
-      const onPath =
-        src &&
-        tgt &&
-        pathSet.has(src.name.toLowerCase()) &&
-        pathSet.has(tgt.name.toLowerCase());
-      return {
-        id: `e-${i}`,
-        source: e.source,
-        target: e.target,
-        data: { type: e.type, onPath },
-        style: {
-          stroke: onPath ? getPrimaryColor() : getMutedColor(),
-          lineWidth: onPath ? 2.5 : 1,
-          strokeOpacity: onPath ? 0.95 : 0.4,
-          endArrow: true,
-          endArrowSize: 6,
-        },
-      };
-    });
+  const g6Edges = edges.map((e, i) => {
+    const src = nodes.find((n) => n.id === e.source);
+    const tgt = nodes.find((n) => n.id === e.target);
+    const isHidden =
+      !src || !tgt || hiddenTypes.has(src.type) || hiddenTypes.has(tgt.type);
+    const onPath =
+      src &&
+      tgt &&
+      pathSet.has(src.name.toLowerCase()) &&
+      pathSet.has(tgt.name.toLowerCase());
+    return {
+      id: `e-${i}`,
+      source: e.source,
+      target: e.target,
+      data: { type: e.type, onPath },
+      style: {
+        stroke: onPath ? getPrimaryColor() : getMutedColor(),
+        lineWidth: onPath ? 2.5 : 1,
+        strokeOpacity: onPath ? 0.95 : 0.4,
+        endArrow: true,
+        endArrowSize: 6,
+        visibility: isHidden ? "hidden" : "visible",
+      },
+    };
+  });
 
   return { nodes: g6Nodes, edges: g6Edges };
 }
@@ -309,11 +315,9 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       const graph = graphRef.current;
       if (!graph) return;
       safeCall("set_data", () => graph.setData(data));
-      // Re-run the layout so newly-revealed nodes get positioned. Without
-      // this they all spawn at (0,0) stacked on top of each other.
-      safeCall("relayout", () => graph.layout());
+      // Just redraw — DON'T re-run layout. Hidden nodes keep their positions
+      // so toggling them back on shows them in place.
       safeCall("redraw", () => graph.draw());
-      safeCall("fit_after_data", () => graph.fitView());
     }, [data]);
 
     // ---- Re-apply layout when it changes ----

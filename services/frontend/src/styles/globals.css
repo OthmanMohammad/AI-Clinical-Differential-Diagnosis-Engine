@@ -220,12 +220,39 @@
 }
 
 /* =============================================================================
-   G6 Graph Canvas — override default font and background
+   G6 Graph Canvas — theme overrides
    ============================================================================= */
+
+/* Context menu */
 .g6-component-contextmenu {
   background: hsl(var(--popover)) !important;
   color: hsl(var(--popover-foreground)) !important;
   border: 1px solid hsl(var(--border)) !important;
   border-radius: var(--radius) !important;
   font-family: var(--font-sans) !important;
+}
+
+/* Minimap — match the current theme background */
+.g6-minimap,
+.pathodx-minimap,
+[class*="g6-minimap"] {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px hsl(var(--background) / 0.4) !important;
+  overflow: hidden !important;
+}
+
+.g6-minimap canvas,
+.pathodx-minimap canvas,
+[class*="g6-minimap"] canvas {
+  background: hsl(var(--card)) !important;
+}
+
+/* Minimap viewport indicator (the draggable rectangle) */
+.g6-minimap-viewport,
+[class*="g6-minimap-viewport"] {
+  border: 2px solid hsl(var(--primary)) !important;
+  background: hsl(var(--primary) / 0.15) !important;
+  border-radius: 2px !important;
 }
