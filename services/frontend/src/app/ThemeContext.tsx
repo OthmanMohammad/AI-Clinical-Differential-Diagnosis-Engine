@@ -25,6 +25,9 @@ export interface ThemeContextValue {
 
 export const ThemeContext = React.createContext<ThemeContextValue | null>(null);
 
+/** Default theme when nothing is stored. Light is the clinical convention. */
+const DEFAULT_THEME: Theme = "light";
+
 function getStoredTheme(): Theme {
   try {
     const stored = localStorage.getItem(STORAGE_KEYS.theme);
@@ -34,11 +37,11 @@ function getStoredTheme(): Theme {
   } catch {
     /* access may be blocked */
   }
-  return "system";
+  return DEFAULT_THEME;
 }
 
 function getSystemTheme(): ResolvedTheme {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   return window.matchMedia("(prefers-color-scheme: light)").matches
     ? "light"
     : "dark";

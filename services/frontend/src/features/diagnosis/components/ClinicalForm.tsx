@@ -103,8 +103,8 @@ export function ClinicalForm({ isSubmitting, onSubmit }: ClinicalFormProps) {
       </div>
 
       {/* Scrollable body */}
-      <ScrollArea className="-mx-4 flex-1 px-4">
-        <div className="space-y-4 pb-4">
+      <ScrollArea className="-mr-2 flex-1 pr-2">
+        <div className="space-y-4 px-0.5 pb-4">
           {/* Symptoms */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">

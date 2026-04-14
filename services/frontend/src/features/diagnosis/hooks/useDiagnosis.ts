@@ -214,12 +214,9 @@ async function tryStream(
     });
 
     // Safety: if it takes too long, bail out
-    const timeout = setTimeout(() => {
+    setTimeout(() => {
       controller.abort();
       resolve(null);
     }, 60_000);
-
-    // Cleanup handler
-    return () => clearTimeout(timeout);
   });
 }

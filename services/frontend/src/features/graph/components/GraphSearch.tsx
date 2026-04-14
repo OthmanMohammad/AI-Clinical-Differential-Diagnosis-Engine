@@ -58,8 +58,12 @@ export function GraphSearch({ nodes, open, onClose, onSelect, className }: Graph
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.15 }}
+          style={{
+            backgroundColor: "hsl(var(--popover))",
+            color: "hsl(var(--popover-foreground))",
+          }}
           className={cn(
-            "pointer-events-auto w-80 rounded-md border border-border bg-popover shadow-lg backdrop-blur",
+            "pointer-events-auto w-80 rounded-md border border-border shadow-2xl",
             className,
           )}
         >

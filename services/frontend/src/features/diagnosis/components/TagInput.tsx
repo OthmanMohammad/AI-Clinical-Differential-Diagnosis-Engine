@@ -100,7 +100,7 @@ export function TagInput({
         className={cn(
           "flex min-h-9 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-transparent px-2 py-1.5 text-sm shadow-sm",
           "transition-colors",
-          focused && "border-ring ring-2 ring-ring/20",
+          focused && "border-ring ring-1 ring-ring/30",
         )}
       >
         <AnimatePresence initial={false}>
@@ -149,7 +149,11 @@ export function TagInput({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-md border border-border bg-popover shadow-lg"
+            style={{
+              backgroundColor: "hsl(var(--popover))",
+              color: "hsl(var(--popover-foreground))",
+            }}
+            className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-md border border-border shadow-2xl"
           >
             <ul role="listbox" className="max-h-64 overflow-y-auto py-1">
               {filteredSuggestions.map((s, i) => (
@@ -166,7 +170,7 @@ export function TagInput({
                     "cursor-pointer px-3 py-1.5 text-sm transition-colors",
                     i === activeSuggestion
                       ? "bg-accent text-accent-foreground"
-                      : "text-foreground/80",
+                      : "text-foreground",
                   )}
                 >
                   {s}

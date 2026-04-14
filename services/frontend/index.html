@@ -1,10 +1,9 @@
 <!doctype html>
-<html lang="en" class="dark" data-theme="dark">
+<html lang="en" class="light" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0B0D12" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="color-scheme" content="light dark" />
     <meta
       name="description"
       content="PathoDX — AI Clinical Differential Diagnosis Engine. Graph RAG + LLM reasoning for clinical decision support."
@@ -12,16 +11,11 @@
     <title>PathoDX — Clinical Differential Diagnosis</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <script>
-      // Prevent flash of wrong theme before React mounts
+      // Prevent flash of wrong theme before React mounts. Default to light.
       (function () {
         try {
           var stored = localStorage.getItem("pathodx.theme");
-          var theme =
-            stored === "light" || stored === "dark"
-              ? stored
-              : window.matchMedia("(prefers-color-scheme: light)").matches
-                ? "light"
-                : "dark";
+          var theme = stored === "dark" ? "dark" : "light";
           document.documentElement.classList.remove("light", "dark");
           document.documentElement.classList.add(theme);
           document.documentElement.setAttribute("data-theme", theme);

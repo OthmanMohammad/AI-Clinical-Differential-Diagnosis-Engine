@@ -71,8 +71,8 @@ export function ResultsPanel({
       </div>
 
       {/* Content */}
-      <ScrollArea className="-mx-4 flex-1 px-4">
-        <div className="space-y-3 pb-4">
+      <ScrollArea className="-mr-2 flex-1 pr-2">
+        <div className="space-y-3 px-0.5 pb-4">
           <AnimatePresence mode="wait">
             {error && (
               <ErrorState

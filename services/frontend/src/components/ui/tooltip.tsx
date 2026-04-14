@@ -15,8 +15,12 @@ const TooltipContent = React.forwardRef<
     <TooltipPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
+      style={{
+        backgroundColor: "hsl(var(--popover))",
+        color: "hsl(var(--popover-foreground))",
+      }}
       className={cn(
-        "z-50 overflow-hidden rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md",
+        "z-50 overflow-hidden rounded-md border border-border px-2 py-1 text-xs shadow-xl",
         "data-[state=delayed-open]:data-[side=top]:animate-slide-down",
         "data-[state=delayed-open]:data-[side=bottom]:animate-slide-up",
         "data-[state=delayed-open]:data-[side=left]:animate-slide-up",

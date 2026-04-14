@@ -63,6 +63,23 @@ function isEntityType(t: string): t is GraphNodeType {
   return ENTITY_ORDER.includes(t as GraphNodeType);
 }
 
+/**
+ * Safely invoke a graph method that may return a Promise OR a plain value.
+ * G6 v5's API is inconsistent — some methods return promises, some are sync.
+ */
+function safeCall(label: string, fn: () => unknown): void {
+  try {
+    const result = fn();
+    if (result && typeof (result as Promise<unknown>).then === "function") {
+      (result as Promise<unknown>).catch((err: Error) => {
+        logger.warn(`graph.${label}_failed`, { error: err.message });
+      });
+    }
+  } catch (err) {
+    logger.warn(`graph.${label}_failed`, { error: (err as Error).message });
+  }
+}
+
 export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGraphProps>(
   function ReasoningGraph(
     { nodes, edges, topPath, hiddenTypes, onNodeClick, className },
@@ -275,9 +292,7 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
         }
       });
 
-      void graph.render().catch((err: Error) => {
-        logger.error("graph.render_failed", { error: err.message });
-      });
+      safeCall("render", () => graph.render());
 
       const handleResize = () => {
         graph.resize();
@@ -300,12 +315,8 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
     React.useEffect(() => {
       const graph = graphRef.current;
       if (!graph) return;
-      void graph
-        .setLayout(getLayoutConfig(layout))
-        .then(() => graph.layout())
-        .catch((err: Error) =>
-          logger.warn("graph.layout_failed", { error: err.message }),
-        );
+      safeCall("set_layout", () => graph.setLayout(getLayoutConfig(layout)));
+      safeCall("layout", () => graph.layout());
     }, [layout]);
 
     // Re-theme when theme changes — rebuild node/edge styles
@@ -313,11 +324,11 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       const graph = graphRef.current;
       if (!graph) return;
       const data = buildData();
-      graph.setData(data);
-      graph.setOptions({ background: getBackgroundColor() });
-      void graph.render().catch((err: Error) =>
-        logger.warn("graph.retheme_failed", { error: err.message }),
+      safeCall("set_data", () => graph.setData(data));
+      safeCall("set_options", () =>
+        graph.setOptions({ background: getBackgroundColor() }),
       );
+      safeCall("retheme_render", () => graph.render());
     }, [resolvedTheme, buildData]);
 
     // Expose imperative handle
@@ -325,22 +336,24 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       ref,
       () => ({
         fitView: () => {
-          void graphRef.current?.fitView();
+          const graph = graphRef.current;
+          if (!graph) return;
+          safeCall("fit_view", () => graph.fitView());
         },
         zoomIn: () => {
-          void graphRef.current?.zoomBy(1.2);
+          const graph = graphRef.current;
+          if (!graph) return;
+          safeCall("zoom_in", () => graph.zoomBy(1.2));
         },
         zoomOut: () => {
-          void graphRef.current?.zoomBy(0.8);
+          const graph = graphRef.current;
+          if (!graph) return;
+          safeCall("zoom_out", () => graph.zoomBy(0.8));
         },
         focusNode: (id: string) => {
           const graph = graphRef.current;
           if (!graph) return;
-          void graph
-            .focusElement(id, true)
-            .catch((err: Error) =>
-              logger.warn("graph.focus_failed", { error: err.message }),
-            );
+          safeCall("focus_node", () => graph.focusElement(id, true));
         },
         exportImage: (format: "png" | "svg") => {
           const graph = graphRef.current;
