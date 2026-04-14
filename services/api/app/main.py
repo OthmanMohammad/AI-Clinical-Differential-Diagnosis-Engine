@@ -19,7 +19,7 @@ from app.config import get_settings
 from app.dependencies import close_neo4j, close_qdrant, init_neo4j, init_qdrant
 from app.observability.langfuse_client import configure_litellm_callbacks, init_langfuse
 from app.observability.metrics import configure_logging
-from app.routers import diagnosis, graph, health
+from app.routers import diagnosis, diagnosis_stream, graph, health, metadata
 
 logger = structlog.get_logger()
 
@@ -133,4 +133,6 @@ async def timeout_middleware(request: Request, call_next):
 # Routers
 app.include_router(health.router)
 app.include_router(diagnosis.router, prefix="/api/v1")
+app.include_router(diagnosis_stream.router, prefix="/api/v1")
 app.include_router(graph.router, prefix="/api/v1")
+app.include_router(metadata.router, prefix="/api/v1")
