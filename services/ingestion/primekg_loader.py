@@ -21,14 +21,21 @@ from neo4j import GraphDatabase
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-# Node types to keep — clinically relevant for differential diagnosis
+# Node types to keep — clinically relevant for differential diagnosis.
+#
+# IMPORTANT: these are the raw strings used in PrimeKG's `x_type` / `y_type`
+# columns, which are NOT always the same as the short names used in the
+# `relation` column. Specifically PrimeKG labels phenotype nodes with the
+# type "effect/phenotype", even though relations involving them use the
+# short name ("disease_phenotype_positive", etc.). Using "phenotype" here
+# would silently drop every phenotype node and every disease-phenotype
+# edge during the node type filter — which is exactly what happened on
+# the first ingest.
 ALLOWED_NODE_TYPES = {
     "disease",
     "drug",
     "gene/protein",
-    "phenotype",
-    "anatomy",
-    "symptom",
+    "effect/phenotype",
 }
 
 # Edge types to keep — clinically relevant relationships
@@ -37,20 +44,17 @@ ALLOWED_EDGE_TYPES = {
     "disease_phenotype_negative",
     "disease_protein",
     "drug_protein",
-    "drug_disease",
     "disease_disease",
-    "exposure_disease",
     "phenotype_phenotype",
 }
 
-# Neo4j label mapping (PrimeKG type → Neo4j label)
+# Neo4j label mapping (PrimeKG raw type → clean Neo4j label).
+# The keys MUST match ALLOWED_NODE_TYPES exactly.
 NODE_LABEL_MAP = {
     "disease": "Disease",
     "drug": "Drug",
     "gene/protein": "Gene",
-    "phenotype": "Phenotype",
-    "anatomy": "Anatomy",
-    "symptom": "Symptom",
+    "effect/phenotype": "Phenotype",
 }
 
 BATCH_SIZE = 2000
