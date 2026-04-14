@@ -1,8 +1,11 @@
 """Layer 3.1 — Vector Search via Qdrant + fastembed.
 
 Embeds user input and finds matching medical entities in Qdrant.
-Production: fastembed in-process (BAAI/bge-micro-v2, ~30MB).
-Local dev: fastembed in-process (BAAI/bge-small-en-v1.5, ~130MB).
+Both dev and production use fastembed in-process with
+BAAI/bge-small-en-v1.5 (~130MB). The same model must be used to
+build the Qdrant collection (see services/ingestion/qdrant_indexer.py)
+or query-time and index-time vectors will live in different embedding
+spaces and similarity becomes meaningless.
 """
 
 from __future__ import annotations

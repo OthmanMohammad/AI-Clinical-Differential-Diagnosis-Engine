@@ -86,10 +86,14 @@ class Settings(BaseSettings):
     request_timeout: int = 30
 
     # Embedding model
+    #
+    # Must match the model used to build the Qdrant collection in
+    # services/ingestion/qdrant_indexer.py — if the two drift apart the
+    # query-time and index-time vectors live in different embedding
+    # spaces and similarity scores become meaningless. We use the same
+    # model in dev and prod so this invariant never breaks.
     @property
     def embedding_model(self) -> str:
-        if self.environment == "production":
-            return "BAAI/bge-micro-v2"
         return "BAAI/bge-small-en-v1.5"
 
     # LLM fallback chain
