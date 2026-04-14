@@ -8,7 +8,6 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 from neo4j import AsyncDriver
 from qdrant_client import AsyncQdrantClient
-from slowapi import Limiter
 
 from app.config import Settings, get_settings
 from app.core.graph_rag import run_diagnosis_pipeline
@@ -19,17 +18,11 @@ from app.guardrails.input_validator import InputValidationError
 from app.models.diagnosis import DiagnosisResponse
 from app.models.patient import PatientIntake
 from app.observability.metrics import ERRORS, REQUEST_LATENCY
+from app.rate_limit import limiter
 
 logger = structlog.get_logger()
 
 router = APIRouter(tags=["diagnosis"])
-
-
-def get_real_ip(request: Request) -> str:
-    return request.headers.get("fly-client-ip", request.client.host if request.client else "unknown")
-
-
-limiter = Limiter(key_func=get_real_ip)
 
 
 @router.post(
@@ -41,9 +34,10 @@ limiter = Limiter(key_func=get_real_ip)
         "powered by Graph RAG + LLM reasoning."
     ),
 )
+@limiter.limit("10/minute")
 async def diagnose(
-    intake: PatientIntake,
     request: Request,
+    intake: PatientIntake,
     _api_key: str = Depends(verify_api_key),
     neo4j_driver: AsyncDriver = Depends(get_neo4j),
     qdrant_client: AsyncQdrantClient = Depends(get_qdrant),

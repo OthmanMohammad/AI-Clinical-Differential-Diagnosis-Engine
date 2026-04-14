@@ -11,6 +11,7 @@ from qdrant_client import AsyncQdrantClient
 from app.core.graph_rag_stream import run_diagnosis_pipeline_stream
 from app.dependencies import get_neo4j, get_qdrant, verify_api_key
 from app.models.patient import PatientIntake
+from app.rate_limit import limiter
 
 logger = structlog.get_logger()
 
@@ -26,9 +27,10 @@ router = APIRouter(tags=["diagnosis"])
         "progress indicators in the UI."
     ),
 )
+@limiter.limit("10/minute")
 async def diagnose_stream(
-    intake: PatientIntake,
     request: Request,
+    intake: PatientIntake,
     _api_key: str = Depends(verify_api_key),
     neo4j_driver: AsyncDriver = Depends(get_neo4j),
     qdrant_client: AsyncQdrantClient = Depends(get_qdrant),
