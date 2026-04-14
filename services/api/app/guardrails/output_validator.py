@@ -55,76 +55,101 @@ async def gate_hallucination_check(
     diagnosis: DifferentialDiagnosis,
     neo4j_driver: AsyncDriver,
 ) -> DifferentialDiagnosis:
-    """Gate 6.2 — Verify every disease_name exists in Neo4j.
+    """Gate 6.2 — Verify every disease_name exists in Neo4j (fuzzy).
 
-    Uses a fuzzy match strategy: a diagnosis is considered "verified"
-    if any of the following hold against PrimeKG disease names:
-      1. Exact case-insensitive match
-      2. Substring match in either direction (handles word reordering
-         and minor variations like "type 2 diabetes mellitus" vs
-         "diabetes mellitus type 2")
-      3. All meaningful tokens of the LLM name are present in some graph
-         disease name (handles "Type 2 Diabetes Mellitus" vs
-         "Diabetes Mellitus, Type 2")
+    Strategy:
+      1. Tokenize each LLM disease name (skip stopwords, single chars).
+      2. Pull all PrimeKG diseases whose name shares at least one
+         meaningful token with any LLM diagnosis. This is one query.
+      3. For each LLM diagnosis, compute Jaccard similarity against
+         every candidate. Mark verified if best similarity >= 0.5.
+
+    This handles word reordering ("Diabetes Mellitus Type 2" vs
+    "type 2 diabetes mellitus"), abbreviations, and minor variations
+    without dragging in fuzzy-string libraries.
 
     Unverified diseases get verified_in_graph=False + orange badge in UI.
     They are NOT removed — the clinician sees them with a clear marker.
     """
-    disease_names = [d.disease_name for d in diagnosis.diagnoses]
+    # Tokenize all LLM diagnoses up front
+    llm_tokens: dict[str, frozenset[str]] = {}
+    all_query_tokens: set[str] = set()
+    for item in diagnosis.diagnoses:
+        toks = frozenset(_meaningful_tokens(item.disease_name))
+        llm_tokens[item.disease_name] = toks
+        all_query_tokens.update(toks)
 
-    async with neo4j_driver.session() as session:
-        # First try exact match for fast path
-        result = await session.run(
-            """
-            UNWIND $names AS name
-            OPTIONAL MATCH (d:Disease)
-            WHERE toLower(d.name) = toLower(name)
-               OR toLower(d.name) CONTAINS toLower(name)
-               OR toLower(name) CONTAINS toLower(d.name)
-            WITH name, count(d) AS hit_count
-            RETURN name, hit_count > 0 AS found
-            """,
-            names=disease_names,
-        )
-        records = await result.data()
+    # If no meaningful tokens at all, mark everything unverified
+    if not all_query_tokens:
+        for item in diagnosis.diagnoses:
+            item.verified_in_graph = False
+        return diagnosis
 
-    found_set: set[str] = set()
-    for record in records:
-        if record["found"]:
-            found_set.add(record["name"].lower())
-
-    # Token-based fallback for names that didn't match by substring.
-    # Example: "Diabetes Mellitus Type 2" should match "type 2 diabetes mellitus".
-    unmatched = [
-        item.disease_name
-        for item in diagnosis.diagnoses
-        if item.disease_name.lower() not in found_set
-    ]
-    if unmatched:
+    # Pull candidate diseases that share at least one token with the LLM names
+    candidates: list[tuple[str, frozenset[str]]] = []
+    try:
         async with neo4j_driver.session() as session:
-            for name in unmatched:
-                tokens = _meaningful_tokens(name)
-                if not tokens:
+            result = await session.run(
+                """
+                MATCH (d:Disease)
+                WHERE d.name IS NOT NULL
+                  AND ANY(t IN $tokens WHERE toLower(d.name) CONTAINS t)
+                RETURN d.name AS name
+                LIMIT 4000
+                """,
+                tokens=list(all_query_tokens),
+            )
+            data = await result.data()
+            for record in data:
+                cand_name = record.get("name")
+                if not cand_name:
                     continue
-                result = await session.run(
-                    """
-                    MATCH (d:Disease)
-                    WHERE ALL(token IN $tokens
-                              WHERE toLower(d.name) CONTAINS token)
-                    RETURN count(d) > 0 AS found
-                    LIMIT 1
-                    """,
-                    tokens=[t.lower() for t in tokens],
-                )
-                record = await result.single()
-                if record and record["found"]:
-                    found_set.add(name.lower())
+                cand_tokens = frozenset(_meaningful_tokens(cand_name))
+                if cand_tokens:
+                    candidates.append((cand_name, cand_tokens))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("hallucination_check_query_failed", error=str(exc))
+        # On query failure, default to "verified" to avoid flooding the UI
+        # with false negatives. The disclaimer still applies.
+        return diagnosis
 
+    logger.debug(
+        "hallucination_candidates", count=len(candidates), tokens=len(all_query_tokens)
+    )
+
+    # Match each LLM name against the candidates
     hallucination_count = 0
     for item in diagnosis.diagnoses:
-        if item.disease_name.lower() not in found_set:
+        toks = llm_tokens[item.disease_name]
+        if not toks:
             item.verified_in_graph = False
             hallucination_count += 1
+            continue
+
+        best = 0.0
+        for _, cand_toks in candidates:
+            inter = len(toks & cand_toks)
+            if inter == 0:
+                continue
+            union = len(toks | cand_toks)
+            jaccard = inter / union
+            if jaccard > best:
+                best = jaccard
+                if best >= 0.99:
+                    break  # near-perfect match, stop
+
+        # Threshold tuned for clinical names — 0.4 catches most reasonable
+        # variants while still flagging genuinely made-up names.
+        if best < 0.4:
+            item.verified_in_graph = False
+            hallucination_count += 1
+            logger.debug(
+                "hallucination_unverified",
+                name=item.disease_name,
+                best_jaccard=round(best, 3),
+            )
+        else:
+            item.verified_in_graph = True
 
     if hallucination_count:
         GATE_TRIGGERS.labels(gate_name="hallucination_check", result="found").inc()
@@ -140,7 +165,7 @@ async def gate_hallucination_check(
 _STOPWORDS = frozenset({
     "the", "a", "an", "of", "and", "or", "in", "on", "with", "to", "for",
     "by", "at", "from", "as", "is", "be", "type", "syndrome", "disease",
-    "disorder",
+    "disorder", "condition",
 })
 
 

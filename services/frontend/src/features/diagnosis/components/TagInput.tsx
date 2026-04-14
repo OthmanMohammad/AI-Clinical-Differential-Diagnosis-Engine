@@ -184,23 +184,41 @@ export function TagInput({
                 }}
                 onMouseEnter={() => setActiveIndex(0)}
                 className={cn(
-                  "flex cursor-pointer items-center justify-between gap-2 border-l-2 px-3 py-2 text-sm transition-colors",
+                  "flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm font-medium transition-colors",
                   activeIndex === 0
-                    ? "border-l-primary bg-primary/15 text-foreground"
-                    : "border-l-transparent text-foreground hover:bg-muted/40",
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground hover:bg-muted",
                 )}
               >
                 <span className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Add</span>
-                  <span className="font-medium">&ldquo;{draft.trim()}&rdquo;</span>
+                  <span
+                    className={cn(
+                      "text-xs",
+                      activeIndex === 0
+                        ? "text-primary-foreground/80"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    Add
+                  </span>
+                  <span className="font-semibold">&ldquo;{draft.trim()}&rdquo;</span>
                 </span>
-                <kbd className="font-mono text-[10px] opacity-70">↵</kbd>
+                <kbd
+                  className={cn(
+                    "font-mono text-[10px]",
+                    activeIndex === 0
+                      ? "text-primary-foreground/80"
+                      : "opacity-70",
+                  )}
+                >
+                  ↵
+                </kbd>
               </li>
               {filteredSuggestions.length > 0 && (
                 <>
                   <li
                     aria-hidden
-                    className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                    className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
                   >
                     Suggestions
                   </li>
@@ -218,10 +236,10 @@ export function TagInput({
                         }}
                         onMouseEnter={() => setActiveIndex(idx)}
                         className={cn(
-                          "cursor-pointer border-l-2 px-3 py-1.5 text-sm transition-colors",
+                          "cursor-pointer px-3 py-1.5 text-sm transition-colors",
                           isActive
-                            ? "border-l-primary bg-primary/15 text-foreground"
-                            : "border-l-transparent text-foreground hover:bg-muted/40",
+                            ? "bg-primary font-medium text-primary-foreground"
+                            : "text-foreground hover:bg-muted",
                         )}
                       >
                         {s}

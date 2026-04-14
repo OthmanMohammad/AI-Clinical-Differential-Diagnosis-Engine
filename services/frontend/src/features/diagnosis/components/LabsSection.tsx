@@ -201,10 +201,10 @@ export function LabsSection() {
                                   }}
                                   onMouseEnter={() => setActiveSuggestion(i)}
                                   className={cn(
-                                    "cursor-pointer border-l-2 px-3 py-1 text-xs transition-colors",
+                                    "cursor-pointer px-3 py-1 text-xs transition-colors",
                                     isActive
-                                      ? "border-l-primary bg-primary/15 text-foreground"
-                                      : "border-l-transparent text-foreground hover:bg-muted/40",
+                                      ? "bg-primary font-medium text-primary-foreground"
+                                      : "text-foreground hover:bg-muted",
                                   )}
                                 >
                                   {l}
