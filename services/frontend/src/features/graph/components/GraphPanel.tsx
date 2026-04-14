@@ -18,7 +18,7 @@ import {
 import { GraphEmptyState } from "@/features/graph/components/GraphEmptyState";
 import { useWorkspaceStore } from "@/features/diagnosis/store/workspace";
 import { ENTITY_TYPES } from "@/lib/constants";
-import type { LayoutType } from "@/features/graph/config/layouts";
+import { DEFAULT_LAYOUT, type LayoutType } from "@/features/graph/config/layouts";
 import type { DiagnosisResponse, GraphNode } from "@/types/api";
 
 interface GraphPanelProps {
@@ -29,7 +29,7 @@ interface GraphPanelProps {
 
 export function GraphPanel({ response, topPath }: GraphPanelProps) {
   const graphRef = React.useRef<ReasoningGraphHandle>(null);
-  const [layout, setLayout] = React.useState<LayoutType>("force");
+  const [layout, setLayout] = React.useState<LayoutType>(DEFAULT_LAYOUT);
   const [hiddenTypes, setHiddenTypes] = React.useState<Set<string>>(() => new Set());
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [selectedNode, setSelectedNode] = React.useState<GraphNode | null>(null);
@@ -52,7 +52,6 @@ export function GraphPanel({ response, topPath }: GraphPanelProps) {
 
   const handleLayoutChange = (next: LayoutType) => {
     setLayout(next);
-    graphRef.current?.setLayout(next);
   };
 
   const handleToggleType = (type: string) => {
@@ -64,9 +63,15 @@ export function GraphPanel({ response, topPath }: GraphPanelProps) {
     });
   };
 
-  const handleExport = (format: "png" | "svg") => {
-    graphRef.current?.exportImage(format);
-    toast.success(`Graph exported as ${format.toUpperCase()}`);
+  const handleExport = async (format: "png" | "svg") => {
+    try {
+      await graphRef.current?.exportImage(format);
+      toast.success(`Graph exported as ${format.toUpperCase()}`);
+    } catch (err) {
+      toast.error(`Export failed`, {
+        description: (err as Error).message,
+      });
+    }
   };
 
   const handleSearchSelect = (id: string) => {
@@ -94,6 +99,7 @@ export function GraphPanel({ response, topPath }: GraphPanelProps) {
             edges={response.graph_edges}
             topPath={topPath}
             hiddenTypes={hiddenTypes}
+            layout={layout}
             onNodeClick={(node) => setSelectedNode(node)}
             className="h-full"
           />
@@ -112,8 +118,8 @@ export function GraphPanel({ response, topPath }: GraphPanelProps) {
                 onZoomIn={() => graphRef.current?.zoomIn()}
                 onZoomOut={() => graphRef.current?.zoomOut()}
                 onSearch={() => setSearchOpen(true)}
-                onExportPng={() => handleExport("png")}
-                onExportSvg={() => handleExport("svg")}
+                onExportPng={() => void handleExport("png")}
+                onExportSvg={() => void handleExport("svg")}
                 onToggleFullscreen={toggleFullscreen}
                 fullscreen={graphFullscreen}
               />

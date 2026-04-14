@@ -17,7 +17,6 @@ import {
   RotateCcw,
   Stethoscope,
   Sun,
-  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -65,7 +64,14 @@ export function CommandPalette() {
             onSelect={() =>
               run(() => {
                 resetIntake();
-                toast.success("Form cleared");
+                // Focus the symptom input on the next tick, after the palette closes
+                setTimeout(() => {
+                  const el = document.querySelector<HTMLInputElement>(
+                    'input[aria-label="Symptoms"]',
+                  );
+                  el?.focus();
+                }, 50);
+                toast.success("Started new diagnosis");
                 logger.info("command.new_diagnosis");
               })
             }
@@ -73,17 +79,6 @@ export function CommandPalette() {
             <Plus />
             New diagnosis
             <CommandShortcut>Ctrl N</CommandShortcut>
-          </CommandItem>
-          <CommandItem
-            onSelect={() =>
-              run(() => {
-                resetIntake();
-                toast.success("Form cleared");
-              })
-            }
-          >
-            <Trash2 />
-            Clear form
           </CommandItem>
         </CommandGroup>
 

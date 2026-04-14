@@ -56,20 +56,20 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
             >
               <Panel
                 defaultSize={panelSizes[0]}
-                minSize={18}
-                maxSize={40}
+                minSize={16}
+                maxSize={45}
                 className="min-w-0"
               >
                 <WorkspacePanel label="Clinical intake">{intake}</WorkspacePanel>
               </Panel>
               <ResizeHandle />
-              <Panel defaultSize={panelSizes[1]} minSize={24} className="min-w-0">
+              <Panel defaultSize={panelSizes[1]} minSize={18} className="min-w-0">
                 <WorkspacePanel label="Differential diagnosis">
                   {results}
                 </WorkspacePanel>
               </Panel>
               <ResizeHandle />
-              <Panel defaultSize={panelSizes[2]} minSize={24} className="min-w-0">
+              <Panel defaultSize={panelSizes[2]} minSize={18} className="min-w-0">
                 <WorkspacePanel label="Reasoning graph" noPadding>
                   {graph}
                 </WorkspacePanel>

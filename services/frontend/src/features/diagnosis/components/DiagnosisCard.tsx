@@ -62,7 +62,7 @@ export function DiagnosisCard({
                 {rank}
               </span>
               <div className="min-w-0 flex-1">
-                <h3 className="truncate text-sm font-semibold text-foreground">
+                <h3 className="break-words text-sm font-semibold leading-snug text-foreground">
                   {diagnosis.disease_name}
                 </h3>
                 <div className="mt-1.5">
