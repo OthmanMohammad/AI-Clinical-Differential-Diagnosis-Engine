@@ -40,20 +40,21 @@ def get_medical_terms() -> set[str]:
     return _medical_terms
 
 
-# Gate 2.4 — Prompt injection patterns
-INJECTION_PATTERNS: list[re.Pattern] = [
-    re.compile(r"ignore\s+(all\s+)?previous\s+instructions", re.IGNORECASE),
-    re.compile(r"ignore\s+(all\s+)?above\s+instructions", re.IGNORECASE),
-    re.compile(r"you\s+are\s+now\s+(a\s+)?", re.IGNORECASE),
-    re.compile(r"forget\s+(your\s+)?system\s+prompt", re.IGNORECASE),
-    re.compile(r"disregard\s+(all\s+)?prior", re.IGNORECASE),
-    re.compile(r"new\s+instructions?\s*:", re.IGNORECASE),
-    re.compile(r"DAN\s+mode", re.IGNORECASE),
+# Gate 2.4 — Prompt injection patterns.
+# Use \s* (zero or more whitespace) so attackers can't bypass with
+# zero-width spaces or collapsed spacing.
+INJECTION_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(r"ignore\s*(all\s*)?previous\s*instructions", re.IGNORECASE),
+    re.compile(r"ignore\s*(all\s*)?above\s*instructions", re.IGNORECASE),
+    re.compile(r"forget\s*(your\s*)?system\s*prompt", re.IGNORECASE),
+    re.compile(r"disregard\s*(all\s*)?prior", re.IGNORECASE),
+    re.compile(r"new\s*instructions?\s*:", re.IGNORECASE),
+    re.compile(r"DAN\s*mode", re.IGNORECASE),
     re.compile(r"jailbreak", re.IGNORECASE),
-    re.compile(r"do\s+anything\s+now", re.IGNORECASE),
+    re.compile(r"do\s*anything\s*now", re.IGNORECASE),
     re.compile(r"pretend\s+(you\s+are|to\s+be)\s+", re.IGNORECASE),
     re.compile(r"act\s+as\s+(a\s+)?(?!a\s+clinical)", re.IGNORECASE),
-    re.compile(r"system\s*:\s*", re.IGNORECASE),
+    re.compile(r"system\s*:\s*you", re.IGNORECASE),
     re.compile(r"\[INST\]", re.IGNORECASE),
     re.compile(r"<\|im_start\|>", re.IGNORECASE),
     re.compile(r"<<SYS>>", re.IGNORECASE),

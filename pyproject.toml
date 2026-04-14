@@ -17,5 +17,6 @@ known-first-party = ["app"]
 
 [tool.pytest.ini_options]
 testpaths = ["services/api/tests"]
+pythonpath = ["services/api"]
 asyncio_mode = "auto"
 filterwarnings = ["ignore::DeprecationWarning"]
