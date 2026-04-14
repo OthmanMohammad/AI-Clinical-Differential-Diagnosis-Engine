@@ -1,12 +1,35 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PathoDX — AI Clinical Differential Diagnosis</title>
+    <meta name="theme-color" content="#0B0D12" />
+    <meta name="color-scheme" content="dark light" />
+    <meta
+      name="description"
+      content="PathoDX — AI Clinical Differential Diagnosis Engine. Graph RAG + LLM reasoning for clinical decision support."
+    />
+    <title>PathoDX — Clinical Differential Diagnosis</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      // Prevent flash of wrong theme before React mounts
+      (function () {
+        try {
+          var stored = localStorage.getItem("pathodx.theme");
+          var theme =
+            stored === "light" || stored === "dark"
+              ? stored
+              : window.matchMedia("(prefers-color-scheme: light)").matches
+                ? "light"
+                : "dark";
+          document.documentElement.classList.remove("light", "dark");
+          document.documentElement.classList.add(theme);
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body class="bg-gray-950 text-gray-100">
+  <body class="bg-background text-foreground antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -1,22 +1,29 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import App from "./App";
-import "./index.css";
+/**
+ * PathoDX — application entry point.
+ */
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+
+import { App } from "@/app/App";
+import { Providers } from "@/app/providers";
+import { logger } from "@/lib/logger";
+import "@/styles/globals.css";
+
+const rootElement = document.getElementById("root");
+if (!rootElement) {
+  throw new Error("Root element not found. Check index.html.");
+}
+
+logger.info("app.bootstrap", {
+  env: import.meta.env.MODE,
+  api: import.meta.env.VITE_API_URL,
 });
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
+createRoot(rootElement).render(
+  <StrictMode>
+    <Providers>
       <App />
-    </QueryClientProvider>
-  </React.StrictMode>,
+    </Providers>
+  </StrictMode>,
 );
