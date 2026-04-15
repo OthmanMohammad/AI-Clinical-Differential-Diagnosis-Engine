@@ -1,0 +1,23 @@
+# ==========================================================================
+# Cloudflare Pages — URL redirects and SPA fallback
+#
+# Syntax:
+#   <source>  <destination>  <status>
+#
+# Rules match top-to-bottom, first hit wins. 200 rewrites keep the URL
+# in the address bar; 301/302/308 perform real redirects. Reference:
+# https://developers.cloudflare.com/pages/configuration/redirects/
+# ==========================================================================
+
+# Apex redirect: www.mooseglove.com -> mooseglove.com (canonical host).
+# Cloudflare Pages only adds one custom domain per alias, so we attach
+# both `mooseglove.com` and `www.mooseglove.com` to the project and use
+# this rule to force everything to the apex.
+https://www.mooseglove.com/*  https://mooseglove.com/:splat  301
+
+# SPA fallback: every unknown path serves index.html so React Router can
+# take over client-side. MUST be the LAST rule — it's a catch-all. 200
+# means "rewrite, don't redirect", so the URL stays intact and deep-links
+# work (e.g. /diagnosis/abc123 hits index.html but the user sees the
+# correct URL and the router renders the right view).
+/*  /index.html  200

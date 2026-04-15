@@ -1,0 +1,70 @@
+# ==========================================================================
+# Cloudflare Pages — security headers for mooseglove.com
+#
+# Applied at the Cloudflare edge BEFORE any cache hit is served. Syntax:
+#   <url-pattern>
+#     Header-Name: header-value
+#
+# Rules are matched top-down; the first matching pattern wins for that URL.
+# Reference: https://developers.cloudflare.com/pages/configuration/headers/
+#
+# Editing this file requires a re-deploy of Pages (happens automatically on
+# push to main). Test a deploy preview URL before merging — a broken CSP
+# here will break every page of the app.
+# ==========================================================================
+
+/*
+  # -- Transport security -------------------------------------------------
+  # HSTS: force HTTPS for 2 years on this domain and all subdomains, and
+  # allow submission to the browser preload list. Do NOT lower max-age
+  # once rolled out — browsers remember the longest value they ever saw.
+  # We're committing to HTTPS-only for this domain. Only add `preload`
+  # once we're confident all subdomains (including api.mooseglove.com)
+  # are HTTPS-only, which they are via Cloudflare Full (Strict).
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
+  # -- Mime-type and framing ----------------------------------------------
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # -- Permissions policy -------------------------------------------------
+  # Deny every powerful browser API the app doesn't use. This is a
+  # privacy + exploit-surface-reduction control: if a rogue dependency
+  # tries to grab the camera/mic/geolocation, the browser blocks it
+  # regardless of user permission prompts.
+  Permissions-Policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), storage-access=(), usb=(), web-share=(), xr-spatial-tracking=()
+
+  # -- Content-Security-Policy --------------------------------------------
+  # Strict CSP. The inline theme bootstrap script in index.html is
+  # whitelisted by its sha256 hash — if you edit that script, update
+  # the hash in index.html AND here. connect-src must list every host
+  # the app fetches from: api.mooseglove.com (our backend). Add more
+  # only if you actually use them (Sentry, etc.). script-src-elem and
+  # style-src-elem are specified explicitly because Firefox splits them.
+  #
+  # Style: 'unsafe-inline' is required because Tailwind + Radix inject
+  # inline <style> blocks at runtime (Radix Popover/Tooltip positioning,
+  # Tailwind's JIT keyframes). Without it, every dialog/menu renders
+  # unstyled. This is the single intentional softening of the policy.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-TLYcrYi/AxSkVl3rTi97NMRB1cEIpjDrodsC4Oit0yg='; script-src-elem 'self' 'sha256-TLYcrYi/AxSkVl3rTi97NMRB1cEIpjDrodsC4Oit0yg='; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.mooseglove.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
+
+  # -- Cross-origin isolation ---------------------------------------------
+  # COOP/CORP protect against Spectre-style cross-origin leaks. COEP is
+  # intentionally OMITTED because enabling it breaks third-party embeds
+  # (none today but likely soon for the graph visualization).
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+
+# -- Long-lived caching for hashed Vite assets ----------------------------
+# Vite emits files named like `index-<hash>.js`. Those are immutable, so
+# cache them aggressively at both the browser and the edge. HTML stays on
+# the default short TTL so deploys actually take effect.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Favicon + fonts are stable by path — cache for a week.
+/favicon.svg
+  Cache-Control: public, max-age=604800
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable

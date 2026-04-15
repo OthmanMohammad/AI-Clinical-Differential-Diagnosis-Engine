@@ -2,15 +2,22 @@
 # MooseGlove — production stack for Oracle Always Free VM
 #
 # Runs the entire backend self-contained: FastAPI + Neo4j 5 +
-# Qdrant. Local development still uses the default
-# docker-compose.yml — DO NOT mix.
+# Qdrant + Cloudflare Tunnel. Local development still uses the
+# default docker-compose.yml — DO NOT mix.
 #
 # Usage on the VM:
 #   cd ~/mooseglove/app
 #   docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env up -d
 #
-# All secrets (NEO4J_PASSWORD, API_KEY, GROQ_API_KEY, ...) come
-# from ~/mooseglove/.env which lives outside the repo.
+# All secrets (NEO4J_PASSWORD, API_KEY, GROQ_API_KEY,
+# CLOUDFLARED_TOKEN, ...) come from ~/mooseglove/.env which
+# lives outside the repo.
+#
+# Network model (zero exposed public ports):
+#   internet → cloudflare edge → outbound tunnel → cloudflared
+#                                                 → api:8080
+#   Nothing listens on the VM's public interface. Oracle Cloud
+#   security list should only allow ingress on TCP/22 (SSH).
 # =============================================================
 
 name: mooseglove
@@ -38,9 +45,11 @@ services:
       QDRANT_URL: http://qdrant:6333
       CORS_ORIGINS: "https://mooseglove.com,https://www.mooseglove.com"
       LANGFUSE_HOST: https://cloud.langfuse.com
-    ports:
-      # Bound to localhost only — Caddy will reverse-proxy to it in Session 3
-      - "127.0.0.1:8080:8080"
+    # No `ports:` block — api is only reachable via the internal
+    # `mooseglove` network. The cloudflared sidecar is the ONLY
+    # thing that talks to it, on the docker-internal DNS name
+    # `api:8080`. This is how we get "zero exposed ports" — the
+    # VM's public interface has no listeners at all.
     volumes:
       # Mount the repo's data dir read-only so ingestion artefacts like
       # medical_terms.json (generated post-PrimeKG load) are visible to
@@ -91,6 +100,49 @@ services:
     ports:
       # Bound to localhost only — for ingestion scripts and debugging
       - "127.0.0.1:6333:6333"
+    networks: [mooseglove]
+    logging: *default-logging
+
+  # -----------------------------------------------------------
+  # Cloudflare Tunnel — the only public ingress to this stack.
+  #
+  # Dials api.cloudflare.com outbound and keeps a persistent
+  # connection open. Inbound requests to api.mooseglove.com land
+  # at Cloudflare's edge, get WAF/rate-limit processed, and are
+  # tunneled to this container, which proxies them to api:8080
+  # (the Public Hostname route configured in the Zero Trust
+  # dashboard).
+  #
+  # The tunnel token is provisioned in the Cloudflare Zero Trust
+  # dashboard (Networks → Tunnels → mooseglove-vm → Install
+  # connector) and pasted into ~/mooseglove/.env as
+  # CLOUDFLARED_TOKEN. Never commit it — it IS the credential.
+  #
+  # If this container is down, api.mooseglove.com returns 530
+  # from Cloudflare. That's the correct failure mode: no fallback
+  # path around the tunnel exists.
+  # -----------------------------------------------------------
+  cloudflared:
+    # `latest` is deliberate here — Cloudflare publishes multiple
+    # releases a month and older pinned tags get deprecated
+    # faster than we can keep up. We still disable in-container
+    # auto-update (--no-autoupdate) so the binary can only change
+    # by us pulling a new image, and we accept the (small) risk
+    # of a bad upstream cut in exchange for always-fresh edge
+    # compatibility. If a bad release lands, pin to the previous
+    # tag here (see https://hub.docker.com/r/cloudflare/cloudflared/tags).
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARED_TOKEN}
+      # Internal metrics endpoint on the mooseglove network only.
+      # Not published to the host — grep it from another container
+      # via `docker exec cloudflared wget -qO- localhost:2000/metrics`.
+      TUNNEL_METRICS: 0.0.0.0:2000
+    depends_on:
+      - api
     networks: [mooseglove]
     logging: *default-logging
 

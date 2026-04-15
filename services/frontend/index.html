@@ -10,6 +10,24 @@
     />
     <title>PathoDX — Clinical Differential Diagnosis</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!--
+      DO NOT EDIT THE INLINE SCRIPT BELOW WITHOUT UPDATING THE CSP HASH.
+      The production Content-Security-Policy in public/_headers allows
+      this exact script via a sha256 hash. Any byte change (including
+      whitespace) will cause the browser to block it and users will see
+      a flash of wrong theme on dark mode.
+
+      Current allowed hash:
+        'sha256-TLYcrYi/AxSkVl3rTi97NMRB1cEIpjDrodsC4Oit0yg='
+
+      To regenerate after editing, run:
+        python3 -c "import hashlib,base64; \
+          s=open('services/frontend/index.html').read(); \
+          start=s.index('<script>')+len('<script>'); \
+          end=s.index('</script>',start); \
+          print('sha256-'+base64.b64encode(hashlib.sha256(s[start:end].encode()).digest()).decode())"
+      and paste the result into services/frontend/public/_headers.
+    -->
     <script>
       // Prevent flash of wrong theme before React mounts. Default to light.
       (function () {
