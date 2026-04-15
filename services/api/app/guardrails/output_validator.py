@@ -233,6 +233,188 @@ def gate_confidence_threshold(
     return diagnosis, all_low
 
 
+# ---------------------------------------------------------------------------
+# Gate 6.5 — Evidence grounding check
+# ---------------------------------------------------------------------------
+#
+# Why this exists
+# ---------------
+# The Tier 2 retrieval rewrite was supposed to ensure that every graph_path
+# field in a diagnosis corresponds to an actual edge we retrieved for the
+# LLM. In practice we found the LLM will happily populate graph_path with
+# correct-looking edges it pulled from its training data even when the
+# retrieval layer missed the target disease entirely. That's "citation
+# theater" — the fields look like graph-grounded reasoning but the LLM
+# hallucinated them. Measuring graph_path non-emptiness as a proxy for
+# grounding was therefore misleading.
+#
+# This gate verifies each graph_path entry against the prompt context
+# (graph_nodes + graph_edges passed through from the retrieval layer).
+# An entry is "grounded" if there's an edge in the context from a node
+# whose name matches the diagnosis to a node whose name matches the
+# graph_path entry. Anything else is counted as hallucinated.
+#
+# The gate is diagnostic-only: we NEVER reject a diagnosis because its
+# graph_path was hallucinated. We just count and log, so downstream
+# observability can tell us the true grounding rate per request. The
+# eval harness reads these fields to compute evidence_grounding_rate
+# across cases.
+
+_MATCH_STOPWORDS = frozenset({
+    "the", "a", "an", "of", "and", "or", "in", "on", "with", "to", "for",
+    "by", "at", "from", "as", "is", "be", "syndrome", "disease", "disorder",
+    "condition", "mellitus",
+})
+
+
+def _name_tokens(name: str) -> frozenset[str]:
+    """Tokenize a disease/phenotype name into a set of meaningful tokens.
+    Same logic as eval/metrics.py._tokenize_name — kept here because we
+    can't import across the eval/services boundary.
+    """
+    if not name:
+        return frozenset()
+    raw = re.findall(r"[a-z0-9]+", name.lower())
+    return frozenset(
+        t for t in raw
+        if t not in _MATCH_STOPWORDS and (t.isdigit() or len(t) > 1)
+    )
+
+
+def _names_match(a: str, b: str) -> bool:
+    """Token-set subset match (either direction). Handles word reorder
+    and qualifier differences like "Acute Pancreatitis" <-> "Pancreatitis"
+    without crossing type/number distinctions (Type 1 DM vs Type 2 DM).
+    """
+    a_toks = _name_tokens(a)
+    b_toks = _name_tokens(b)
+    if not a_toks or not b_toks:
+        return False
+    smaller, larger = (a_toks, b_toks) if len(a_toks) <= len(b_toks) else (b_toks, a_toks)
+    return smaller.issubset(larger)
+
+
+def gate_evidence_grounding(
+    diagnosis: DifferentialDiagnosis,
+    graph_nodes: list[dict],
+    graph_edges: list[dict],
+) -> tuple[DifferentialDiagnosis, int, int]:
+    """Gate 6.5 — Verify each diagnosis.graph_path entry against the
+    context actually passed to the LLM.
+
+    Args:
+        diagnosis: The LLM's parsed output.
+        graph_nodes: Nodes that were in the prompt context.
+        graph_edges: Edges that were in the prompt context.
+
+    Returns:
+        Tuple of (diagnosis mutated with per-item grounding counts,
+                  total entries across all diagnoses,
+                  grounded entries across all diagnoses).
+
+    Side effects:
+        * Populates DiagnosisItem.grounded_path_entries and
+          .hallucinated_path_entries on each item.
+        * Logs `evidence_grounding_complete` with the aggregate numbers.
+        * Increments GATE_TRIGGERS with the pass/fail label.
+    """
+    if not diagnosis.diagnoses:
+        return diagnosis, 0, 0
+    # Note: we deliberately DON'T early-exit on empty graph_nodes or
+    # graph_edges. If the LLM returned graph_path entries but the
+    # prompt context had no edges, every entry is by definition
+    # hallucinated and should be counted as such. Early-exit would
+    # silently mark them as "untested" which is exactly the opposite
+    # signal we want.
+    graph_nodes = graph_nodes or []
+    graph_edges = graph_edges or []
+
+    # Index nodes by elementId for fast lookup.
+    nodes_by_id: dict[str, dict] = {
+        n.get("id"): n for n in graph_nodes if n.get("id")
+    }
+
+    # Build disease_id -> set of phenotype names it connects to (via edges).
+    disease_id_to_phenotype_names: dict[str, set[str]] = {}
+    for edge in graph_edges:
+        src_id = edge.get("source")
+        tgt_id = edge.get("target")
+        if not src_id or not tgt_id:
+            continue
+        tgt_node = nodes_by_id.get(tgt_id)
+        if not tgt_node:
+            continue
+        tgt_name = (tgt_node.get("name") or "").strip()
+        if not tgt_name:
+            continue
+        disease_id_to_phenotype_names.setdefault(src_id, set()).add(tgt_name.lower())
+
+    # Pair each disease NODE NAME in the graph with its phenotype names,
+    # so we can match the LLM's `disease_name` (a string) back to the
+    # context via token-set matching.
+    disease_name_to_phenotype_names: list[tuple[str, set[str]]] = []
+    for d_id, phen_names in disease_id_to_phenotype_names.items():
+        d_node = nodes_by_id.get(d_id)
+        if not d_node:
+            continue
+        d_name = (d_node.get("name") or "").strip()
+        if not d_name:
+            continue
+        disease_name_to_phenotype_names.append((d_name, phen_names))
+
+    total_entries = 0
+    grounded_entries = 0
+
+    for item in diagnosis.diagnoses:
+        # Collect every phenotype name in the context that belongs to a
+        # disease whose name token-set-matches the LLM's diagnosis.
+        allowed_phenotypes: set[str] = set()
+        for d_name, phen_names in disease_name_to_phenotype_names:
+            if _names_match(item.disease_name, d_name):
+                allowed_phenotypes |= phen_names
+
+        item_grounded = 0
+        for entry in item.graph_path:
+            total_entries += 1
+            entry_norm = (entry or "").strip().lower()
+            if entry_norm and entry_norm in allowed_phenotypes:
+                item_grounded += 1
+                grounded_entries += 1
+
+        item.grounded_path_entries = item_grounded
+        item.hallucinated_path_entries = len(item.graph_path) - item_grounded
+
+    if total_entries > 0:
+        grounding_rate = grounded_entries / total_entries
+        hallucinated = total_entries - grounded_entries
+        logger.info(
+            "evidence_grounding_complete",
+            total=total_entries,
+            grounded=grounded_entries,
+            hallucinated=hallucinated,
+            grounding_rate=round(grounding_rate, 3),
+        )
+        if hallucinated > 0:
+            GATE_TRIGGERS.labels(
+                gate_name="evidence_grounding", result="partial"
+            ).inc()
+            logger.warning(
+                "evidence_grounding_hallucinations",
+                count=hallucinated,
+                total=total_entries,
+            )
+        else:
+            GATE_TRIGGERS.labels(
+                gate_name="evidence_grounding", result="clean"
+            ).inc()
+    else:
+        GATE_TRIGGERS.labels(
+            gate_name="evidence_grounding", result="empty"
+        ).inc()
+
+    return diagnosis, total_entries, grounded_entries
+
+
 async def run_output_gates(
     raw_output: dict,
     neo4j_driver: AsyncDriver,
@@ -256,7 +438,14 @@ async def run_output_gates(
     # Gate 6.4 — Confidence threshold
     diagnosis, low_confidence = gate_confidence_threshold(diagnosis)
 
-    # Gate 6.5 — Mandatory disclaimer (always present)
+    # Gate 6.5 — Evidence grounding (diagnostic-only; never rejects)
+    diagnosis, total_evidence, grounded_evidence = gate_evidence_grounding(
+        diagnosis,
+        graph_nodes or [],
+        graph_edges or [],
+    )
+
+    # Mandatory disclaimer (always present) + assembly
     return DiagnosisResponse(
         diagnoses=diagnosis.diagnoses,
         reasoning_summary=diagnosis.reasoning_summary,
@@ -268,4 +457,6 @@ async def run_output_gates(
         prompt_version=prompt_version,
         graph_nodes=graph_nodes or [],
         graph_edges=graph_edges or [],
+        total_evidence_entries=total_evidence,
+        grounded_evidence_entries=grounded_evidence,
     )

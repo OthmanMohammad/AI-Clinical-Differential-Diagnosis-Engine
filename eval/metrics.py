@@ -92,9 +92,13 @@ def _first_hit_rank(predicted: list[str], expected_set: set[str]) -> int:
 def _has_graph_path(response: dict) -> bool:
     """True if the TOP diagnosis has a non-empty graph_path.
 
-    This is the Tier 2 shipping guard — after the retrieval rewrite, the
-    top diagnosis should almost always have graph evidence. If most of them
-    come back empty, the per-candidate evidence attribution is broken.
+    WARNING: this is a weak signal. The LLM will happily populate
+    graph_path from its world knowledge even when the retrieval layer
+    missed the target disease entirely. That's citation theater: the
+    field looks populated but the edges were never in the prompt.
+
+    Use `_evidence_grounding_counts` instead for the honest signal —
+    it requires the API to have run Gate 6.5 (evidence_grounding).
     """
     diagnoses = (response or {}).get("diagnoses") or []
     if not diagnoses:
@@ -102,6 +106,22 @@ def _has_graph_path(response: dict) -> bool:
     top = diagnoses[0] or {}
     path = top.get("graph_path") or []
     return len(path) > 0
+
+
+def _evidence_grounding_counts(response: dict) -> tuple[int, int]:
+    """Return (total_path_entries, grounded_path_entries) for a response.
+
+    These fields come from `DiagnosisResponse.total_evidence_entries`
+    and `.grounded_evidence_entries` populated by the output validator's
+    Gate 6.5. If the response was produced by an older API version that
+    doesn't yet compute them, both are 0 and the caller must not
+    compute a rate (undefined / empty-set). Callers should check
+    whether total > 0 before dividing.
+    """
+    resp = response or {}
+    total = int(resp.get("total_evidence_entries", 0) or 0)
+    grounded = int(resp.get("grounded_evidence_entries", 0) or 0)
+    return total, grounded
 
 
 def compute_metrics(results: list[dict]) -> dict:
@@ -119,6 +139,14 @@ def compute_metrics(results: list[dict]) -> dict:
     reciprocal_ranks: list[float] = []
     graph_path_hits = 0
 
+    # Aggregate evidence grounding counts across all successful cases.
+    # evidence_grounding_rate = grounded / total is the HONEST signal
+    # of whether the retrieval layer is actually doing the work, vs
+    # graph_path_rate which only says "the LLM populated the field".
+    total_evidence_entries = 0
+    grounded_evidence_entries = 0
+    cases_with_grounding_data = 0
+
     for r in successful:
         expected_lower = {e.lower() for e in r.get("expected", [])}
         predicted = [p for p in r.get("predicted", []) if p]
@@ -135,12 +163,27 @@ def compute_metrics(results: list[dict]) -> dict:
         if _has_graph_path(r.get("response", {})):
             graph_path_hits += 1
 
+        total, grounded = _evidence_grounding_counts(r.get("response", {}))
+        total_evidence_entries += total
+        grounded_evidence_entries += grounded
+        if total > 0:
+            cases_with_grounding_data += 1
+
     n_success = len(successful) or 1
     top1_accuracy = top1_hits / n_success
     top3_accuracy = top3_hits / n_success
     top5_accuracy = top5_hits / n_success
     mrr = sum(reciprocal_ranks) / n_success if reciprocal_ranks else 0.0
     graph_path_rate = graph_path_hits / n_success
+
+    # Evidence grounding rate is the ratio of grounded-to-total entries
+    # across all graph_path fields in all successful cases. When this
+    # is well below graph_path_rate, the LLM is citing edges it never
+    # saw — that's citation theater, not grounded reasoning.
+    evidence_grounding_rate = (
+        grounded_evidence_entries / total_evidence_entries
+        if total_evidence_entries > 0 else 0.0
+    )
 
     # Latency
     latencies = [r.get("latency_ms", 0) for r in results]
@@ -184,6 +227,10 @@ def compute_metrics(results: list[dict]) -> dict:
         "top5_accuracy": top5_accuracy,
         "mrr": mrr,
         "graph_path_rate": graph_path_rate,
+        "evidence_grounding_rate": evidence_grounding_rate,
+        "total_evidence_entries": total_evidence_entries,
+        "grounded_evidence_entries": grounded_evidence_entries,
+        "cases_with_grounding_data": cases_with_grounding_data,
         "mean_latency_ms": mean_latency,
         "p95_latency_ms": p95_latency,
         "by_confidence": confidence_metrics,
@@ -197,14 +244,21 @@ def format_summary(metrics: dict, label: str = "") -> str:
         lines.append(f"=== {label} ===")
     else:
         lines.append("=== Evaluation Metrics ===")
-    lines.append(f"  Success rate:     {metrics.get('success_rate', 0):.1%}")
-    lines.append(f"  MRR:              {metrics.get('mrr', 0):.3f}")
-    lines.append(f"  Top-1 accuracy:   {metrics.get('top1_accuracy', 0):.1%}")
-    lines.append(f"  Top-3 accuracy:   {metrics.get('top3_accuracy', 0):.1%}")
-    lines.append(f"  Top-5 accuracy:   {metrics.get('top5_accuracy', 0):.1%}")
-    lines.append(f"  Graph-path rate:  {metrics.get('graph_path_rate', 0):.1%}")
-    lines.append(f"  Mean latency:     {metrics.get('mean_latency_ms', 0):.0f}ms")
-    lines.append(f"  P95 latency:      {metrics.get('p95_latency_ms', 0):.0f}ms")
+    lines.append(f"  Success rate:        {metrics.get('success_rate', 0):.1%}")
+    lines.append(f"  MRR:                 {metrics.get('mrr', 0):.3f}")
+    lines.append(f"  Top-1 accuracy:      {metrics.get('top1_accuracy', 0):.1%}")
+    lines.append(f"  Top-3 accuracy:      {metrics.get('top3_accuracy', 0):.1%}")
+    lines.append(f"  Top-5 accuracy:      {metrics.get('top5_accuracy', 0):.1%}")
+    lines.append(f"  Graph-path rate:     {metrics.get('graph_path_rate', 0):.1%}  (weak signal — cites non-empty)")
+    eg = metrics.get("evidence_grounding_rate", 0)
+    total_e = metrics.get("total_evidence_entries", 0)
+    grounded_e = metrics.get("grounded_evidence_entries", 0)
+    lines.append(
+        f"  Evidence grounding:  {eg:.1%}  "
+        f"({grounded_e}/{total_e} path entries grounded in context)"
+    )
+    lines.append(f"  Mean latency:        {metrics.get('mean_latency_ms', 0):.0f}ms")
+    lines.append(f"  P95 latency:         {metrics.get('p95_latency_ms', 0):.0f}ms")
     return "\n".join(lines)
 
 
@@ -219,18 +273,21 @@ def diff_metrics(baseline: dict, current: dict) -> str:
 
     lines = [
         "=== Baseline → Current ===",
-        f"  MRR:             {baseline.get('mrr', 0):.3f}"
+        f"  MRR:                 {baseline.get('mrr', 0):.3f}"
         f" → {current.get('mrr', 0):.3f}  ({_delta('mrr')})",
-        f"  Top-1 accuracy:  {baseline.get('top1_accuracy', 0):.1%}"
+        f"  Top-1 accuracy:      {baseline.get('top1_accuracy', 0):.1%}"
         f" → {current.get('top1_accuracy', 0):.1%}"
         f"  ({_delta('top1_accuracy', '{:+.1%}')})",
-        f"  Top-3 accuracy:  {baseline.get('top3_accuracy', 0):.1%}"
+        f"  Top-3 accuracy:      {baseline.get('top3_accuracy', 0):.1%}"
         f" → {current.get('top3_accuracy', 0):.1%}"
         f"  ({_delta('top3_accuracy', '{:+.1%}')})",
-        f"  Graph-path rate: {baseline.get('graph_path_rate', 0):.1%}"
+        f"  Graph-path rate:     {baseline.get('graph_path_rate', 0):.1%}"
         f" → {current.get('graph_path_rate', 0):.1%}"
         f"  ({_delta('graph_path_rate', '{:+.1%}')})",
-        f"  Mean latency:    {baseline.get('mean_latency_ms', 0):.0f}ms"
+        f"  Evidence grounding:  {baseline.get('evidence_grounding_rate', 0):.1%}"
+        f" → {current.get('evidence_grounding_rate', 0):.1%}"
+        f"  ({_delta('evidence_grounding_rate', '{:+.1%}')})",
+        f"  Mean latency:        {baseline.get('mean_latency_ms', 0):.0f}ms"
         f" → {current.get('mean_latency_ms', 0):.0f}ms",
     ]
     return "\n".join(lines)

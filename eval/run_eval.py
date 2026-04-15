@@ -12,6 +12,25 @@ Usage:
 
     # Compare a new run against a saved baseline
     python -m eval.run_eval --api-url ... --api-key ... --diff eval/results/baseline.json
+
+Rate limiting
+-------------
+The production API rate-limits /diagnose at 10 requests/minute via
+slowapi. A 20-case eval run fired back-to-back will hit the limit
+somewhere around case 10, and every remaining case will come back
+as HTTP 429 Too Many Requests. That's how this harness destroyed
+the first Tier 2 baseline.
+
+Two defences:
+
+1. `--sleep-between` (default 6.5s) paces cases under the limit —
+   60s / 10 req = 6s, plus 0.5s of headroom. For a 20-case run that's
+   ~130s of wall-clock time, which is fine.
+2. Automatic retry on 429 with `Retry-After` honoured if present,
+   exponential backoff otherwise. `--max-retries` controls how many
+   retry rounds per case.
+
+Both knobs can be overridden on the command line.
 """
 
 from __future__ import annotations
@@ -30,6 +49,28 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 CASES_DIR = Path("eval/cases")
+
+# Pacing defaults.
+#
+# The production API's slowapi limit is "10/minute". slowapi uses a
+# sliding window, so we don't know exactly when our budget refills —
+# 6s pacing (60/10) would be mathematically correct but is timing-brittle
+# if the window started counting from a different reference point than
+# we think. 8s gives us 25% headroom against a sliding window and still
+# finishes a 20-case run in 160 seconds. The tradeoff (slower eval vs
+# a poisoned eval from rate limiting) is heavily in favour of "slower."
+DEFAULT_SLEEP_BETWEEN_CASES = 8.0  # seconds
+DEFAULT_MAX_RETRIES = 2
+
+# When a 429 has no Retry-After header, wait 60s flat. The slowapi
+# window is known (60s) so exponential backoff is cargo cult — we know
+# exactly when the budget resets.
+DEFAULT_429_FLAT_SLEEP = 60.0
+
+# Circuit breaker: if N cases IN A ROW exhaust their retries on 429,
+# the eval has gone wrong — either pacing is broken or the limiter is
+# saturated. Bail with a clear error rather than spin for 10+ minutes.
+DEFAULT_CONSECUTIVE_429_BAIL = 3
 
 
 def load_cases(
@@ -61,21 +102,58 @@ def run_case(
     api_url: str,
     api_key: str,
     timeout: float = 60.0,
+    max_retries: int = DEFAULT_MAX_RETRIES,
 ) -> dict:
-    """Run a single eval case against the API."""
+    """Run a single eval case against the API, with 429-aware retries.
+
+    On HTTP 429 the harness honours the `Retry-After` response header
+    if present (per RFC 6585). Otherwise it sleeps a flat
+    DEFAULT_429_FLAT_SLEEP seconds — slowapi's window is known
+    (60 seconds), so exponential backoff would be cargo cult.
+    """
     payload = case["patient"]
     case_id = case.get("_source_file", case.get("id", "?"))
 
-    start = time.monotonic()
-    try:
-        resp = httpx.post(
-            f"{api_url}/api/v1/diagnose",
-            json=payload,
-            headers={"X-API-Key": api_key},
-            timeout=timeout,
-        )
-        elapsed = time.monotonic() - start
+    total_start = time.monotonic()
 
+    for attempt in range(max_retries + 1):
+        try:
+            resp = httpx.post(
+                f"{api_url}/api/v1/diagnose",
+                json=payload,
+                headers={"X-API-Key": api_key},
+                timeout=timeout,
+            )
+        except Exception as exc:
+            elapsed = time.monotonic() - total_start
+            logger.warning("case_failed case_id=%s error=%s", case_id, exc)
+            return {
+                "case_id": case_id,
+                "expected": case.get("expected_diagnoses", []),
+                "predicted": [],
+                "mapping_confidence": case.get("mapping_confidence", "automated"),
+                "split": case.get("split", "train"),
+                "status_code": 0,
+                "latency_ms": round(elapsed * 1000),
+                "error": str(exc)[:500],
+            }
+
+        # Rate limited — sleep for the exact window and retry.
+        if resp.status_code == 429 and attempt < max_retries:
+            retry_after = resp.headers.get("retry-after")
+            if retry_after and retry_after.isdigit():
+                sleep_s = float(retry_after)
+            else:
+                sleep_s = DEFAULT_429_FLAT_SLEEP
+            logger.warning(
+                "case rate_limited case_id=%s attempt=%d sleeping=%.1fs",
+                case_id, attempt + 1, sleep_s,
+            )
+            time.sleep(sleep_s)
+            continue
+
+        # Any other response (200 or final 429/500/etc) — return it
+        elapsed = time.monotonic() - total_start
         if resp.status_code == 200:
             response_data = resp.json()
             predicted = [
@@ -95,22 +173,27 @@ def run_case(
             "split": case.get("split", "train"),
             "status_code": resp.status_code,
             "latency_ms": round(elapsed * 1000),
+            "attempts": attempt + 1,
             "response": response_data,
         }
 
-    except Exception as exc:
-        elapsed = time.monotonic() - start
-        logger.warning("case_failed case_id=%s error=%s", case_id, exc)
-        return {
-            "case_id": case_id,
-            "expected": case.get("expected_diagnoses", []),
-            "predicted": [],
-            "mapping_confidence": case.get("mapping_confidence", "automated"),
-            "split": case.get("split", "train"),
-            "status_code": 0,
-            "latency_ms": round(elapsed * 1000),
-            "error": str(exc)[:500],
-        }
+    # Exhausted all retries on 429
+    elapsed = time.monotonic() - total_start
+    return {
+        "case_id": case_id,
+        "expected": case.get("expected_diagnoses", []),
+        "predicted": [],
+        "mapping_confidence": case.get("mapping_confidence", "automated"),
+        "split": case.get("split", "train"),
+        "status_code": 429,
+        "latency_ms": round(elapsed * 1000),
+        "attempts": max_retries + 1,
+        "error": "rate limited after retries exhausted",
+    }
+
+
+class RunnerBailOut(RuntimeError):
+    """Raised when the circuit breaker trips."""
 
 
 def main() -> None:
@@ -146,6 +229,32 @@ def main() -> None:
         default=None,
         help="Optional path to a previous results.json to diff against.",
     )
+    parser.add_argument(
+        "--sleep-between",
+        type=float,
+        default=DEFAULT_SLEEP_BETWEEN_CASES,
+        help=(
+            "Seconds to sleep between cases, to stay under the production "
+            "10-requests-per-minute rate limit. Default 6.5s = safely under. "
+            "Set to 0 to disable pacing (will hit 429 on real deployments)."
+        ),
+    )
+    parser.add_argument(
+        "--max-retries",
+        type=int,
+        default=DEFAULT_MAX_RETRIES,
+        help="Maximum 429-retry rounds per case (default 2).",
+    )
+    parser.add_argument(
+        "--consecutive-429-bail",
+        type=int,
+        default=DEFAULT_CONSECUTIVE_429_BAIL,
+        help=(
+            "If this many cases IN A ROW exhaust their retries on 429, "
+            "bail the whole run with an error. Keeps a poisoned eval from "
+            "spinning for 10+ minutes."
+        ),
+    )
     args = parser.parse_args()
 
     split = "all"
@@ -160,10 +269,40 @@ def main() -> None:
         return
 
     results = []
+    consecutive_429_bailout = 0
+    bailed = False
     for i, case in enumerate(cases):
         logger.info("Running case %d/%d: %s", i + 1, len(cases), case["_source_file"])
-        result = run_case(case, args.api_url, args.api_key)
+        result = run_case(
+            case,
+            args.api_url,
+            args.api_key,
+            max_retries=args.max_retries,
+        )
         results.append(result)
+
+        # Circuit breaker: consecutive 429-after-retries means the
+        # limiter is saturated and pacing is wrong. Bail rather than
+        # spin for 10+ minutes producing more empty results.
+        if result.get("status_code") == 429:
+            consecutive_429_bailout += 1
+            if consecutive_429_bailout >= args.consecutive_429_bail:
+                logger.error(
+                    "circuit_breaker_tripped consecutive_429s=%d case=%s "
+                    "— aborting run. Raise --sleep-between or investigate "
+                    "the rate limiter.",
+                    consecutive_429_bailout,
+                    case["_source_file"],
+                )
+                bailed = True
+                break
+        else:
+            consecutive_429_bailout = 0
+
+        # Pace to avoid hitting the API's slowapi limiter. Skip the
+        # sleep after the final case.
+        if args.sleep_between > 0 and i < len(cases) - 1:
+            time.sleep(args.sleep_between)
 
     metrics = compute_metrics(results)
     # Per-split breakdown
@@ -174,6 +313,7 @@ def main() -> None:
         "label": args.label,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "total_cases": len(results),
+        "bailed_on_rate_limit": bailed,
         "metrics": metrics,
         "metrics_train": train_metrics,
         "metrics_holdout": holdout_metrics,

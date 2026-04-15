@@ -20,6 +20,16 @@ class DiagnosisItem(BaseModel):
     supporting_evidence: list[str] = Field(min_length=1, max_length=10)
     graph_path: list[str] = Field(default_factory=list)
     verified_in_graph: bool = True
+    # Populated by gate_evidence_grounding. `grounded_path_entries` is
+    # the count of graph_path entries that correspond to edges actually
+    # present in the prompt context. `hallucinated_path_entries` is the
+    # complement — entries the LLM made up from its world knowledge.
+    # These are diagnostic-only fields: we never reject diagnoses based
+    # on them. They exist to expose retrieval/grounding quality as a
+    # real observability signal instead of relying on graph_path
+    # length as a proxy.
+    grounded_path_entries: int = 0
+    hallucinated_path_entries: int = 0
 
 
 class DifferentialDiagnosis(BaseModel):
@@ -55,3 +65,13 @@ class DiagnosisResponse(BaseModel):
     # Graph data for frontend visualization
     graph_nodes: list[dict] = Field(default_factory=list)
     graph_edges: list[dict] = Field(default_factory=list)
+
+    # Evidence grounding — aggregate counts across all diagnoses.
+    # total_evidence_entries is the sum of graph_path lengths; of those,
+    # grounded_evidence_entries are the ones that correspond to edges
+    # actually present in `graph_edges` (the context the LLM was given).
+    # The ratio is the single most important retrieval-quality metric
+    # because it catches LLM world-knowledge papering over retrieval
+    # gaps — see app/guardrails/output_validator.gate_evidence_grounding.
+    total_evidence_entries: int = 0
+    grounded_evidence_entries: int = 0

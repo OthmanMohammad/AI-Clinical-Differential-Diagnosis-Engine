@@ -240,8 +240,99 @@ def test_format_summary_contains_key_metrics(fake_results):
 
 
 def test_diff_metrics_reports_deltas():
-    a = {"mrr": 0.3, "top1_accuracy": 0.2, "top3_accuracy": 0.5, "graph_path_rate": 0.1, "mean_latency_ms": 2000}
-    b = {"mrr": 0.6, "top1_accuracy": 0.4, "top3_accuracy": 0.8, "graph_path_rate": 0.5, "mean_latency_ms": 1500}
+    a = {"mrr": 0.3, "top1_accuracy": 0.2, "top3_accuracy": 0.5, "graph_path_rate": 0.1, "evidence_grounding_rate": 0.1, "mean_latency_ms": 2000}
+    b = {"mrr": 0.6, "top1_accuracy": 0.4, "top3_accuracy": 0.8, "graph_path_rate": 0.5, "evidence_grounding_rate": 0.55, "mean_latency_ms": 1500}
     out = diff_metrics(a, b)
     assert "+0.300" in out  # MRR delta
     assert "Baseline" in out
+    # Evidence grounding delta surfaces in the diff
+    assert "Evidence grounding" in out
+
+
+# ---------------------------------------------------------------------------
+# evidence_grounding_rate
+# ---------------------------------------------------------------------------
+
+
+def test_evidence_grounding_rate_all_grounded():
+    results = [
+        {
+            "status_code": 200, "latency_ms": 100, "split": "train",
+            "expected": ["T2DM"], "predicted": ["T2DM"],
+            "response": {
+                "diagnoses": [{"disease_name": "T2DM", "graph_path": ["Polyuria", "Polydipsia"]}],
+                "total_evidence_entries": 2,
+                "grounded_evidence_entries": 2,
+            },
+        },
+    ]
+    m = compute_metrics(results)
+    assert m["evidence_grounding_rate"] == pytest.approx(1.0)
+    assert m["total_evidence_entries"] == 2
+    assert m["grounded_evidence_entries"] == 2
+
+
+def test_evidence_grounding_rate_all_hallucinated():
+    """T2DM case in the wild: LLM returned graph_path but the edges
+    weren't in context, so grounded_evidence_entries=0."""
+    results = [
+        {
+            "status_code": 200, "latency_ms": 100, "split": "train",
+            "expected": ["T2DM"], "predicted": ["T2DM"],
+            "response": {
+                "diagnoses": [{"disease_name": "T2DM", "graph_path": ["Polyuria", "Polydipsia", "Fatigue"]}],
+                "total_evidence_entries": 3,
+                "grounded_evidence_entries": 0,
+            },
+        },
+    ]
+    m = compute_metrics(results)
+    assert m["evidence_grounding_rate"] == pytest.approx(0.0)
+    # graph_path_rate (the weak proxy) is still 100% because the field
+    # IS populated — just with hallucinated entries. This is the whole
+    # point of adding evidence_grounding_rate: it separates "populated"
+    # from "actually grounded".
+    assert m["graph_path_rate"] == pytest.approx(1.0)
+
+
+def test_evidence_grounding_rate_partial_across_cases():
+    results = [
+        {
+            "status_code": 200, "latency_ms": 100, "split": "train",
+            "expected": ["A"], "predicted": ["A"],
+            "response": {
+                "diagnoses": [{"disease_name": "A", "graph_path": ["x", "y"]}],
+                "total_evidence_entries": 2,
+                "grounded_evidence_entries": 2,
+            },
+        },
+        {
+            "status_code": 200, "latency_ms": 100, "split": "train",
+            "expected": ["B"], "predicted": ["B"],
+            "response": {
+                "diagnoses": [{"disease_name": "B", "graph_path": ["p", "q", "r"]}],
+                "total_evidence_entries": 3,
+                "grounded_evidence_entries": 1,
+            },
+        },
+    ]
+    m = compute_metrics(results)
+    # (2 grounded + 1 grounded) / (2 total + 3 total) = 3/5 = 0.6
+    assert m["evidence_grounding_rate"] == pytest.approx(0.6)
+
+
+def test_evidence_grounding_rate_missing_fields_is_zero():
+    """Older API responses without the new fields get 0 (not divide-by-zero)."""
+    results = [
+        {
+            "status_code": 200, "latency_ms": 100, "split": "train",
+            "expected": ["A"], "predicted": ["A"],
+            "response": {
+                "diagnoses": [{"disease_name": "A", "graph_path": ["x"]}],
+                # No total_evidence_entries / grounded_evidence_entries
+            },
+        },
+    ]
+    m = compute_metrics(results)
+    assert m["evidence_grounding_rate"] == 0.0
+    assert m["total_evidence_entries"] == 0
