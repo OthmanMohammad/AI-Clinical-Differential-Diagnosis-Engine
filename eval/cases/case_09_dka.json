@@ -1,0 +1,34 @@
+{
+  "id": "case_09",
+  "name": "Diabetic ketoacidosis",
+  "split": "train",
+  "patient": {
+    "symptoms": ["polyuria", "polydipsia", "nausea", "vomiting", "abdominal pain", "fatigue", "fruity breath", "rapid breathing"],
+    "age": 24,
+    "sex": "female",
+    "history": ["type 1 diabetes mellitus"],
+    "medications": ["insulin"],
+    "vitals": {
+      "temperature_c": 37.2,
+      "heart_rate": 116,
+      "respiratory_rate": 30,
+      "systolic_bp": 102,
+      "diastolic_bp": 64
+    },
+    "labs": {
+      "glucose": 512,
+      "hba1c": 11.4,
+      "bicarbonate": 9,
+      "anion_gap": 24,
+      "ketones": 6.2,
+      "ph": 7.18
+    },
+    "free_text": "Known type 1 diabetic with recent gastroenteritis skipped insulin doses. Now deep labored breathing (Kussmaul), fruity breath, severe thirst and urination."
+  },
+  "expected_diagnoses": ["Diabetic Ketoacidosis", "DKA", "Type 1 Diabetes"],
+  "icd_codes": ["E10.1"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "ADA DKA guideline",
+  "notes": "Glucose >500 + ketones positive + bicarb <15 + low pH = DKA. Kussmaul respiration and fruity breath are pathognomonic."
+}

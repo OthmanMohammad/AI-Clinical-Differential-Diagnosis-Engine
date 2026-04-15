@@ -1,0 +1,29 @@
+{
+  "id": "case_03",
+  "name": "Acute appendicitis with migrating pain",
+  "split": "train",
+  "patient": {
+    "symptoms": ["abdominal pain", "right lower quadrant pain", "nausea", "vomiting", "fever", "anorexia"],
+    "age": 22,
+    "sex": "male",
+    "history": [],
+    "medications": [],
+    "vitals": {
+      "temperature_c": 38.1,
+      "heart_rate": 102,
+      "systolic_bp": 128,
+      "diastolic_bp": 78
+    },
+    "labs": {
+      "wbc": 14.6,
+      "crp": 38
+    },
+    "free_text": "Pain started periumbilical 18 hours ago, now localized to right lower quadrant. Rebound tenderness at McBurney's point."
+  },
+  "expected_diagnoses": ["Appendicitis", "Acute Appendicitis"],
+  "icd_codes": ["K35"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "Surgical textbook presentation of classic appendicitis",
+  "notes": "Periumbilical-to-RLQ migration is pathognomonic. Rebound tenderness + leukocytosis + fever seal it."
+}

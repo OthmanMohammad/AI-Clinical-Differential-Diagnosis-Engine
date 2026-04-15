@@ -1,0 +1,32 @@
+{
+  "id": "case_11",
+  "name": "Iron deficiency anemia",
+  "split": "train",
+  "patient": {
+    "symptoms": ["fatigue", "pallor", "shortness of breath", "dizziness", "tachycardia", "brittle nails"],
+    "age": 34,
+    "sex": "female",
+    "history": ["heavy menstrual bleeding"],
+    "medications": [],
+    "vitals": {
+      "heart_rate": 106,
+      "systolic_bp": 106,
+      "diastolic_bp": 68,
+      "temperature_c": 36.8,
+      "spo2": 98.0
+    },
+    "labs": {
+      "hemoglobin": 8.4,
+      "mcv": 68,
+      "ferritin": 6,
+      "iron_saturation": 8
+    },
+    "free_text": "Progressive fatigue over 4 months. Shortness of breath climbing stairs. History of heavy menstrual periods. No melena or hematochezia."
+  },
+  "expected_diagnoses": ["Iron Deficiency Anemia", "Anemia"],
+  "icd_codes": ["D50"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "Microcytic anemia workup textbook",
+  "notes": "Hgb 8.4 + MCV 68 + ferritin 6 = textbook IDA. Classic labs should dominate regardless of graph."
+}

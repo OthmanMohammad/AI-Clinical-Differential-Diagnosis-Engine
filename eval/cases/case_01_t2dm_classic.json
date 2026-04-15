@@ -1,0 +1,29 @@
+{
+  "id": "case_01",
+  "name": "Classic Type 2 Diabetes Mellitus with hyperglycemia",
+  "split": "train",
+  "patient": {
+    "symptoms": ["polyuria", "polydipsia", "fatigue", "blurred vision", "unintended weight loss"],
+    "age": 52,
+    "sex": "male",
+    "history": ["hypertension", "obesity", "hyperlipidemia"],
+    "medications": ["amlodipine", "atorvastatin"],
+    "vitals": {
+      "temperature_c": 37.0,
+      "heart_rate": 88,
+      "systolic_bp": 145,
+      "diastolic_bp": 92
+    },
+    "labs": {
+      "glucose": 287,
+      "hba1c": 9.2
+    },
+    "free_text": "3-month history of increased thirst and urination with fatigue. Family history of diabetes."
+  },
+  "expected_diagnoses": ["Type 2 Diabetes Mellitus", "Diabetes Mellitus Type 2"],
+  "icd_codes": ["E11"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "Harrison's 21e chapter on Diabetes Mellitus (textbook presentation)",
+  "notes": "Both symptoms AND labs are diagnostic. A working pipeline must return T2DM as the top result with graph_path referencing polyuria/polydipsia edges."
+}

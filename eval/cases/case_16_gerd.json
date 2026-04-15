@@ -1,0 +1,26 @@
+{
+  "id": "case_16",
+  "name": "Gastroesophageal reflux disease",
+  "split": "holdout",
+  "patient": {
+    "symptoms": ["heartburn", "regurgitation", "chest discomfort", "sour taste", "chronic cough"],
+    "age": 42,
+    "sex": "male",
+    "history": ["obesity"],
+    "medications": [],
+    "vitals": {
+      "heart_rate": 76,
+      "systolic_bp": 134,
+      "diastolic_bp": 84,
+      "temperature_c": 36.8,
+      "spo2": 98.0
+    },
+    "free_text": "Burning sensation behind the breastbone after meals, worse when lying down. Sour taste in mouth. Symptoms respond partially to antacids. No chest pain with exertion. No red flags."
+  },
+  "expected_diagnoses": ["Gastroesophageal Reflux Disease", "GERD", "Reflux"],
+  "icd_codes": ["K21"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "AGA GERD guideline",
+  "notes": "HOLDOUT — do not tune against. Classic postprandial heartburn with positional component."
+}

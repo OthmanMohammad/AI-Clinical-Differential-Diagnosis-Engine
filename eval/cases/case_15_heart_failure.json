@@ -1,0 +1,33 @@
+{
+  "id": "case_15",
+  "name": "Decompensated heart failure",
+  "split": "train",
+  "patient": {
+    "symptoms": ["shortness of breath", "orthopnea", "paroxysmal nocturnal dyspnea", "bilateral leg swelling", "weight gain", "fatigue"],
+    "age": 69,
+    "sex": "male",
+    "history": ["coronary artery disease", "myocardial infarction", "hypertension", "type 2 diabetes mellitus"],
+    "medications": ["carvedilol", "furosemide", "lisinopril", "aspirin", "metformin"],
+    "vitals": {
+      "heart_rate": 104,
+      "respiratory_rate": 24,
+      "spo2": 92.0,
+      "systolic_bp": 148,
+      "diastolic_bp": 88,
+      "temperature_c": 36.9
+    },
+    "labs": {
+      "bnp": 1850,
+      "creatinine": 1.6,
+      "sodium": 134,
+      "troponin": 0.03
+    },
+    "free_text": "Progressive dyspnea over 1 week, now short of breath at rest. Sleeps propped up on 3 pillows, wakes up gasping. 5 kg weight gain. Bilateral pitting edema to mid-shin. Jugular venous distension, bibasilar crackles, S3 gallop."
+  },
+  "expected_diagnoses": ["Heart Failure", "Congestive Heart Failure", "Decompensated Heart Failure", "CHF"],
+  "icd_codes": ["I50"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "ESC heart failure guideline",
+  "notes": "Textbook CHF: orthopnea, PND, leg edema, elevated BNP. BNP > 400 should boost heart failure via lab rule."
+}

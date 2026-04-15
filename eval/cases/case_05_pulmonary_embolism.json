@@ -1,0 +1,31 @@
+{
+  "id": "case_05",
+  "name": "Pulmonary embolism post long flight",
+  "split": "train",
+  "patient": {
+    "symptoms": ["sudden shortness of breath", "pleuritic chest pain", "tachycardia", "hemoptysis", "leg swelling"],
+    "age": 45,
+    "sex": "female",
+    "history": ["obesity", "oral contraceptive use", "recent long-haul flight"],
+    "medications": ["combined oral contraceptive"],
+    "vitals": {
+      "heart_rate": 122,
+      "respiratory_rate": 28,
+      "spo2": 91.0,
+      "systolic_bp": 108,
+      "diastolic_bp": 68,
+      "temperature_c": 37.4
+    },
+    "labs": {
+      "d_dimer": 3200,
+      "troponin": 0.08
+    },
+    "free_text": "Acute onset dyspnea and right-sided pleuritic chest pain while walking 4 hours after a 12-hour flight. Calf swelling and tenderness noted on the right."
+  },
+  "expected_diagnoses": ["Pulmonary Embolism"],
+  "icd_codes": ["I26"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "Wells criteria + classic PE textbook presentation",
+  "notes": "Wells score ~7.5 (high probability). D-dimer positive. Emergency gate may short-circuit."
+}

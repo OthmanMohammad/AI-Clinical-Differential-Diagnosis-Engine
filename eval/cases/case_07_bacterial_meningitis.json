@@ -1,0 +1,31 @@
+{
+  "id": "case_07",
+  "name": "Acute bacterial meningitis",
+  "split": "train",
+  "patient": {
+    "symptoms": ["severe headache", "neck stiffness", "fever", "photophobia", "altered mental status", "vomiting"],
+    "age": 19,
+    "sex": "male",
+    "history": [],
+    "medications": [],
+    "vitals": {
+      "temperature_c": 39.8,
+      "heart_rate": 118,
+      "respiratory_rate": 24,
+      "systolic_bp": 132,
+      "diastolic_bp": 82
+    },
+    "labs": {
+      "wbc": 22.4,
+      "crp": 210,
+      "lactate": 3.2
+    },
+    "free_text": "University student presents with sudden severe headache, high fever, and stiff neck. Unable to touch chin to chest. Photophobia noted. Confused and drowsy. No recent travel."
+  },
+  "expected_diagnoses": ["Bacterial Meningitis", "Meningitis"],
+  "icd_codes": ["G00"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "IDSA bacterial meningitis guideline",
+  "notes": "Classic triad: fever + neck stiffness + altered mental status. Emergency gate should short-circuit."
+}

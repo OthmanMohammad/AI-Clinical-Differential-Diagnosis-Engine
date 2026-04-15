@@ -1,0 +1,32 @@
+{
+  "id": "case_02",
+  "name": "Community-acquired pneumonia in older adult",
+  "split": "train",
+  "patient": {
+    "symptoms": ["fever", "productive cough", "shortness of breath", "pleuritic chest pain", "chills"],
+    "age": 68,
+    "sex": "female",
+    "history": ["copd", "hypertension"],
+    "medications": ["albuterol", "tiotropium", "lisinopril"],
+    "vitals": {
+      "temperature_c": 39.2,
+      "heart_rate": 108,
+      "respiratory_rate": 26,
+      "spo2": 89.0,
+      "systolic_bp": 118,
+      "diastolic_bp": 72
+    },
+    "labs": {
+      "wbc": 18.2,
+      "crp": 145,
+      "procalcitonin": 2.8
+    },
+    "free_text": "Two days of high fever, rust-colored sputum, and worsening dyspnea. Right lower lobe crackles on exam."
+  },
+  "expected_diagnoses": ["Pneumonia", "Community-Acquired Pneumonia", "Bacterial Pneumonia"],
+  "icd_codes": ["J18"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "IDSA community-acquired pneumonia guideline, textbook presentation",
+  "notes": "Classic CAP. Fever + productive cough + hypoxemia + elevated WBC + CRP. Should be top-1."
+}

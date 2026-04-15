@@ -1,0 +1,29 @@
+{
+  "id": "case_10",
+  "name": "Primary hypothyroidism",
+  "split": "train",
+  "patient": {
+    "symptoms": ["fatigue", "cold intolerance", "weight gain", "constipation", "dry skin", "hair loss", "depression"],
+    "age": 46,
+    "sex": "female",
+    "history": ["postpartum thyroiditis 3 years ago"],
+    "medications": [],
+    "vitals": {
+      "heart_rate": 56,
+      "systolic_bp": 118,
+      "diastolic_bp": 76,
+      "temperature_c": 36.2
+    },
+    "labs": {
+      "tsh": 22.4,
+      "free_t4": 0.6
+    },
+    "free_text": "Gradual 6-month onset of fatigue, feeling cold even in warm rooms, constipation, dry skin, and 8 kg weight gain. Family history of Hashimoto's thyroiditis."
+  },
+  "expected_diagnoses": ["Hypothyroidism", "Primary Hypothyroidism", "Hashimoto"],
+  "icd_codes": ["E03"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "ATA hypothyroidism guideline",
+  "notes": "Elevated TSH + low free T4 = primary hypothyroidism. Classic constellation of symptoms."
+}

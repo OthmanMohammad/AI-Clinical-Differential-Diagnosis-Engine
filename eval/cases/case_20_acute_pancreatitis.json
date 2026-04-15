@@ -1,0 +1,35 @@
+{
+  "id": "case_20",
+  "name": "Acute pancreatitis",
+  "split": "holdout",
+  "patient": {
+    "symptoms": ["severe epigastric pain", "pain radiating to the back", "nausea", "vomiting", "abdominal tenderness"],
+    "age": 51,
+    "sex": "male",
+    "history": ["alcohol use disorder", "hypertriglyceridemia"],
+    "medications": [],
+    "vitals": {
+      "heart_rate": 112,
+      "respiratory_rate": 22,
+      "systolic_bp": 112,
+      "diastolic_bp": 68,
+      "temperature_c": 38.0,
+      "spo2": 95.0
+    },
+    "labs": {
+      "lipase": 1680,
+      "amylase": 920,
+      "wbc": 16.2,
+      "crp": 180,
+      "calcium": 8.4,
+      "ast": 98
+    },
+    "free_text": "Severe constant upper abdominal pain for 12 hours, worse with movement, radiates to the back. Heavy alcohol binge the night before. Vomiting but cannot tolerate oral intake."
+  },
+  "expected_diagnoses": ["Acute Pancreatitis", "Pancreatitis"],
+  "icd_codes": ["K85"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "ACG acute pancreatitis guideline",
+  "notes": "HOLDOUT — do not tune against. Lipase > 3x ULN + epigastric pain + alcohol trigger = Atlanta criteria met."
+}

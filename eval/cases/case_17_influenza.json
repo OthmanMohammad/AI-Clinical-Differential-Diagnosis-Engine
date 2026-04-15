@@ -1,0 +1,27 @@
+{
+  "id": "case_17",
+  "name": "Seasonal influenza",
+  "split": "holdout",
+  "patient": {
+    "symptoms": ["fever", "myalgia", "headache", "sore throat", "dry cough", "fatigue", "chills"],
+    "age": 33,
+    "sex": "female",
+    "history": [],
+    "medications": [],
+    "vitals": {
+      "temperature_c": 39.4,
+      "heart_rate": 104,
+      "respiratory_rate": 20,
+      "spo2": 97.0,
+      "systolic_bp": 118,
+      "diastolic_bp": 74
+    },
+    "free_text": "Sudden onset of high fever, severe body aches, headache, and dry cough 36 hours ago during flu season. Multiple sick contacts at work. No sputum, no localized chest findings."
+  },
+  "expected_diagnoses": ["Influenza", "Flu", "Viral Infection"],
+  "icd_codes": ["J11"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "CDC influenza surveillance case definition",
+  "notes": "HOLDOUT — do not tune against. Abrupt-onset systemic symptoms in flu season, no focal signs."
+}

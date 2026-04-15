@@ -1,0 +1,27 @@
+{
+  "id": "case_14",
+  "name": "COPD exacerbation",
+  "split": "train",
+  "patient": {
+    "symptoms": ["shortness of breath", "productive cough", "wheezing", "increased sputum", "purulent sputum"],
+    "age": 71,
+    "sex": "male",
+    "history": ["copd", "40 pack-year smoking history", "hypertension"],
+    "medications": ["tiotropium", "salmeterol fluticasone", "albuterol"],
+    "vitals": {
+      "heart_rate": 110,
+      "respiratory_rate": 28,
+      "spo2": 86.0,
+      "temperature_c": 37.6,
+      "systolic_bp": 156,
+      "diastolic_bp": 88
+    },
+    "free_text": "Known severe COPD. Three days of worsening dyspnea, yellow-green sputum, and wheezing. Requires supplemental oxygen. Pursed-lip breathing, barrel chest."
+  },
+  "expected_diagnoses": ["COPD", "COPD Exacerbation", "Chronic Obstructive Pulmonary Disease"],
+  "icd_codes": ["J44"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "GOLD 2024 COPD exacerbation definition",
+  "notes": "Anthonisen criteria: increased dyspnea + increased sputum volume + sputum purulence = all three."
+}

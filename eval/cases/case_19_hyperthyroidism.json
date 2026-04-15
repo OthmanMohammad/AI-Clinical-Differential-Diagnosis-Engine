@@ -1,0 +1,30 @@
+{
+  "id": "case_19",
+  "name": "Graves disease / hyperthyroidism",
+  "split": "holdout",
+  "patient": {
+    "symptoms": ["weight loss", "heat intolerance", "palpitations", "tremor", "anxiety", "diarrhea", "exophthalmos"],
+    "age": 35,
+    "sex": "female",
+    "history": ["graves disease"],
+    "medications": [],
+    "vitals": {
+      "heart_rate": 118,
+      "systolic_bp": 142,
+      "diastolic_bp": 72,
+      "temperature_c": 37.4
+    },
+    "labs": {
+      "tsh": 0.02,
+      "free_t4": 3.4,
+      "t3": 280
+    },
+    "free_text": "6-week history of 6 kg unintended weight loss despite increased appetite, heat intolerance, palpitations, anxiety, and fine tremor. Diffuse goiter palpable, mild proptosis."
+  },
+  "expected_diagnoses": ["Hyperthyroidism", "Graves Disease", "Thyrotoxicosis"],
+  "icd_codes": ["E05"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "ATA Graves disease guideline",
+  "notes": "HOLDOUT — do not tune against. Suppressed TSH + elevated free T4 + classic hypermetabolic symptoms + proptosis."
+}

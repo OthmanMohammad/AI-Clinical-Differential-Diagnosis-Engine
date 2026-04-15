@@ -1,0 +1,30 @@
+{
+  "id": "case_04",
+  "name": "ST-elevation myocardial infarction",
+  "split": "train",
+  "patient": {
+    "symptoms": ["severe chest pain", "chest pressure", "left arm pain", "diaphoresis", "nausea", "shortness of breath"],
+    "age": 64,
+    "sex": "male",
+    "history": ["hypertension", "hyperlipidemia", "type 2 diabetes mellitus", "former smoker"],
+    "medications": ["metformin", "atorvastatin", "lisinopril", "aspirin"],
+    "vitals": {
+      "heart_rate": 96,
+      "systolic_bp": 158,
+      "diastolic_bp": 94,
+      "respiratory_rate": 22,
+      "spo2": 96.0
+    },
+    "labs": {
+      "troponin": 2.8,
+      "creatinine": 1.1
+    },
+    "free_text": "Substernal crushing chest pressure for 45 minutes, radiating to left arm and jaw. Cold sweat. ECG showed ST elevation in leads II, III, aVF."
+  },
+  "expected_diagnoses": ["Myocardial Infarction", "Acute Myocardial Infarction", "STEMI", "Acute Coronary Syndrome"],
+  "icd_codes": ["I21"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "AHA/ACC STEMI guideline, classic presentation",
+  "notes": "Note: emergency gate SHOULD trigger on chest_pain + diaphoresis combo before the pipeline even reaches the LLM. If not, eval still expects MI in the differential."
+}

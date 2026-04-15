@@ -1,0 +1,30 @@
+{
+  "id": "case_18",
+  "name": "Uncomplicated urinary tract infection",
+  "split": "holdout",
+  "patient": {
+    "symptoms": ["dysuria", "urinary frequency", "urinary urgency", "suprapubic pain", "cloudy urine"],
+    "age": 26,
+    "sex": "female",
+    "history": ["recurrent urinary tract infection"],
+    "medications": [],
+    "vitals": {
+      "temperature_c": 37.2,
+      "heart_rate": 82,
+      "systolic_bp": 118,
+      "diastolic_bp": 76
+    },
+    "labs": {
+      "urine_leukocyte_esterase": 2,
+      "urine_nitrites": 1,
+      "urine_wbc_per_hpf": 45
+    },
+    "free_text": "Two days of painful urination, needing to go every 30 minutes, and cloudy foul-smelling urine. No flank pain, no fever, no vaginal discharge."
+  },
+  "expected_diagnoses": ["Urinary Tract Infection", "UTI", "Cystitis", "Acute Cystitis"],
+  "icd_codes": ["N39.0"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "IDSA uncomplicated cystitis guideline",
+  "notes": "HOLDOUT — do not tune against. Uncomplicated lower UTI, no signs of pyelonephritis."
+}

@@ -1,0 +1,29 @@
+{
+  "id": "case_12",
+  "name": "Nephrolithiasis with renal colic",
+  "split": "train",
+  "patient": {
+    "symptoms": ["flank pain", "hematuria", "nausea", "vomiting", "restlessness", "dysuria"],
+    "age": 38,
+    "sex": "male",
+    "history": ["previous kidney stone"],
+    "medications": [],
+    "vitals": {
+      "heart_rate": 102,
+      "systolic_bp": 148,
+      "diastolic_bp": 92,
+      "temperature_c": 37.3
+    },
+    "labs": {
+      "creatinine": 1.2,
+      "wbc": 11.8
+    },
+    "free_text": "Sudden severe right flank pain radiating to groin, unable to find comfortable position, visible blood in urine. No fever."
+  },
+  "expected_diagnoses": ["Nephrolithiasis", "Kidney Stone", "Urolithiasis", "Renal Colic"],
+  "icd_codes": ["N20"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "AUA nephrolithiasis guideline",
+  "notes": "Colicky flank pain + hematuria + prior history = classic stone."
+}

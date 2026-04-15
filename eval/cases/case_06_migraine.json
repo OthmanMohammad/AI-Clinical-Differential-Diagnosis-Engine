@@ -1,0 +1,25 @@
+{
+  "id": "case_06",
+  "name": "Migraine with aura",
+  "split": "train",
+  "patient": {
+    "symptoms": ["unilateral headache", "throbbing headache", "photophobia", "phonophobia", "nausea", "visual aura"],
+    "age": 28,
+    "sex": "female",
+    "history": ["migraine"],
+    "medications": [],
+    "vitals": {
+      "heart_rate": 78,
+      "systolic_bp": 118,
+      "diastolic_bp": 76,
+      "temperature_c": 36.9
+    },
+    "free_text": "Recurrent headaches for years, worse during menstruation. Today's episode started with zigzag visual lines lasting 20 minutes, then a pounding right-sided headache. Lying in a dark room helps."
+  },
+  "expected_diagnoses": ["Migraine", "Migraine with aura"],
+  "icd_codes": ["G43"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "IHS Classification of Headache Disorders (ICHD-3) criteria for migraine with aura",
+  "notes": "Visual aura followed by unilateral throbbing headache + photophobia/phonophobia = textbook migraine with aura."
+}

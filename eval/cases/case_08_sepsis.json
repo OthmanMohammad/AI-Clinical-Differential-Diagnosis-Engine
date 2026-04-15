@@ -1,0 +1,34 @@
+{
+  "id": "case_08",
+  "name": "Severe sepsis with elevated lactate",
+  "split": "train",
+  "patient": {
+    "symptoms": ["fever", "chills", "hypotension", "tachycardia", "altered mental status", "cool extremities"],
+    "age": 74,
+    "sex": "female",
+    "history": ["diabetes mellitus type 2", "chronic kidney disease", "recent urinary tract infection"],
+    "medications": ["metformin", "lisinopril"],
+    "vitals": {
+      "temperature_c": 38.9,
+      "heart_rate": 132,
+      "respiratory_rate": 28,
+      "systolic_bp": 82,
+      "diastolic_bp": 48,
+      "spo2": 92.0
+    },
+    "labs": {
+      "wbc": 21.0,
+      "lactate": 4.6,
+      "creatinine": 2.8,
+      "procalcitonin": 18.4,
+      "crp": 260
+    },
+    "free_text": "Two days of worsening dysuria, now with high fever, confusion, and low blood pressure despite fluids. Skin mottled."
+  },
+  "expected_diagnoses": ["Sepsis", "Septic Shock", "Urosepsis"],
+  "icd_codes": ["A41"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "Surviving Sepsis Campaign criteria (qSOFA >=2, lactate >4)",
+  "notes": "Urinary source, meets septic shock criteria. Lactate 4.6 is the dominant signal for a lab-rule boost."
+}

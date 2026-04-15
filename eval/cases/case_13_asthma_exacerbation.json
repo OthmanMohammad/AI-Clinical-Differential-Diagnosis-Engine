@@ -1,0 +1,27 @@
+{
+  "id": "case_13",
+  "name": "Acute asthma exacerbation",
+  "split": "train",
+  "patient": {
+    "symptoms": ["wheezing", "shortness of breath", "cough", "chest tightness", "prolonged expiration"],
+    "age": 16,
+    "sex": "female",
+    "history": ["asthma", "atopic dermatitis", "seasonal allergies"],
+    "medications": ["albuterol", "inhaled corticosteroid"],
+    "vitals": {
+      "heart_rate": 118,
+      "respiratory_rate": 30,
+      "spo2": 91.0,
+      "temperature_c": 37.0,
+      "systolic_bp": 122,
+      "diastolic_bp": 76
+    },
+    "free_text": "Started with cold symptoms 2 days ago. Worsening wheezing and shortness of breath today. Poor response to home albuterol. Audible wheeze, prolonged expiratory phase, accessory muscle use."
+  },
+  "expected_diagnoses": ["Asthma", "Asthma Exacerbation", "Acute Asthma"],
+  "icd_codes": ["J45"],
+  "mapping_confidence": "high",
+  "clinically_validated": false,
+  "source": "GINA 2023 asthma exacerbation criteria",
+  "notes": "Known asthmatic with viral trigger, classic wheezing + poor response to bronchodilator."
+}
