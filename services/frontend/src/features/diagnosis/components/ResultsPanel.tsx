@@ -9,7 +9,6 @@
  *   5. Success (ranked diagnoses)
  */
 
-import * as React from "react";
 import { AlertOctagon, Brain, Sparkles, RefreshCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 

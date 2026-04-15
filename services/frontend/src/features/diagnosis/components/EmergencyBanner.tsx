@@ -2,7 +2,6 @@ import { AlertCircle, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 
 import type { EmergencyResult } from "@/types/api";
-import { capitalize } from "@/lib/utils";
 
 interface EmergencyBannerProps {
   emergency: EmergencyResult;

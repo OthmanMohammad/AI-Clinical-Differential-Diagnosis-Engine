@@ -18,7 +18,6 @@ import {
   getMutedColor,
   getPrimaryColor,
 } from "@/features/graph/config/theme";
-import { formatEdgeLabel } from "@/features/graph/config/edgeTypes";
 import type { GraphEdge, GraphNode, GraphNodeType } from "@/types/api";
 import { useTheme } from "@/hooks/useTheme";
 
