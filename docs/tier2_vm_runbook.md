@@ -4,6 +4,13 @@
 > the ordering matters. Most steps can be paused and resumed; a few
 > (marked ⚠️) cannot.
 
+> **If you've already done one pass of this runbook and want a clean
+> baseline vs post comparison**, jump to the "Clean-baseline rollback
+> protocol" section at the bottom. That section assumes Tier 2 is
+> already deployed and walks through rolling the API back to the
+> pre-Tier-2 image, running a clean baseline, rolling forward, and
+> running a clean post-Tier-2 eval.
+
 ## What changed
 
 This branch rewrites the Graph RAG retrieval layer to fix the
@@ -434,3 +441,193 @@ After Tier 2 ships cleanly:
 
 Everything in Session 3 is purely edge/deploy work — no more code
 rewrites to the retrieval layer.
+
+---
+
+## Understanding the new eval metrics
+
+The eval harness now reports two different graph-grounding numbers.
+They answer different questions and both matter.
+
+| Metric | What it measures | Strong or weak signal? |
+|---|---|---|
+| `graph_path_rate` | Fraction of successful diagnoses whose top result has a non-empty `graph_path` field | **Weak.** The LLM will populate this field from world knowledge even when the retrieval layer missed the target disease. |
+| `evidence_grounding_rate` | Of all `graph_path` entries across all diagnoses, the fraction that correspond to edges actually present in the prompt context | **Strong.** Cannot be gamed by LLM world knowledge. |
+
+**The number you care about is `evidence_grounding_rate`.** If it's
+much lower than `graph_path_rate`, the LLM is papering over retrieval
+gaps with citations it made up — the answers might still be right,
+but the system isn't doing graph-grounded reasoning for those cases.
+
+Per-request observability: every successful `/diagnose` response now
+includes `total_evidence_entries` and `grounded_evidence_entries`.
+The API logs an `evidence_grounding_complete` line on every request,
+plus `evidence_grounding_hallucinations` when `grounded < total`.
+
+---
+
+## Clean-baseline rollback protocol
+
+If you ran the runbook once and got noisy numbers (rate limit
+pollution, 503s, whatever), use this sequence to capture a clean
+before/after comparison.
+
+The idea: roll the API container back to the last pre-Tier-2 commit,
+run the baseline eval cleanly, roll back forward to Tier 2 + all
+hotfixes, run the post eval cleanly. No more comparing "somewhat
+polluted before" to "less polluted after".
+
+### Step CB0 — Preflight
+
+You need two SHAs:
+
+- **Pre-Tier-2 SHA** — the last commit on main before the retrieval
+  rewrite. As of the last push that's `1d881f9`
+  (`fix(api): container-safe project root + mount data dir in compose`).
+  Verify with:
+  ```bash
+  cd ~/mooseglove/app
+  git log --oneline -20 | head -20
+  ```
+  Find the commit just before the Phase 0 eval infrastructure
+  commit (`3f9b24c` feat(eval): MRR metric, 20 clinical golden cases...).
+  The one immediately older than that is your pre-Tier-2 anchor.
+
+- **Current main SHA** — where we roll back *to* after the clean
+  baseline. Just `main` after you merge the latest hotfix PR.
+
+### Step CB1 — Save the currently deployed image
+
+Don't rely on rebuilding from source for rollback. Tag the current
+image so we can flip back instantly:
+
+```bash
+# Current production image is tagged :latest by compose
+docker tag mooseglove-api:latest mooseglove-api:tier2-current
+docker images mooseglove-api
+```
+
+You should see two tags (`latest` and `tier2-current`) pointing at
+the same image ID.
+
+### Step CB2 — Check out the pre-Tier-2 commit in a worktree
+
+A git worktree lets you have two checkouts of the same repo side by
+side without losing your main branch state.
+
+```bash
+cd ~/mooseglove
+git -C app worktree add ../app-pre-tier2 1d881f9
+cd app-pre-tier2
+git log --oneline -3  # confirm you're on the pre-Tier-2 commit
+```
+
+### Step CB3 — Build the pre-Tier-2 image as a separate tag
+
+```bash
+# Build from the worktree's Dockerfile but use a different tag.
+# Point the compose file's context at app-pre-tier2 just for this build.
+docker build \
+  -f ~/mooseglove/app-pre-tier2/services/api/Dockerfile \
+  -t mooseglove-api:pre-tier2 \
+  ~/mooseglove/app-pre-tier2
+```
+
+**Note:** the pre-Tier-2 Dockerfile doesn't have the fastembed-baked
+optimization, so this build will take a few minutes and the resulting
+container will do the model download on first request. That's fine —
+we're only using this image for the baseline run, not permanently.
+
+### Step CB4 — Swap to the pre-Tier-2 image and run baseline
+
+```bash
+cd ~/mooseglove/app
+docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env stop api
+docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env rm -f api
+
+# Retag so compose uses the pre-Tier-2 image without editing compose file
+docker tag mooseglove-api:pre-tier2 mooseglove-api:latest
+
+docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env up -d api
+sleep 20  # let it boot + download fastembed model
+
+# Wait for the old-style pathodx_started (no disease_index_loaded
+# log line — that's Tier 2 only)
+docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env logs --tail 30 api | grep pathodx_started
+
+# Run the baseline eval, paced at 8s, against the OLD retrieval pipeline
+API_KEY=$(grep ^API_KEY= ~/mooseglove/.env | cut -d= -f2-)
+PYTHONPATH=. /tmp/eval-venv/bin/python -m eval.run_eval \
+  --api-url http://127.0.0.1:8080 \
+  --api-key "$API_KEY" \
+  --output eval/results/baseline_clean.json \
+  --label "baseline_clean"
+```
+
+This takes ~160 seconds. Note: `evidence_grounding_rate` will be
+**0.0** on this run because the old API doesn't run Gate 6.5 yet —
+that's expected and correct. You're measuring `graph_path_rate`,
+`mrr`, `top1_accuracy`, and `top3_accuracy` as the baseline.
+
+### Step CB5 — Roll forward to Tier 2 current and run post eval
+
+```bash
+# Swap back to the Tier 2 image we saved in CB1
+docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env stop api
+docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env rm -f api
+docker tag mooseglove-api:tier2-current mooseglove-api:latest
+docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env up -d api
+sleep 10
+
+# Confirm Tier 2 is actually running (look for disease_index_loaded)
+docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env logs --tail 30 api | grep -E "pathodx_started|disease_index_loaded|clinical_rules_loaded"
+
+# Now the clean post-Tier-2 eval, diffed against the clean baseline
+PYTHONPATH=. /tmp/eval-venv/bin/python -m eval.run_eval \
+  --api-url http://127.0.0.1:8080 \
+  --api-key "$API_KEY" \
+  --output eval/results/post_tier2_clean.json \
+  --label "post_tier2_clean" \
+  --diff eval/results/baseline_clean.json
+```
+
+### Step CB6 — Clean up the worktree
+
+```bash
+cd ~/mooseglove
+git -C app worktree remove ../app-pre-tier2
+```
+
+The `pre-tier2` and `tier2-current` image tags can stay — they're
+rollback insurance and they take zero extra disk space (same layers).
+
+### What to paste back
+
+1. The `=== baseline_clean ===` block from Step CB4 (the clean before)
+2. The `=== post_tier2_clean ===` block from Step CB5 (the clean after)
+3. The `=== Baseline → Current ===` diff block from Step CB5
+
+All three numbers should now be free of rate-limit pollution, and
+the evidence_grounding_rate on the post run will tell us how much
+of the retrieval improvement is real versus LLM citation theater.
+
+### Shipping gate (final)
+
+Clean numbers need to clear these thresholds for Tier 2 to be
+declared shipped:
+
+| Metric | Threshold |
+|---|---|
+| `success_rate` | ≥ 90% on both train and holdout |
+| `mrr` | ≥ +0.10 over clean baseline |
+| `top1_accuracy` | ≥ +15% over clean baseline on both splits |
+| `evidence_grounding_rate` | ≥ 30% (this is the real honest number) |
+| No new errors in API logs | — |
+
+If `evidence_grounding_rate < 30%`, the rule-seed fix isn't landing
+the way we intended and we need to investigate before shipping. If
+it's 30-50%, good enough to ship with known limitations documented.
+If it's >50%, we're doing real graph-grounded reasoning for the
+majority of cases.
+
+Either way, we'll **know** — which is the whole point.
