@@ -33,21 +33,36 @@
   # privacy + exploit-surface-reduction control: if a rogue dependency
   # tries to grab the camera/mic/geolocation, the browser blocks it
   # regardless of user permission prompts.
-  Permissions-Policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), storage-access=(), usb=(), web-share=(), xr-spatial-tracking=()
+  #
+  # `ambient-light-sensor`, `battery`, and `document-domain` were
+  # deprecated and removed from modern browser parsers — including them
+  # produces console warnings with no security benefit, so they're out.
+  Permissions-Policy: accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), storage-access=(), usb=(), web-share=(), xr-spatial-tracking=()
 
   # -- Content-Security-Policy --------------------------------------------
-  # Strict CSP. The inline theme bootstrap script in index.html is
-  # whitelisted by its sha256 hash — if you edit that script, update
-  # the hash in index.html AND here. connect-src must list every host
-  # the app fetches from: api.mooseglove.com (our backend). Add more
-  # only if you actually use them (Sentry, etc.). script-src-elem and
-  # style-src-elem are specified explicitly because Firefox splits them.
+  # Strict CSP. No inline scripts allowed — the theme bootstrap lives
+  # at public/theme-init.js (external file) so `script-src 'self'` is
+  # enough without any hash whitelisting.
+  #
+  # Cloudflare Pages auto-injects a Web Analytics beacon loaded from
+  # static.cloudflareinsights.com that POSTs to cloudflareinsights.com.
+  # We allow both so free pageview stats work. If you want to disable
+  # analytics entirely, remove those two origins here AND toggle Web
+  # Analytics off in the Pages project settings.
+  #
+  # connect-src must list every host the app fetches from:
+  #   - api.mooseglove.com           our backend (diagnose, health, etc.)
+  #   - cloudflareinsights.com       Cloudflare Web Analytics beacon POST
+  # Add more only if you actually use them (Sentry, etc.).
+  #
+  # script-src-elem and style-src-elem are specified explicitly because
+  # Firefox splits them from script-src/style-src. Keep them in sync.
   #
   # Style: 'unsafe-inline' is required because Tailwind + Radix inject
   # inline <style> blocks at runtime (Radix Popover/Tooltip positioning,
   # Tailwind's JIT keyframes). Without it, every dialog/menu renders
   # unstyled. This is the single intentional softening of the policy.
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-TLYcrYi/AxSkVl3rTi97NMRB1cEIpjDrodsC4Oit0yg='; script-src-elem 'self' 'sha256-TLYcrYi/AxSkVl3rTi97NMRB1cEIpjDrodsC4Oit0yg='; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.mooseglove.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; script-src-elem 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.mooseglove.com https://cloudflareinsights.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
 
   # -- Cross-origin isolation ---------------------------------------------
   # COOP/CORP protect against Spectre-style cross-origin leaks. COEP is
