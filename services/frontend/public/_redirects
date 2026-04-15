@@ -1,23 +1,25 @@
 # ==========================================================================
-# Cloudflare Pages — URL redirects and SPA fallback
+# Cloudflare Pages — URL redirects
 #
-# Syntax:
-#   <source>  <destination>  <status>
+# This file is intentionally almost empty. Two things that used to live
+# here have moved elsewhere because `_redirects` was the wrong place:
 #
-# Rules match top-to-bottom, first hit wins. 200 rewrites keep the URL
-# in the address bar; 301/302/308 perform real redirects. Reference:
-# https://developers.cloudflare.com/pages/configuration/redirects/
+# 1. SPA fallback (was: `/*  /index.html  200`)
+#    Cloudflare Pages has built-in SPA routing — requests that don't match
+#    a static asset are automatically served the root index.html so client-
+#    side routing takes over. Adding an explicit rule here triggered a
+#    false-positive "infinite loop detected" warning in Cloudflare's
+#    validator, and the built-in behavior is already correct, so we don't
+#    need the rule at all.
+#
+# 2. www -> apex canonical redirect (was: `https://www.mooseglove.com/*  ...`)
+#    Cloudflare's `_redirects` parser does not accept absolute-URL sources
+#    (only relative paths), so cross-hostname redirects cannot live here.
+#    The redirect is configured via Cloudflare Dashboard:
+#      Rules -> Redirect Rules -> www-to-apex-canonical
+#    with expression `http.host eq "www.mooseglove.com"` and target
+#    `https://mooseglove.com${http.request.uri.path}` at status 301.
+#
+# Anything that would add a genuine relative-path redirect (e.g. renaming
+# a route and keeping old links working) should go below this line.
 # ==========================================================================
-
-# Apex redirect: www.mooseglove.com -> mooseglove.com (canonical host).
-# Cloudflare Pages only adds one custom domain per alias, so we attach
-# both `mooseglove.com` and `www.mooseglove.com` to the project and use
-# this rule to force everything to the apex.
-https://www.mooseglove.com/*  https://mooseglove.com/:splat  301
-
-# SPA fallback: every unknown path serves index.html so React Router can
-# take over client-side. MUST be the LAST rule — it's a catch-all. 200
-# means "rewrite, don't redirect", so the URL stays intact and deep-links
-# work (e.g. /diagnosis/abc123 hits index.html but the user sees the
-# correct URL and the router renders the right view).
-/*  /index.html  200
