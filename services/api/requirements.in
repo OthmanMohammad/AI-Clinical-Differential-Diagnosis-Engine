@@ -15,7 +15,11 @@ spacy>=3.7.0
 neo4j>=5.25.0
 
 # Vector DB
-qdrant-client>=1.12.0
+# Pin qdrant-client to match the server version deployed in
+# docker-compose.prod.yml. Major.minor must match between client
+# and server or you get a noisy UserWarning on every call; worse,
+# some methods silently stop working when they drift too far.
+qdrant-client>=1.12.0,<1.13.0
 fastembed>=0.4.0
 
 # Observability
@@ -27,7 +31,6 @@ prometheus-client>=0.21.0
 
 # Security
 slowapi>=0.1.9
-guardrails-ai>=0.5.0
 
 # HTTP
 httpx>=0.27.0

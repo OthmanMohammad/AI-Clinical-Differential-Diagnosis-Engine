@@ -109,11 +109,19 @@ def gate_medical_relevance(intake: PatientIntake) -> None:
 
 
 def gate_prompt_injection(intake: PatientIntake) -> None:
-    """Gate 2.4 — Three-layer prompt injection detection.
+    """Gate 2.4 — Two-layer prompt injection detection.
 
     Layer 1: Unicode NFKC normalization + control character stripping
     Layer 2: Regex patterns for known injection templates
-    Layer 3: Guardrails AI (if available — graceful fallback)
+
+    A previous revision had a third layer wrapping `guardrails-ai`'s
+    DetectJailbreak inside a try/except ImportError. In practice the
+    package was never configured (no hub registry, no hub token) so
+    the import either failed silently or logged `Failed to read hub
+    registry at /app/.guardrails/hub_registry.json` and did nothing.
+    It was pure dead code + a 30 MB dependency for no added defence.
+    Removed. If we ever want a real ML-based injection layer, a
+    finetuned classifier or Cloudflare Turnstile is a cleaner drop-in.
     """
     # Layer 1: Sanitize
     all_text = intake.combined_text()
@@ -137,24 +145,6 @@ def gate_prompt_injection(intake: PatientIntake) -> None:
                 gate="2.4",
                 detail="Input contains disallowed content patterns.",
             )
-
-    # Layer 3: Guardrails AI DetectJailbreak (optional)
-    try:
-        from guardrails.hub import DetectJailbreak
-        validator = DetectJailbreak(on_fail="exception")
-        validator.validate(sanitized, metadata={})
-    except ImportError:
-        pass  # guardrails-ai not installed — skip
-    except Exception as exc:
-        if "Validation failed" in str(exc):
-            GATE_TRIGGERS.labels(gate_name="prompt_injection", result="detected").inc()
-            logger.warning("prompt_injection_detected", layer="guardrails_ai")
-            raise InputValidationError(
-                gate="2.4",
-                detail="Input contains disallowed content patterns.",
-            ) from exc
-        # Other errors (network, etc.) — don't block the request
-        logger.debug("guardrails_ai_check_skipped", reason=str(exc))
 
     GATE_TRIGGERS.labels(gate_name="prompt_injection", result="passed").inc()
 

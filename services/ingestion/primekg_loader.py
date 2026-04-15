@@ -97,7 +97,20 @@ def extract_nodes(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def create_constraints(driver) -> None:
-    """Create uniqueness constraints for each node label."""
+    """Create uniqueness constraints + query-time indexes.
+
+    Two index families:
+
+    1. primekg_id UNIQUE constraint per label — used by the edge
+       loader to match endpoint nodes in O(1) during ingest.
+    2. name index on Disease, Phenotype, Drug — used by the runtime
+       retrieval layer (services/api/app/core/retrieval.py) to look
+       up nodes by their human name when the vector search / NLP
+       passes back a string rather than an elementId. Without these,
+       those queries fall back to a label scan and ingest behaviour
+       drifts between "fast first ingest" and "slow after many
+       restarts" as Neo4j picks different query plans.
+    """
     with driver.session() as session:
         for label in NODE_LABEL_MAP.values():
             try:
@@ -108,6 +121,17 @@ def create_constraints(driver) -> None:
                 logger.info("Constraint created for %s", label)
             except Exception as exc:
                 logger.warning("Constraint for %s: %s", label, exc)
+
+        # Runtime query indexes — name lookups
+        for label in ("Disease", "Phenotype", "Drug", "Gene"):
+            try:
+                session.run(
+                    f"CREATE INDEX IF NOT EXISTS "
+                    f"FOR (n:{label}) ON (n.name)"
+                )
+                logger.info("Name index created for %s", label)
+            except Exception as exc:
+                logger.warning("Name index for %s: %s", label, exc)
 
 
 def load_nodes(driver, nodes: pd.DataFrame) -> None:

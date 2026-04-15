@@ -65,7 +65,6 @@ def configure_logging(environment: str) -> None:
         "PyRuSH.PyRuSHSentencizer": logging.WARNING,
         "medspacy": logging.WARNING,
         "spacy": logging.WARNING,
-        "guardrails-ai": logging.ERROR,
         "httpx": logging.WARNING,
         "httpcore": logging.WARNING,
         "huggingface_hub": logging.WARNING,
