@@ -1,0 +1,326 @@
+# =============================================================================
+# Clinical Lab + Demographic Rules
+# =============================================================================
+#
+# Each rule is a heuristic that pattern-matches on a patient's structured
+# fields (labs, age, sex, history) and produces a score boost for a list of
+# diseases. The retrieval pipeline (services/api/app/core/retrieval.py)
+# applies these rules AFTER the graph-based phenotype-intersection query:
+#
+#   1. Graph query returns candidates from phenotype overlap (primary signal)
+#   2. Each rule that matches the patient MULTIPLIES the score of its
+#      listed diseases that are already in the candidate set
+#   3. If (and only if) the candidate set is empty OR too small (<3), matched
+#      rules also INJECT their diseases as "rule-only" seeds with evidence
+#      source flagged as "clinical_rule" rather than "graph"
+#
+# This design ensures rules can never introduce diagnoses with no graph
+# support — they can only amplify or fall back, never invent.
+#
+# -----------------------------------------------------------------------------
+# SCHEMA
+# -----------------------------------------------------------------------------
+# version: schema version for this file. Bump on breaking changes.
+#
+# rules:
+#   - id: short_slug                    (unique within file)
+#     label: human-readable name
+#     description: one-sentence rationale
+#     when:                             conjunction of conditions
+#       labs:                           dict; multiple lab conditions AND'd
+#         <lab_name>:                   lab key as it appears in PatientIntake
+#           op: ">" | ">=" | "<" | "<=" | "=="
+#           value: float
+#       age:                            optional {op, value}
+#       sex: male|female|other          optional
+#       history_contains: [str, ...]    optional; any-of match against history
+#       symptoms_contains_any: [str]    optional; any-of match against symptoms
+#     boosts:                           diseases to amplify when rule fires
+#       - name: canonical disease name (must appear in PrimeKG)
+#         multiplier: float             multiplier on candidate score (>1.0
+#                                        to boost; <1.0 allowed but discouraged)
+#         rationale: str                short explanation for the LLM / UI
+#     source: url or citation
+#     last_reviewed: YYYY-MM-DD
+#     clinically_validated: false       ALL rules here are false; these are
+#                                        heuristics, not physician-validated
+#
+# -----------------------------------------------------------------------------
+# IMPORTANT
+# -----------------------------------------------------------------------------
+# Every rule in this file is marked clinically_validated: false. These are
+# textbook-derived heuristics written by a non-clinician. They exist to
+# amplify graph-derived signal for common patterns, NOT to serve as a
+# substitute for clinical judgment.
+# =============================================================================
+
+version: 1
+
+rules:
+  - id: hyperglycemia_diabetes
+    label: "Hyperglycemia pattern → diabetes"
+    description: >
+      Random glucose ≥200 mg/dL or HbA1c ≥6.5% meets ADA diagnostic
+      criteria for diabetes mellitus.
+    when:
+      labs:
+        glucose:
+          op: ">="
+          value: 200
+    boosts:
+      - name: "Type 2 Diabetes Mellitus"
+        multiplier: 2.5
+        rationale: "glucose ≥200 meets ADA diagnostic threshold"
+      - name: "Type 1 Diabetes Mellitus"
+        multiplier: 1.8
+        rationale: "glucose ≥200 also supports T1DM (type determined by age/history)"
+    source: "ADA Standards of Medical Care in Diabetes 2024, Section 2"
+    last_reviewed: "2026-04-14"
+    clinically_validated: false
+
+  - id: elevated_hba1c_diabetes
+    label: "HbA1c ≥6.5% → diabetes"
+    description: >
+      HbA1c at or above 6.5% is one of the four ADA criteria for diabetes.
+    when:
+      labs:
+        hba1c:
+          op: ">="
+          value: 6.5
+    boosts:
+      - name: "Type 2 Diabetes Mellitus"
+        multiplier: 2.5
+        rationale: "HbA1c ≥6.5% meets ADA diagnostic threshold"
+      - name: "Type 1 Diabetes Mellitus"
+        multiplier: 1.8
+        rationale: "HbA1c ≥6.5% also supports T1DM in appropriate context"
+    source: "ADA Standards of Medical Care in Diabetes 2024, Section 2"
+    last_reviewed: "2026-04-14"
+    clinically_validated: false
+
+  - id: severe_hyperglycemia_dka
+    label: "Severe hyperglycemia + metabolic acidosis → DKA"
+    description: >
+      Glucose >250 with low bicarbonate is classic for diabetic ketoacidosis.
+      Requires both signals (not glucose alone) to avoid false positives.
+    when:
+      labs:
+        glucose:
+          op: ">"
+          value: 250
+        bicarbonate:
+          op: "<"
+          value: 18
+    boosts:
+      - name: "Diabetic Ketoacidosis"
+        multiplier: 3.0
+        rationale: "glucose >250 + bicarb <18 meets Atlanta DKA criteria"
+    source: "ADA DKA guideline"
+    last_reviewed: "2026-04-14"
+    clinically_validated: false
+
+  - id: elevated_troponin_mi
+    label: "Elevated troponin → acute coronary syndrome"
+    description: >
+      Troponin I >0.04 ng/mL is suggestive of myocardial injury;
+      values above 0.4 are usually diagnostic for acute MI in appropriate
+      clinical context.
+    when:
+      labs:
+        troponin:
+          op: ">"
+          value: 0.04
+    boosts:
+      - name: "Acute Myocardial Infarction"
+        multiplier: 2.8
+        rationale: "elevated troponin indicates myocardial injury"
+      - name: "Myocardial Infarction"
+        multiplier: 2.5
+        rationale: "elevated troponin indicates myocardial injury"
+      - name: "Unstable Angina"
+        multiplier: 1.5
+        rationale: "borderline troponin can fit unstable angina"
+    source: "AHA/ACC NSTEMI/STEMI guidelines, 4th universal definition of MI"
+    last_reviewed: "2026-04-14"
+    clinically_validated: false
+
+  - id: elevated_bnp_heart_failure
+    label: "Elevated BNP → heart failure"
+    description: >
+      BNP >400 pg/mL has high positive predictive value for decompensated
+      heart failure in a patient presenting with dyspnea.
+    when:
+      labs:
+        bnp:
+          op: ">"
+          value: 400
+    boosts:
+      - name: "Heart Failure"
+        multiplier: 2.5
+        rationale: "BNP >400 strongly suggests heart failure"
+      - name: "Congestive Heart Failure"
+        multiplier: 2.5
+        rationale: "BNP >400 strongly suggests heart failure"
+    source: "ESC Heart Failure 2021 guideline"
+    last_reviewed: "2026-04-14"
+    clinically_validated: false
+
+  - id: elevated_dimer_with_dyspnea_pe
+    label: "Elevated D-dimer + acute dyspnea → pulmonary embolism"
+    description: >
+      D-dimer >500 ng/mL in the setting of acute-onset shortness of breath
+      warrants PE workup. D-dimer alone is nonspecific; requires the
+      symptom co-condition to fire.
+    when:
+      labs:
+        d_dimer:
+          op: ">"
+          value: 500
+      symptoms_contains_any:
+        - "shortness of breath"
+        - "sudden shortness of breath"
+        - "dyspnea"
+        - "pleuritic chest pain"
+    boosts:
+      - name: "Pulmonary Embolism"
+        multiplier: 2.5
+        rationale: "elevated D-dimer + dyspnea raises PE probability"
+    source: "Wells criteria + ESC 2019 PE guideline"
+    last_reviewed: "2026-04-14"
+    clinically_validated: false
+
+  - id: elevated_lactate_sepsis
+    label: "Lactate >2 mmol/L → sepsis / shock"
+    description: >
+      Elevated lactate is one of the primary criteria in the Surviving
+      Sepsis Campaign definitions. Lactate ≥4 is septic shock.
+    when:
+      labs:
+        lactate:
+          op: ">"
+          value: 2.0
+    boosts:
+      - name: "Sepsis"
+        multiplier: 2.2
+        rationale: "elevated lactate is a sepsis criterion"
+      - name: "Septic Shock"
+        multiplier: 2.5
+        rationale: "lactate ≥4 meets septic shock criteria"
+    source: "Surviving Sepsis Campaign 2021"
+    last_reviewed: "2026-04-14"
+    clinically_validated: false
+
+  - id: elevated_lipase_pancreatitis
+    label: "Lipase >3x ULN → acute pancreatitis"
+    description: >
+      Lipase above 3 times upper limit of normal (typically ~180 U/L) in
+      the presence of epigastric pain meets the Atlanta classification
+      criterion for acute pancreatitis.
+    when:
+      labs:
+        lipase:
+          op: ">"
+          value: 540
+    boosts:
+      - name: "Acute Pancreatitis"
+        multiplier: 3.0
+        rationale: "lipase >3x ULN is diagnostic per Atlanta criteria"
+      - name: "Pancreatitis"
+        multiplier: 2.5
+        rationale: "lipase elevation supports pancreatitis"
+    source: "Revised Atlanta Classification (2012)"
+    last_reviewed: "2026-04-14"
+    clinically_validated: false
+
+  - id: suppressed_tsh_hyperthyroid
+    label: "Suppressed TSH → hyperthyroidism"
+    description: >
+      TSH <0.1 mIU/L with normal or elevated free T4 is primary
+      hyperthyroidism.
+    when:
+      labs:
+        tsh:
+          op: "<"
+          value: 0.1
+    boosts:
+      - name: "Hyperthyroidism"
+        multiplier: 2.5
+        rationale: "suppressed TSH is the hallmark of primary hyperthyroidism"
+      - name: "Graves Disease"
+        multiplier: 2.0
+        rationale: "Graves disease is the most common cause of primary hyperthyroidism"
+    source: "ATA hyperthyroidism guideline"
+    last_reviewed: "2026-04-14"
+    clinically_validated: false
+
+  - id: elevated_tsh_hypothyroid
+    label: "Elevated TSH → hypothyroidism"
+    description: >
+      TSH >10 mIU/L with low free T4 is overt primary hypothyroidism.
+    when:
+      labs:
+        tsh:
+          op: ">"
+          value: 10
+    boosts:
+      - name: "Hypothyroidism"
+        multiplier: 2.5
+        rationale: "TSH >10 indicates overt primary hypothyroidism"
+      - name: "Hashimoto Thyroiditis"
+        multiplier: 1.8
+        rationale: "Hashimoto is the most common cause of primary hypothyroidism"
+    source: "ATA hypothyroidism guideline"
+    last_reviewed: "2026-04-14"
+    clinically_validated: false
+
+  - id: severe_anemia_microcytic
+    label: "Microcytic anemia → iron deficiency"
+    description: >
+      Hemoglobin <10 with MCV <80 and ferritin <30 is classic for
+      iron deficiency anemia.
+    when:
+      labs:
+        hemoglobin:
+          op: "<"
+          value: 10
+        mcv:
+          op: "<"
+          value: 80
+    boosts:
+      - name: "Iron Deficiency Anemia"
+        multiplier: 2.8
+        rationale: "low Hgb + low MCV is microcytic anemia, most commonly IDA"
+      - name: "Anemia"
+        multiplier: 1.5
+        rationale: "low hemoglobin confirms anemia"
+    source: "ACG/AGA anemia workup guidelines"
+    last_reviewed: "2026-04-14"
+    clinically_validated: false
+
+  - id: leukocytosis_with_fever_infection
+    label: "Leukocytosis + fever → infection"
+    description: >
+      WBC >12 with fever in any patient raises infection probability.
+      This is a broad boost that should widen the candidate pool rather
+      than pick a single answer.
+    when:
+      labs:
+        wbc:
+          op: ">"
+          value: 12
+    boosts:
+      - name: "Pneumonia"
+        multiplier: 1.4
+        rationale: "leukocytosis supports bacterial infection"
+      - name: "Sepsis"
+        multiplier: 1.4
+        rationale: "leukocytosis is part of SIRS/sepsis criteria"
+      - name: "Appendicitis"
+        multiplier: 1.3
+        rationale: "leukocytosis supports acute appendicitis"
+      - name: "Urinary Tract Infection"
+        multiplier: 1.2
+        rationale: "leukocytosis supports bacterial UTI"
+    source: "IDSA general infection workup"
+    last_reviewed: "2026-04-14"
+    clinically_validated: false

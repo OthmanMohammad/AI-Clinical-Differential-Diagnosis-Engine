@@ -1,24 +1,24 @@
 """Output Guardrail Gates 6.1–6.5.
 
 All gates run (except 6.1 which is a hard stop on schema failure).
+
+The hallucination gate (6.2) used to keep its own 5-minute TTL cache
+of Neo4j disease names inside this module. That cache was extracted
+into `app.services.disease_index.DiseaseIndex` in the Phase 2
+retrieval rewrite so the retrieval layer and this gate share one
+consistent snapshot. Both consume it via `get_disease_index()`.
 """
 
 from __future__ import annotations
 
 import re
-import time
 from typing import TYPE_CHECKING
 
 import structlog
 
 from app.models.diagnosis import DISCLAIMER_TEXT, DifferentialDiagnosis, DiagnosisResponse
 from app.observability.metrics import GATE_TRIGGERS
-
-# Cache of (disease_name, token_set) tuples loaded once and refreshed
-# every CACHE_TTL_SECONDS. Avoids hammering Neo4j on every request.
-_disease_cache: list[tuple[str, frozenset[str]]] | None = None
-_disease_cache_loaded_at: float = 0.0
-_DISEASE_CACHE_TTL = 300.0  # 5 minutes
+from app.services.disease_index import get_disease_index
 
 if TYPE_CHECKING:
     from neo4j import AsyncDriver
@@ -66,10 +66,11 @@ async def gate_hallucination_check(
 
     Strategy:
       1. Tokenize each LLM disease name (skip stopwords, single chars).
-      2. Pull all PrimeKG diseases whose name shares at least one
-         meaningful token with any LLM diagnosis. This is one query.
+      2. Pull all PrimeKG disease records from the shared DiseaseIndex
+         singleton (which both this gate and the retrieval layer consume —
+         no duplicate caches).
       3. For each LLM diagnosis, compute Jaccard similarity against
-         every candidate. Mark verified if best similarity >= 0.5.
+         every record. Mark verified if best similarity >= 0.4.
 
     This handles word reordering ("Diabetes Mellitus Type 2" vs
     "type 2 diabetes mellitus"), abbreviations, and minor variations
@@ -92,9 +93,11 @@ async def gate_hallucination_check(
             item.verified_in_graph = False
         return diagnosis
 
-    # Use the cached disease list (loaded once + refreshed every 5 min)
+    # Use the shared DiseaseIndex — same snapshot that the retrieval layer
+    # uses, so a disease in the hallucination gate's view is always also
+    # in the retrieval layer's view.
     try:
-        candidates = await _get_disease_cache(neo4j_driver)
+        records = await get_disease_index().all(neo4j_driver)
     except Exception as exc:  # noqa: BLE001
         logger.warning("hallucination_cache_load_failed", error=str(exc))
         # On query failure, default to "verified" to avoid flooding the UI
@@ -102,10 +105,12 @@ async def gate_hallucination_check(
         return diagnosis
 
     logger.debug(
-        "hallucination_candidates", count=len(candidates), tokens=len(all_query_tokens)
+        "hallucination_candidates",
+        count=len(records),
+        tokens=len(all_query_tokens),
     )
 
-    # Match each LLM name against the candidates
+    # Match each LLM name against the index
     hallucination_count = 0
     for item in diagnosis.diagnoses:
         toks = llm_tokens[item.disease_name]
@@ -115,11 +120,11 @@ async def gate_hallucination_check(
             continue
 
         best = 0.0
-        for _, cand_toks in candidates:
-            inter = len(toks & cand_toks)
+        for rec in records:
+            inter = len(toks & rec.tokens)
             if inter == 0:
                 continue
-            union = len(toks | cand_toks)
+            union = len(toks | rec.tokens)
             jaccard = inter / union
             if jaccard > best:
                 best = jaccard
@@ -148,8 +153,9 @@ async def gate_hallucination_check(
     return diagnosis
 
 
-# Words to ignore when token-matching disease names — they're too common
-# to be meaningful for matching (every disease has "syndrome" or "disease").
+# Tokenizer + stopwords kept in sync with app/services/disease_index.py.
+# If the two ever drift the hallucination check would see different token
+# sets than the retrieval layer, which is how silent mismatches happen.
 _STOPWORDS = frozenset({
     "the", "a", "an", "of", "and", "or", "in", "on", "with", "to", "for",
     "by", "at", "from", "as", "is", "be", "type", "syndrome", "disease",
@@ -163,50 +169,13 @@ def _meaningful_tokens(name: str) -> list[str]:
     return [t for t in raw if t not in _STOPWORDS and len(t) > 1]
 
 
-async def _get_disease_cache(
-    neo4j_driver: AsyncDriver,
-) -> list[tuple[str, frozenset[str]]]:
-    """Return the cached list of (disease_name, token_set) tuples.
-
-    Loads the entire PrimeKG disease set from Neo4j on first call and
-    refreshes every _DISEASE_CACHE_TTL seconds. Pulling all ~17k diseases
-    is a one-time ~200ms hit; subsequent requests are zero-cost lookups.
-    """
-    global _disease_cache, _disease_cache_loaded_at
-    now = time.monotonic()
-    if _disease_cache is not None and (now - _disease_cache_loaded_at) < _DISEASE_CACHE_TTL:
-        return _disease_cache
-
-    logger.info("loading_disease_cache")
-    candidates: list[tuple[str, frozenset[str]]] = []
-    async with neo4j_driver.session() as session:
-        result = await session.run(
-            """
-            MATCH (d:Disease)
-            WHERE d.name IS NOT NULL
-            RETURN d.name AS name
-            """
-        )
-        async for record in result:
-            cand_name = record.get("name")
-            if not cand_name:
-                continue
-            cand_tokens = frozenset(_meaningful_tokens(cand_name))
-            if cand_tokens:
-                candidates.append((cand_name, cand_tokens))
-
-    _disease_cache = candidates
-    _disease_cache_loaded_at = now
-    logger.info("disease_cache_loaded", count=len(candidates))
-    return candidates
-
-
 async def preload_disease_cache(neo4j_driver: AsyncDriver) -> None:
-    """Eagerly populate the disease cache at app startup."""
-    try:
-        await _get_disease_cache(neo4j_driver)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("disease_cache_preload_failed", error=str(exc))
+    """Eagerly populate the shared DiseaseIndex at app startup.
+
+    Kept as a top-level name for backwards compatibility with app/main.py
+    which imports it by this name.
+    """
+    await get_disease_index().preload(neo4j_driver)
 
 
 def gate_treatment_filter(diagnosis: DifferentialDiagnosis) -> tuple[DifferentialDiagnosis, bool]:
