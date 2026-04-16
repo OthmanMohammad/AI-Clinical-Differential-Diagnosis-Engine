@@ -1,19 +1,27 @@
-// Prevent flash of wrong theme before React mounts. Default to light.
+// Theme bootstrap — runs before React mounts (on the main app) and before
+// any content renders (on legal pages like /disclaimer.html, /privacy.html).
 //
-// This file is served from the Vite public/ directory as a static asset
-// and loaded synchronously from index.html via <script src="/theme-init.js">.
-// It runs BEFORE React so dark-mode users see the correct background
-// color on first paint.
+// Loaded as an external <script src="/theme-init.js"> so CSP only needs
+// script-src 'self' — no hash whitelisting required.
 //
-// It lives as an external file (not inlined in index.html) because inline
-// scripts require CSP hash whitelisting in public/_headers, and Vite's
-// HTML processing during build slightly reformats inline scripts which
-// drifts the hash. An external file served from /theme-init.js only
-// needs script-src 'self' in CSP, which is the default.
+// The app stores one of three values in localStorage under "mooseglove.theme":
+//   "light"  — force light
+//   "dark"   — force dark
+//   "system" — follow OS preference
+//
+// If no value is stored (first visit, incognito), follow OS preference.
 (function () {
   try {
     var stored = localStorage.getItem("mooseglove.theme");
-    var theme = stored === "dark" ? "dark" : "light";
+    var theme;
+    if (stored === "dark") {
+      theme = "dark";
+    } else if (stored === "light") {
+      theme = "light";
+    } else {
+      // "system" or null — follow OS preference
+      theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
     document.documentElement.classList.remove("light", "dark");
     document.documentElement.classList.add(theme);
     document.documentElement.setAttribute("data-theme", theme);
