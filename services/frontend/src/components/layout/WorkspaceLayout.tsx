@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Maximize2, Minus, Plus, X } from "lucide-react";
+import { Maximize2, Minus, Network, Plus, X } from "lucide-react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -10,6 +10,9 @@ interface WorkspaceLayoutProps {
   intake: React.ReactNode;
   results: React.ReactNode;
   graph: React.ReactNode;
+  /** Node/edge counts for the mobile graph placeholder. */
+  graphNodeCount?: number;
+  graphEdgeCount?: number;
 }
 
 function useIsMobile(): boolean {
@@ -26,7 +29,13 @@ function useIsMobile(): boolean {
   return mobile;
 }
 
-export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps) {
+export function WorkspaceLayout({
+  intake,
+  results,
+  graph,
+  graphNodeCount = 0,
+  graphEdgeCount = 0,
+}: WorkspaceLayoutProps) {
   const panelSizes = useWorkspaceStore((s) => s.panelSizes);
   const setPanelSizes = useWorkspaceStore((s) => s.setPanelSizes);
   const graphFullscreen = useWorkspaceStore((s) => s.graphFullscreen);
@@ -53,24 +62,36 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
           <section aria-label="Differential diagnosis" className="border-border border-b p-3">
             {results}
           </section>
-          {/* Graph preview — non-interactive, just a visual */}
-          <section aria-label="Reasoning graph" className="relative h-[60vh] min-h-[250px]">
-            <div className="pointer-events-none h-full opacity-60">{graph}</div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <button
-                type="button"
-                onClick={() => setMobileGraphOpen(true)}
-                className="bg-primary text-primary-foreground pointer-events-auto flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium shadow-xl"
-              >
-                <Maximize2 className="h-4 w-4" />
-                Explore graph
-              </button>
+
+          {/* Static placeholder card — G6 is NOT mounted here.
+              Only instantiated when fullscreen opens. */}
+          <section
+            aria-label="Reasoning graph"
+            className="border-border flex flex-col items-center justify-center gap-3 border-b px-4 py-10"
+          >
+            <div className="bg-muted/30 flex h-14 w-14 items-center justify-center rounded-full">
+              <Network className="text-muted-foreground h-6 w-6" />
             </div>
+            <div className="text-center">
+              <p className="text-foreground text-sm font-medium">Reasoning graph</p>
+              {graphNodeCount > 0 && (
+                <p className="text-muted-foreground text-xs">
+                  {graphNodeCount} nodes &middot; {graphEdgeCount} edges
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setMobileGraphOpen(true)}
+              className="bg-primary text-primary-foreground mt-1 flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium shadow-lg"
+            >
+              <Maximize2 className="h-4 w-4" />
+              Explore graph
+            </button>
           </section>
         </main>
 
-        {/* Fullscreen graph overlay — completely separate from the page layout.
-            Uses inline styles for bulletproof background coverage. */}
+        {/* Fullscreen graph — G6 only mounts here when opened. */}
         {mobileGraphOpen && (
           <div
             style={{
@@ -86,7 +107,6 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
           >
             <div className="h-full w-full">{graph}</div>
 
-            {/* Close button — top left */}
             <button
               type="button"
               onClick={() => setMobileGraphOpen(false)}
@@ -96,7 +116,6 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
               Close
             </button>
 
-            {/* Zoom buttons — bottom right */}
             <div className="absolute bottom-8 right-3 z-10 flex flex-col gap-2">
               <button
                 type="button"

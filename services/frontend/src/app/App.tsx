@@ -92,6 +92,8 @@ export function App() {
             />
           }
           graph={<GraphPanel response={data} topPath={topPath} />}
+          graphNodeCount={data?.graph_nodes?.length ?? 0}
+          graphEdgeCount={data?.graph_edges?.length ?? 0}
         />
       </div>
       <Footer
