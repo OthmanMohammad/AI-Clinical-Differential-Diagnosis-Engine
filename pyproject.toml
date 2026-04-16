@@ -1,7 +1,7 @@
 [project]
 name = "mooseglove"
 version = "0.1.0"
-description = "AI Clinical Differential Diagnosis Engine — Graph RAG + LLM"
+description = "Clinical Differential Diagnosis Engine — Graph RAG + LLM"
 requires-python = ">=3.11"
 
 [tool.ruff]
