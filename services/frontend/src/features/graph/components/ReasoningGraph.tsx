@@ -272,7 +272,7 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
           {
             type: "minimap",
             size: [160, 100],
-            className: "pathodx-minimap",
+            className: "mooseglove-minimap",
             position: "right-bottom",
           },
         ],
@@ -391,7 +391,7 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
             }
 
             const link = document.createElement("a");
-            link.download = `pathodx-graph-${Date.now()}.png`;
+            link.download = `mooseglove-graph-${Date.now()}.png`;
             link.href = dataUrl;
             document.body.appendChild(link);
             link.click();

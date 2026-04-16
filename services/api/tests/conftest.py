@@ -1,4 +1,4 @@
-"""Test fixtures for PathoDX API tests."""
+"""Test fixtures for MooseGlove API tests."""
 
 from __future__ import annotations
 

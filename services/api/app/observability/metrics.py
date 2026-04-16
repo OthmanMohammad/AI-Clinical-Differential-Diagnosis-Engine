@@ -8,45 +8,45 @@ from prometheus_client import Counter, Histogram
 # --- Prometheus metrics ---
 
 REQUEST_LATENCY = Histogram(
-    "pathodx_request_latency_seconds",
+    "mooseglove_request_latency_seconds",
     "Total request latency",
     ["endpoint", "status_code"],
     buckets=[0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0],
 )
 
 LLM_LATENCY = Histogram(
-    "pathodx_llm_latency_seconds",
+    "mooseglove_llm_latency_seconds",
     "LLM call latency",
     ["model"],
     buckets=[0.5, 1.0, 2.0, 3.0, 5.0, 10.0],
 )
 
 NEO4J_LATENCY = Histogram(
-    "pathodx_neo4j_latency_seconds",
+    "mooseglove_neo4j_latency_seconds",
     "Neo4j query latency",
     buckets=[0.05, 0.1, 0.25, 0.5, 1.0, 5.0],
 )
 
 QDRANT_LATENCY = Histogram(
-    "pathodx_qdrant_latency_seconds",
+    "mooseglove_qdrant_latency_seconds",
     "Qdrant search latency",
     buckets=[0.01, 0.05, 0.1, 0.25, 0.5],
 )
 
 GATE_TRIGGERS = Counter(
-    "pathodx_gate_triggers_total",
+    "mooseglove_gate_triggers_total",
     "Guardrail gate trigger count",
     ["gate_name", "result"],
 )
 
 EMERGENCY_TRIGGERS = Counter(
-    "pathodx_emergency_triggers_total",
+    "mooseglove_emergency_triggers_total",
     "Emergency pattern triggers",
     ["pattern_name"],
 )
 
 ERRORS = Counter(
-    "pathodx_errors_total",
+    "mooseglove_errors_total",
     "Error count by type",
     ["error_type"],
 )

@@ -2,17 +2,17 @@
  * Application-wide constants.
  */
 
-export const APP_NAME = "PathoDX";
+export const APP_NAME = "MooseGlove";
 export const APP_TAGLINE = "AI Clinical Differential Diagnosis Engine";
 export const APP_VERSION = "0.1.0";
 
 /** localStorage keys (namespaced to avoid collisions). */
 export const STORAGE_KEYS = {
-  theme: "pathodx.theme",
-  intake: "pathodx.intake",
-  workspaceLayout: "pathodx.layout",
-  sidebarCollapsed: "pathodx.sidebar.collapsed",
-  graphLayoutType: "pathodx.graph.layout",
+  theme: "mooseglove.theme",
+  intake: "mooseglove.intake",
+  workspaceLayout: "mooseglove.layout",
+  sidebarCollapsed: "mooseglove.sidebar.collapsed",
+  graphLayoutType: "mooseglove.graph.layout",
 } as const;
 
 /** Query keys for TanStack Query. */

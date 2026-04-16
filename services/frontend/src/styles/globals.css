@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* =============================================================================
-   PathoDX Design Tokens
+   MooseGlove Design Tokens
    Built on Radix UI color scales — WCAG AA compliant, accessible in both themes.
    ============================================================================= */
 
@@ -236,7 +236,7 @@
 
 /* Minimap — match the current theme background */
 .g6-minimap,
-.pathodx-minimap,
+.mooseglove-minimap,
 [class*="g6-minimap"] {
   background: hsl(var(--card)) !important;
   border: 1px solid hsl(var(--border)) !important;
@@ -246,7 +246,7 @@
 }
 
 .g6-minimap canvas,
-.pathodx-minimap canvas,
+.mooseglove-minimap canvas,
 [class*="g6-minimap"] canvas {
   background: hsl(var(--card)) !important;
 }

@@ -196,7 +196,7 @@ class RunnerBailOutError(RuntimeError):
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run PathoDX evaluation")
+    parser = argparse.ArgumentParser(description="Run MooseGlove evaluation")
     parser.add_argument("--api-url", default="http://127.0.0.1:8080")
     parser.add_argument("--api-key", required=True)
     parser.add_argument("--cases-dir", type=Path, default=CASES_DIR)

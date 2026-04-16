@@ -27,7 +27,7 @@ async def health() -> dict[str, str]:
     Used by Fly.io / Kubernetes to know whether to restart the container.
     Should be cheap and never depend on external services.
     """
-    return {"status": "healthy", "service": "pathodx"}
+    return {"status": "healthy", "service": "mooseglove"}
 
 
 @router.get("/ready", summary="Readiness probe")
@@ -86,7 +86,7 @@ async def ready() -> JSONResponse:
 
     body = {
         "status": "ready" if all_ok else "not_ready",
-        "service": "pathodx",
+        "service": "mooseglove",
         "checks": checks,
         "elapsed_ms": round((time.monotonic() - started) * 1000),
     }

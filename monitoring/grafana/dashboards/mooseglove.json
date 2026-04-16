@@ -1,0 +1,65 @@
+{
+  "dashboard": {
+    "title": "MooseGlove - Clinical Diagnosis Engine",
+    "uid": "mooseglove-main",
+    "timezone": "browser",
+    "refresh": "30s",
+    "panels": [
+      {
+        "title": "Request Latency (p95)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(mooseglove_request_latency_seconds_bucket[5m]))",
+            "legendFormat": "p95"
+          }
+        ]
+      },
+      {
+        "title": "LLM Latency by Model",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(mooseglove_llm_latency_seconds_bucket[5m]))",
+            "legendFormat": "{{ model }}"
+          }
+        ]
+      },
+      {
+        "title": "Gate Triggers",
+        "type": "stat",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+        "targets": [
+          {
+            "expr": "increase(mooseglove_gate_triggers_total[1h])",
+            "legendFormat": "{{ gate_name }} ({{ result }})"
+          }
+        ]
+      },
+      {
+        "title": "Emergency Triggers",
+        "type": "stat",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+        "targets": [
+          {
+            "expr": "increase(mooseglove_emergency_triggers_total[24h])",
+            "legendFormat": "{{ pattern_name }}"
+          }
+        ]
+      },
+      {
+        "title": "Error Rate",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+        "targets": [
+          {
+            "expr": "rate(mooseglove_errors_total[5m])",
+            "legendFormat": "{{ error_type }}"
+          }
+        ]
+      }
+    ]
+  }
+}

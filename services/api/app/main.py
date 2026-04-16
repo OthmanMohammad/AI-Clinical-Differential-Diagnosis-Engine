@@ -1,4 +1,4 @@
-"""PathoDX API — Clinical Differential Diagnosis Engine.
+"""MooseGlove API — Clinical Differential Diagnosis Engine.
 
 Application entry point. This module wires together:
 
@@ -65,7 +65,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     configure_logging(settings.environment)
 
     logger.info(
-        "starting_pathodx",
+        "starting_mooseglove",
         environment=settings.environment,
         cors_origins=settings.cors_origin_list,
     )
@@ -108,14 +108,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         except Exception as exc:  # noqa: BLE001
             logger.warning("disease_cache_preload_failed", error=str(exc))
 
-    logger.info("pathodx_started")
+    logger.info("mooseglove_started")
     yield
 
     # ---- Shutdown ----
-    logger.info("stopping_pathodx")
+    logger.info("stopping_mooseglove")
     await close_neo4j()
     await close_qdrant()
-    logger.info("pathodx_stopped")
+    logger.info("mooseglove_stopped")
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +125,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 _app_settings = get_settings()
 
 app = FastAPI(
-    title="PathoDX",
+    title="MooseGlove",
     description="AI Clinical Differential Diagnosis Engine",
     version="0.1.0",
     lifespan=lifespan,
