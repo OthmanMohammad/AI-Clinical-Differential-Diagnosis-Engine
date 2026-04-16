@@ -149,7 +149,6 @@ anyio==4.13.0 \
     --hash=sha256:334b70e641fd2221c1505b3890c69882fe4a2df910cba14d97019b90b24439dc
     # via
     #   httpx
-    #   langfuse
     #   openai
     #   starlette
     #   watchfiles
@@ -629,11 +628,11 @@ distro==1.9.0 \
 fastapi==0.135.3 \
     --hash=sha256:9b0f590c813acd13d0ab43dd8494138eb58e484bfac405db1f3187cfc5810d98 \
     --hash=sha256:bd6d7caf1a2bdd8d676843cdcd2287729572a1ef524fc4d65c17ae002a1be654
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 fastembed==0.8.0 \
     --hash=sha256:40bee672657574a1009e35ec50030a55f2b426842cb011845379817641bbbbd0 \
     --hash=sha256:75966edfa8b006ee78514c726bd7f6a50721dadc89305279052be9db72fd53e8
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 fastuuid==0.14.0 \
     --hash=sha256:05a8dde1f395e0c9b4be515b7a521403d1e8349443e7641761af07c7ad1624b1 \
     --hash=sha256:0737606764b29785566f968bd8005eace73d3666bd0862f33a760796e26d1ede \
@@ -859,6 +858,10 @@ fsspec==2026.3.0 \
     --hash=sha256:1ee6a0e28677557f8c2f994e3eea77db6392b4de9cd1f5d7a9e87a0ae9d01b41 \
     --hash=sha256:d2ceafaad1b3457968ed14efa28798162f1638dbb5d2a6868a2db002a5ee39a4
     # via huggingface-hub
+googleapis-common-protos==1.74.0 \
+    --hash=sha256:57971e4eeeba6aad1163c1f0fc88543f965bb49129b8bb55b2b7b26ecab084f1 \
+    --hash=sha256:702216f78610bb510e3f12ac3cafd281b7ac45cc5d86e90ad87e4d301a3426b5
+    # via opentelemetry-exporter-otlp-proto-http
 grpcio==1.80.0 \
     --hash=sha256:00168469238b022500e486c1c33916acf2f2a9b2c022202cf8a1885d2e3073c1 \
     --hash=sha256:02e64bb0bb2da14d947a49e6f120a75e947250aebe65f9629b62bb1f5c14e6e9 \
@@ -1081,7 +1084,7 @@ httpx[http2]==0.28.1 \
     --hash=sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc \
     --hash=sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad
     # via
-    #   -r services/api/requirements.in
+    #   -r requirements.in
     #   huggingface-hub
     #   langfuse
     #   litellm
@@ -1103,13 +1106,14 @@ idna==3.11 \
     # via
     #   anyio
     #   httpx
-    #   langfuse
     #   requests
     #   yarl
 importlib-metadata==8.5.0 \
     --hash=sha256:45e54197d28b7a7f1559e60b95e7c567032b602131fbd588f1497f47880aa68b \
     --hash=sha256:71522656f0abace1d072b9e5481a48f07c138e00f079c38c8f883823f9c26bd7
-    # via litellm
+    # via
+    #   litellm
+    #   opentelemetry-api
 iniconfig==2.3.0 \
     --hash=sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730 \
     --hash=sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12
@@ -1249,10 +1253,10 @@ langcodes==3.5.1 \
     --hash=sha256:40bff315e01b01d11c2ae3928dd4f5cbd74dd38f9bd912c12b9a3606c143f731 \
     --hash=sha256:b6a9c25c603804e2d169165091d0cdb23934610524a21d226e4f463e8e958a72
     # via spacy
-langfuse==2.60.10 \
-    --hash=sha256:815c6369194aa5b2a24f88eb9952f7c3fc863272c41e90642a71f3bc76f4a11f \
-    --hash=sha256:a26d0d927a28ee01b2d12bb5b862590b643cc4e60a28de6e2b0c2cfff5dbfc6a
-    # via -r services/api/requirements.in
+langfuse==4.2.0 \
+    --hash=sha256:bfd760bf10fd0228f297f6369436620f76d16b589de46393d65706b27e4e4082 \
+    --hash=sha256:d0bd26d5065cf6a59d7d1093b08d8910e2458dc3da7ed8ccec160db114c18342
+    # via -r requirements.in
 limits==5.8.0 \
     --hash=sha256:ae1b008a43eb43073c3c579398bd4eb4c795de60952532dc24720ab45e1ac6b8 \
     --hash=sha256:c9e0d74aed837e8f6f50d1fcebcf5fd8130957287206bc3799adaee5092655da
@@ -1260,7 +1264,7 @@ limits==5.8.0 \
 litellm==1.83.8 \
     --hash=sha256:38db022b4bf5a51cbe597a8308e6e51eb71254ae684d41aa210b76df0c827063 \
     --hash=sha256:3bc8cfeff9d73a6a11409006c0d66bafeed9a23db65f642000f72f1cdb2e9ce8
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 loguru==0.7.3 \
     --hash=sha256:19480589e77d47b8d85b2c827ad95d49bf31b0dcde16593892eb51dd18706eb6 \
     --hash=sha256:31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c
@@ -1368,7 +1372,7 @@ mdurl==0.1.2 \
     # via markdown-it-py
 medspacy==1.3.1 \
     --hash=sha256:976599d9446e98018b311951cfa926be5a59d0c140967b828fe98bc4bada40fe
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 medspacy-quickumls==3.2 \
     --hash=sha256:eeea4c94f4e46529470b9de894bac3384fe883f843d321cd578a62f880439165
     # via medspacy
@@ -1747,7 +1751,7 @@ murmurhash==1.0.15 \
 neo4j==6.1.0 \
     --hash=sha256:3bd93941f3a3559af197031157220af9fd71f4f93a311db687bd69ffa417b67d \
     --hash=sha256:b5dde8c0d8481e7b6ae3733569d990dd3e5befdc5d452f531ad1884ed3500b84
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 nltk==3.9.4 \
     --hash=sha256:ed03bc098a40481310320808b2db712d95d13ca65b27372f8a403949c8b523d0 \
     --hash=sha256:f2fa301c3a12718ce4a0e9305c5675299da5ad9e26068218b69d692fda84828f
@@ -1827,6 +1831,38 @@ openai==2.24.0 \
     --hash=sha256:1e5769f540dbd01cb33bc4716a23e67b9d695161a734aff9c5f925e2bf99a673 \
     --hash=sha256:fed30480d7d6c884303287bde864980a4b137b60553ffbcf9ab4a233b7a73d94
     # via litellm
+opentelemetry-api==1.41.0 \
+    --hash=sha256:0e77c806e6a89c9e4f8d372034622f3e1418a11bdbe1c80a50b3d3397ad0fa4f \
+    --hash=sha256:9421d911326ec12dee8bc933f7839090cad7a3f13fcfb0f9e82f8174dc003c09
+    # via
+    #   langfuse
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-exporter-otlp-proto-common==1.41.0 \
+    --hash=sha256:7a99177bf61f85f4f9ed2072f54d676364719c066f6d11f515acc6c745c7acf0 \
+    --hash=sha256:966bbce537e9edb166154779a7c4f8ab6b8654a03a28024aeaf1a3eacb07d6ee
+    # via opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-http==1.41.0 \
+    --hash=sha256:a9c4ee69cce9c3f4d7ee736ad1b44e3c9654002c0816900abbafd9f3cf289751 \
+    --hash=sha256:dcd6e0686f56277db4eecbadd5262124e8f2cc739cadbc3fae3d08a12c976cf5
+    # via langfuse
+opentelemetry-proto==1.41.0 \
+    --hash=sha256:95d2e576f9fb1800473a3e4cfcca054295d06bdb869fda4dc9f4f779dc68f7b6 \
+    --hash=sha256:b970ab537309f9eed296be482c3e7cca05d8aca8165346e929f658dbe153b247
+    # via
+    #   opentelemetry-exporter-otlp-proto-common
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-sdk==1.41.0 \
+    --hash=sha256:7bddf3961131b318fc2d158947971a8e37e38b1cd23470cfb72b624e7cc108bd \
+    --hash=sha256:a596f5687964a3e0d7f8edfdcf5b79cbca9c93c7025ebf5fb00f398a9443b0bd
+    # via
+    #   langfuse
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-semantic-conventions==0.62b0 \
+    --hash=sha256:0ddac1ce59eaf1a827d9987ab60d9315fb27aea23304144242d1fcad9e16b489 \
+    --hash=sha256:cbfb3c8fc259575cf68a6e1b94083cc35adc4a6b06e8cf431efa0d62606c0097
+    # via opentelemetry-sdk
 packaging==24.2 \
     --hash=sha256:09abb1bccd265c01f4a3aa3f7a7db064b36514d2cba19a2f694fe6150451a759 \
     --hash=sha256:c228a6dc5e932d346bc5739379109d49e8853dd8223571c7c5b55260edc0b97f
@@ -2006,7 +2042,7 @@ preshed==3.0.13 \
 prometheus-client==0.25.0 \
     --hash=sha256:5e373b75c31afb3c86f1a52fa1ad470c9aace18082d39ec0d2f918d11cc9ba28 \
     --hash=sha256:d5aec89e349a6ec230805d0df882f3807f74fd6c1a2fa86864e3c2279059fed1
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 propcache==0.4.1 \
     --hash=sha256:0002004213ee1f36cfb3f9a42b5066100c44276b9b72b4e1504cddd3d692e86e \
     --hash=sha256:0013cb6f8dde4b2a2f66903b8ba740bdfe378c943c4377a200551ceb27f379e4 \
@@ -2145,8 +2181,10 @@ protobuf==6.33.6 \
     --hash=sha256:e9db7e292e0ab79dd108d7f1a94fe31601ce1ee3f7b79e0692043423020b0593 \
     --hash=sha256:f443a394af5ed23672bc6c486be138628fbe5c651ccbc536873d7da23d1868cf
     # via
+    #   googleapis-common-protos
     #   grpcio-tools
     #   onnxruntime
+    #   opentelemetry-proto
 py-rust-stemmers==0.1.5 \
     --hash=sha256:019221c57a7bcc51097fa3f124b62d0577b5b6167184ee51abd3aea822d78f69 \
     --hash=sha256:07b3b8582313ef8a7f544acf2c887f27c3dd48c5ddca028fa0f498de7380e24f \
@@ -2218,7 +2256,7 @@ pydantic==2.12.5 \
     --hash=sha256:4d351024c75c0f085a9febbb665ce8c0c6ec5d30e903bdb6394b7ede26aebb49 \
     --hash=sha256:e561593fccf61e8a20fc46dfc2dfe075b8be7d0188df33f221ad1f0139180f9d
     # via
-    #   -r services/api/requirements.in
+    #   -r requirements.in
     #   confection
     #   fastapi
     #   langfuse
@@ -2355,7 +2393,7 @@ pydantic-core==2.41.5 \
 pydantic-settings==2.13.1 \
     --hash=sha256:b4c11847b15237fb0171e1462bf540e294affb9b86db4d9aa5c01730bdbe4025 \
     --hash=sha256:d56fd801823dbeae7f0975e1f8c8e25c258eb75d278ea7abb5d9cebb01b56237
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 pyfastner==1.0.10 \
     --hash=sha256:259665dd8a84c907559645d2ce33ec807be0fb03664cfdb14a50aa6436cedb72 \
     --hash=sha256:d477fc4f7acbb68f0c828b0bed478206092bb8190997dfda006993db5813b262
@@ -2426,18 +2464,18 @@ pytest==9.0.3 \
     --hash=sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9 \
     --hash=sha256:b86ada508af81d19edeb213c681b1d48246c1a91d304c6c81a427674c17eb91c
     # via
-    #   -r services/api/requirements.in
+    #   -r requirements.in
     #   medspacy-quickumls
     #   pytest-asyncio
     #   pytest-cov
 pytest-asyncio==1.3.0 \
     --hash=sha256:611e26147c7f77640e6d0a92a38ed17c3e9848063698d5c93d5aa7aa11cebff5 \
     --hash=sha256:d7f52f36d231b80ee124cd216ffb19369aa168fc10095013c6b014a34d3ee9e5
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 pytest-cov==7.1.0 \
     --hash=sha256:30674f2b5f6351aa09702a9c8c364f6a01c27aae0c1366ae8016160d1efc56b2 \
     --hash=sha256:a0461110b7865f9a271aa1b51e516c9a95de9d696734a2f71e3e78f46e1d4678
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 python-dotenv==1.0.1 \
     --hash=sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca \
     --hash=sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a
@@ -2524,13 +2562,13 @@ pyyaml==6.0.3 \
     --hash=sha256:fa160448684b4e94d80416c0fa4aac48967a969efe22931448d853ada8baf926 \
     --hash=sha256:fc09d0aa354569bc501d4e787133afc08552722d3ab34836a80547331bb5d4a0
     # via
-    #   -r services/api/requirements.in
+    #   -r requirements.in
     #   huggingface-hub
     #   uvicorn
 qdrant-client==1.12.2 \
     --hash=sha256:2777e09b3e89bb22bb490384d8b1fa8140f3915287884f18984f7031a346aba5 \
     --hash=sha256:a0ae500a46a679ff3521ba3f1f1cf3d72b57090a768cec65fc317066bcbac1e6
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 quicksectx==0.4.1 \
     --hash=sha256:086e1e4e7541c2a57be23067ddbc3cb13bbd68bc9977dba7bdd4e229fdb8c04f \
     --hash=sha256:21e7123982f6e33f8b25b9f0f102c80f900fba0cebfec4c14a17a81a987eb24c \
@@ -2680,7 +2718,7 @@ requests==2.33.1 \
     --hash=sha256:4e6d1ef462f3626a1f0a0a9c42dd93c63bad33f9f1c1937509b8c5c8718ab56a
     # via
     #   fastembed
-    #   langfuse
+    #   opentelemetry-exporter-otlp-proto-http
     #   spacy
     #   tiktoken
     #   weasel
@@ -2818,7 +2856,7 @@ six==1.17.0 \
 slowapi==0.1.9 \
     --hash=sha256:639192d0f1ca01b1c6d95bf6c71d794c3a9ee189855337b4821f7f457dddad77 \
     --hash=sha256:cfad116cfb84ad9d763ee155c1e5c5cbf00b0d47399a769b227865f5df576e36
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 smart-open==7.6.0 \
     --hash=sha256:2a78f454610a826aa688065b54b4a0a9b12a5599fa61d5190e9bac2df5e5f53f \
     --hash=sha256:44717f46b5ff276fac03b88e5d13d1c416f064f3b7b081381b0fa8889004bd7e
@@ -2859,7 +2897,7 @@ spacy==3.7.5 \
     --hash=sha256:faa1e2b6234ae33c0b1f8dfa5a8dcb66fb891f19231725dfcff4b2666125c250 \
     --hash=sha256:fdbb667792d6ca93899645774d1db3fccc327088a92072029be1e4bc25d7cf15
     # via
-    #   -r services/api/requirements.in
+    #   -r requirements.in
     #   medspacy
     #   medspacy-quickumls
     #   pyrush
@@ -2941,7 +2979,7 @@ starlette==1.0.0 \
 structlog==25.5.0 \
     --hash=sha256:098522a3bebed9153d4570c6d0288abf80a031dfdb2048d59a49e9dc2190fc98 \
     --hash=sha256:a8453e9b9e636ec59bd9e79bbd4a72f025981b3ba0f5837aebf48f02f37a7f9f
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 sympy==1.14.0 \
     --hash=sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517 \
     --hash=sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5
@@ -3087,6 +3125,10 @@ typing-extensions==4.15.0 \
     #   huggingface-hub
     #   limits
     #   openai
+    #   opentelemetry-api
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
     #   pydantic
     #   pydantic-core
     #   pytest-asyncio
@@ -3113,7 +3155,7 @@ urllib3==2.6.3 \
 uvicorn[standard]==0.44.0 \
     --hash=sha256:6c942071b68f07e178264b9152f1f16dfac5da85880c4ce06366a96d70d4f31e \
     --hash=sha256:ce937c99a2cc70279556967274414c087888e8cec9f9c94644dfca11bd3ced89
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 uvloop==0.22.1 \
     --hash=sha256:017bd46f9e7b78e81606329d07141d3da446f8798c6baeec124260e22c262772 \
     --hash=sha256:0530a5fbad9c9e4ee3f2b33b148c6a64d47bbad8000ea63704fa8260f4cf728e \
