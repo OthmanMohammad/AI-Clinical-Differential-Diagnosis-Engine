@@ -17,12 +17,7 @@ interface NodeDetailDrawerProps {
   onClose: () => void;
 }
 
-export function NodeDetailDrawer({
-  node,
-  allNodes,
-  allEdges,
-  onClose,
-}: NodeDetailDrawerProps) {
+export function NodeDetailDrawer({ node, allNodes, allEdges, onClose }: NodeDetailDrawerProps) {
   const { copy, copied } = useCopyToClipboard();
 
   const neighbors = node
@@ -37,8 +32,9 @@ export function NodeDetailDrawer({
             direction: e.source === node.id ? "out" : "in",
           };
         })
-        .filter((n): n is { node: GraphNode; edgeType: string; direction: "out" | "in" } =>
-          n.node !== undefined,
+        .filter(
+          (n): n is { node: GraphNode; edgeType: string; direction: "out" | "in" } =>
+            n.node !== undefined,
         )
     : [];
 
@@ -63,7 +59,7 @@ export function NodeDetailDrawer({
                 </Badge>
               </div>
               <SheetTitle className="text-lg">{node.name}</SheetTitle>
-              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+              <div className="text-muted-foreground flex items-center gap-2 text-[10px]">
                 <span className="font-mono">{node.id.slice(0, 24)}…</span>
                 <Button
                   variant="ghost"
@@ -82,14 +78,14 @@ export function NodeDetailDrawer({
             <ScrollArea className="mt-4 h-[calc(100vh-220px)] pr-4">
               <div className="space-y-4">
                 <div>
-                  <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <h4 className="text-muted-foreground mb-2 text-[10px] font-semibold uppercase tracking-wider">
                     Connections ({neighbors.length})
                   </h4>
                   <ul className="space-y-1">
                     {neighbors.map((n, i) => (
                       <li
                         key={`${n.node.id}-${i}`}
-                        className="flex items-start gap-2 rounded-sm bg-muted/20 px-2 py-1.5 text-xs"
+                        className="bg-muted/20 flex items-start gap-2 rounded-sm px-2 py-1.5 text-xs"
                       >
                         <span
                           className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
@@ -97,16 +93,14 @@ export function NodeDetailDrawer({
                             backgroundColor:
                               n.node.type in ENTITY_COLOR_VAR
                                 ? `hsl(var(${
-                                    ENTITY_COLOR_VAR[
-                                      n.node.type as keyof typeof ENTITY_COLOR_VAR
-                                    ]
+                                    ENTITY_COLOR_VAR[n.node.type as keyof typeof ENTITY_COLOR_VAR]
                                   }))`
                                 : "#888",
                           }}
                         />
                         <div className="flex-1">
                           <div className="truncate">{n.node.name}</div>
-                          <div className="mt-0.5 text-[10px] text-muted-foreground">
+                          <div className="text-muted-foreground mt-0.5 text-[10px]">
                             <ExternalLink className="mr-1 inline h-2.5 w-2.5" />
                             {formatEdgeLabel(n.edgeType)} ({n.direction})
                           </div>

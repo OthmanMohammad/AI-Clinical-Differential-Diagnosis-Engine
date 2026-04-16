@@ -83,11 +83,9 @@ export function ClinicalForm({ isSubmitting, onSubmit }: ClinicalFormProps) {
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h2 className="text-h3 font-semibold tracking-tight">Clinical intake</h2>
-          <p className="text-xs text-muted-foreground">
-            Describe the presentation
-          </p>
+          <p className="text-muted-foreground text-xs">Describe the presentation</p>
         </div>
-        <div className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-primary">
+        <div className="bg-primary/10 text-primary rounded-md px-2 py-1 text-[10px] font-medium uppercase tracking-wider">
           <Sparkles className="mr-1 inline h-2.5 w-2.5" />
           Graph RAG
         </div>
@@ -119,18 +117,11 @@ export function ClinicalForm({ isSubmitting, onSubmit }: ClinicalFormProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="age">Age</Label>
-              <AgeInput
-                id="age"
-                value={age}
-                onChange={(n) => setField("age", n)}
-              />
+              <AgeInput id="age" value={age} onChange={(n) => setField("age", n)} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="sex">Sex</Label>
-              <Select
-                value={sex}
-                onValueChange={(v) => setField("sex", v as typeof sex)}
-              >
+              <Select value={sex} onValueChange={(v) => setField("sex", v as typeof sex)}>
                 <SelectTrigger id="sex" className="h-9">
                   <SelectValue />
                 </SelectTrigger>
@@ -180,7 +171,7 @@ export function ClinicalForm({ isSubmitting, onSubmit }: ClinicalFormProps) {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label>Clinical notes</Label>
-              <span className="font-mono text-[10px] text-muted-foreground">
+              <span className="text-muted-foreground font-mono text-[10px]">
                 {freeText.length}/2000
               </span>
             </div>
@@ -197,7 +188,7 @@ export function ClinicalForm({ isSubmitting, onSubmit }: ClinicalFormProps) {
       </ScrollArea>
 
       {/* Submit footer */}
-      <div className="mt-3 border-t border-border pt-3">
+      <div className="border-border mt-3 border-t pt-3">
         <Button
           type="button"
           className="group w-full gap-2"
@@ -218,9 +209,7 @@ export function ClinicalForm({ isSubmitting, onSubmit }: ClinicalFormProps) {
             >
               Generate differential
               <Send className={cn("h-3.5 w-3.5 transition-transform")} />
-              <Kbd className="ml-1 bg-primary-foreground/10 text-primary-foreground/80">
-                Ctrl ↵
-              </Kbd>
+              <Kbd className="bg-primary-foreground/10 text-primary-foreground/80 ml-1">Ctrl ↵</Kbd>
             </motion.span>
           )}
         </Button>

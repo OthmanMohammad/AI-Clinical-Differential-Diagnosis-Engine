@@ -33,9 +33,7 @@ export function App() {
   const toPayload = useIntakeStore((s) => s.toPayload);
 
   // Cross-panel highlight state
-  const [highlightedDiagnosis, setHighlightedDiagnosis] = React.useState<
-    string | null
-  >(null);
+  const [highlightedDiagnosis, setHighlightedDiagnosis] = React.useState<string | null>(null);
 
   // Backend health check (runs in background, drives the status dot)
   const healthQuery = useQuery({
@@ -46,20 +44,16 @@ export function App() {
     refetchOnMount: true,
   });
 
-  const connectionStatus: "connected" | "disconnected" | "checking" =
-    healthQuery.isLoading
-      ? "checking"
-      : healthQuery.isError
-        ? "disconnected"
-        : "connected";
+  const connectionStatus: "connected" | "disconnected" | "checking" = healthQuery.isLoading
+    ? "checking"
+    : healthQuery.isError
+      ? "disconnected"
+      : "connected";
 
   // Surface API errors as toasts
   React.useEffect(() => {
     if (!error) return;
-    const message =
-      error instanceof ApiError
-        ? `${error.status}: ${error.message}`
-        : error.message;
+    const message = error instanceof ApiError ? `${error.status}: ${error.message}` : error.message;
     toast.error("Diagnosis failed", { description: message });
     logger.warn("app.diagnosis_error_toast", { message });
   }, [error]);
@@ -73,23 +67,19 @@ export function App() {
   // The top diagnosis's graph path — used to highlight the G6 graph.
   const topPath: string[] | undefined = React.useMemo(() => {
     if (highlightedDiagnosis && data) {
-      const match = data.diagnoses.find(
-        (d) => d.disease_name === highlightedDiagnosis,
-      );
+      const match = data.diagnoses.find((d) => d.disease_name === highlightedDiagnosis);
       if (match && match.graph_path.length > 0) return match.graph_path;
     }
     return data?.diagnoses[0]?.graph_path;
   }, [data, highlightedDiagnosis]);
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
+    <div className="bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
       <TopBar connectionStatus={connectionStatus} />
       <div className="flex min-h-0 flex-1">
         <Sidebar />
         <WorkspaceLayout
-          intake={
-            <ClinicalForm isSubmitting={isLoading} onSubmit={handleSubmit} />
-          }
+          intake={<ClinicalForm isSubmitting={isLoading} onSubmit={handleSubmit} />}
           results={
             <ResultsPanel
               isLoading={isLoading}

@@ -99,9 +99,7 @@ export function CommandPalette() {
               <Stethoscope />
               <div className="flex flex-col">
                 <span>{example.label}</span>
-                <span className="text-xs text-muted-foreground">
-                  {example.description}
-                </span>
+                <span className="text-muted-foreground text-xs">{example.description}</span>
               </div>
             </CommandItem>
           ))}

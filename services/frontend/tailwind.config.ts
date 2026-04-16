@@ -74,10 +74,10 @@ const config: Config = {
       },
       fontSize: {
         // Custom type scale
-        "display": ["2rem", { lineHeight: "2.5rem", fontWeight: "600", letterSpacing: "-0.025em" }],
-        "h1": ["1.5rem", { lineHeight: "2rem", fontWeight: "600", letterSpacing: "-0.02em" }],
-        "h2": ["1.25rem", { lineHeight: "1.75rem", fontWeight: "600", letterSpacing: "-0.015em" }],
-        "h3": ["1rem", { lineHeight: "1.5rem", fontWeight: "500" }],
+        display: ["2rem", { lineHeight: "2.5rem", fontWeight: "600", letterSpacing: "-0.025em" }],
+        h1: ["1.5rem", { lineHeight: "2rem", fontWeight: "600", letterSpacing: "-0.02em" }],
+        h2: ["1.25rem", { lineHeight: "1.75rem", fontWeight: "600", letterSpacing: "-0.015em" }],
+        h3: ["1rem", { lineHeight: "1.5rem", fontWeight: "500" }],
       },
       keyframes: {
         "accordion-down": {

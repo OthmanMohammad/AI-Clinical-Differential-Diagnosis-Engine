@@ -23,14 +23,7 @@ export const QUERY_KEYS = {
 };
 
 /** Entity types recognised from the backend knowledge graph. */
-export const ENTITY_TYPES = [
-  "Disease",
-  "Symptom",
-  "Gene",
-  "Drug",
-  "Phenotype",
-  "Anatomy",
-] as const;
+export const ENTITY_TYPES = ["Disease", "Symptom", "Gene", "Drug", "Phenotype", "Anatomy"] as const;
 
 export type EntityType = (typeof ENTITY_TYPES)[number];
 

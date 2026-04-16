@@ -24,10 +24,7 @@ export interface IntakeFormState {
 }
 
 interface IntakeStore extends IntakeFormState {
-  setField: <K extends keyof IntakeFormState>(
-    key: K,
-    value: IntakeFormState[K],
-  ) => void;
+  setField: <K extends keyof IntakeFormState>(key: K, value: IntakeFormState[K]) => void;
   addSymptom: (symptom: string) => void;
   removeSymptom: (index: number) => void;
   addHistory: (item: string) => void;
@@ -67,9 +64,7 @@ export const useIntakeStore = create<IntakeStore>()(
         const trimmed = symptom.trim();
         if (!trimmed) return;
         set((state) =>
-          state.symptoms.includes(trimmed)
-            ? state
-            : { symptoms: [...state.symptoms, trimmed] },
+          state.symptoms.includes(trimmed) ? state : { symptoms: [...state.symptoms, trimmed] },
         );
       },
       removeSymptom: (index) =>
@@ -81,9 +76,7 @@ export const useIntakeStore = create<IntakeStore>()(
         const trimmed = item.trim();
         if (!trimmed) return;
         set((state) =>
-          state.history.includes(trimmed)
-            ? state
-            : { history: [...state.history, trimmed] },
+          state.history.includes(trimmed) ? state : { history: [...state.history, trimmed] },
         );
       },
       removeHistory: (index) =>
@@ -105,16 +98,14 @@ export const useIntakeStore = create<IntakeStore>()(
           medications: state.medications.filter((_, i) => i !== index),
         })),
 
-      setVital: (key, value) =>
-        set((state) => ({ vitals: { ...state.vitals, [key]: value } })),
+      setVital: (key, value) => set((state) => ({ vitals: { ...state.vitals, [key]: value } })),
 
       addLab: (key, value) => {
         const trimmed = key.trim();
         if (!trimmed) return;
         set((state) => ({ labs: [...state.labs, { key: trimmed, value }] }));
       },
-      removeLab: (index) =>
-        set((state) => ({ labs: state.labs.filter((_, i) => i !== index) })),
+      removeLab: (index) => set((state) => ({ labs: state.labs.filter((_, i) => i !== index) })),
 
       loadIntake: (intake) =>
         set({

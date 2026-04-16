@@ -35,15 +35,11 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
   },
   {
     title: "Diagnosis",
-    shortcuts: [
-      { keys: ["Ctrl", "Enter"], description: "Submit diagnosis" },
-    ],
+    shortcuts: [{ keys: ["Ctrl", "Enter"], description: "Submit diagnosis" }],
   },
   {
     title: "Graph",
-    shortcuts: [
-      { keys: ["F"], description: "Toggle fullscreen graph" },
-    ],
+    shortcuts: [{ keys: ["F"], description: "Toggle fullscreen graph" }],
   },
 ];
 
@@ -64,22 +60,22 @@ export function HelpDialog() {
           {SHORTCUT_GROUPS.map((group, idx) => (
             <div key={group.title}>
               {idx > 0 && <Separator className="my-3" />}
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <h4 className="text-muted-foreground mb-2 text-xs font-semibold uppercase tracking-wider">
                 {group.title}
               </h4>
               <div className="space-y-2">
                 {group.shortcuts.map((s) => (
-                  <div
-                    key={s.description}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="text-sm text-foreground">{s.description}</span>
+                  <div key={s.description} className="flex items-center justify-between">
+                    <span className="text-foreground text-sm">{s.description}</span>
                     <div className="flex items-center gap-1">
                       {s.keys.map((k, i) => (
-                        <span key={`${s.description}-${k}-${i}`} className="inline-flex items-center gap-1">
+                        <span
+                          key={`${s.description}-${k}-${i}`}
+                          className="inline-flex items-center gap-1"
+                        >
                           <Kbd>{k}</Kbd>
                           {i < s.keys.length - 1 && (
-                            <span className="text-xs text-muted-foreground">+</span>
+                            <span className="text-muted-foreground text-xs">+</span>
                           )}
                         </span>
                       ))}

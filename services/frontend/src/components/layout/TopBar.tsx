@@ -25,22 +25,20 @@ export function TopBar({ connectionStatus }: TopBarProps) {
   }[connectionStatus];
 
   return (
-    <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md">
+    <header className="border-border bg-background/80 sticky top-0 z-40 flex h-12 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-md">
       {/* Brand */}
       <div className="flex items-center gap-2">
         <motion.div
           initial={{ rotate: -90, opacity: 0 }}
           animate={{ rotate: 0, opacity: 1 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-primary"
+          className="bg-primary/15 text-primary flex h-6 w-6 items-center justify-center rounded-md"
         >
           <Activity className="h-3.5 w-3.5" strokeWidth={2.5} />
         </motion.div>
         <div className="flex items-baseline gap-2">
           <h1 className="text-sm font-semibold tracking-tight">{APP_NAME}</h1>
-          <span className="hidden text-xs text-muted-foreground md:inline">
-            {APP_TAGLINE}
-          </span>
+          <span className="text-muted-foreground hidden text-xs md:inline">{APP_TAGLINE}</span>
         </div>
       </div>
 
@@ -50,7 +48,7 @@ export function TopBar({ connectionStatus }: TopBarProps) {
       <Button
         variant="outline"
         size="sm"
-        className="hidden h-8 gap-2 px-3 text-xs text-muted-foreground sm:inline-flex"
+        className="text-muted-foreground hidden h-8 gap-2 px-3 text-xs sm:inline-flex"
         onClick={toggleCommandPalette}
         aria-label="Open command palette"
       >
@@ -103,13 +101,8 @@ export function TopBar({ connectionStatus }: TopBarProps) {
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="flex items-center gap-1.5">
-            <Circle
-              className={`h-2 w-2 fill-current ${statusColor}`}
-              strokeWidth={0}
-            />
-            <span className="hidden text-xs text-muted-foreground md:inline">
-              API
-            </span>
+            <Circle className={`h-2 w-2 fill-current ${statusColor}`} strokeWidth={0} />
+            <span className="text-muted-foreground hidden text-xs md:inline">API</span>
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom">

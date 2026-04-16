@@ -7,10 +7,7 @@ export function DiagnosisSkeleton() {
   return (
     <div className="space-y-3">
       {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          className="rounded-lg border border-border bg-card p-4"
-        >
+        <div key={i} className="border-border bg-card rounded-lg border p-4">
           <div className="flex items-start gap-3">
             <Skeleton className="h-7 w-7 rounded-md" />
             <div className="flex-1 space-y-2">

@@ -47,12 +47,8 @@ export function ResultsPanel({
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <h2 className="text-h3 font-semibold tracking-tight">
-            Differential diagnosis
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Ranked by model confidence
-          </p>
+          <h2 className="text-h3 font-semibold tracking-tight">Differential diagnosis</h2>
+          <p className="text-muted-foreground text-xs">Ranked by model confidence</p>
         </div>
         {data && (
           <Tooltip>
@@ -62,9 +58,7 @@ export function ResultsPanel({
                 {data.diagnoses.length} diagnoses
               </Badge>
             </TooltipTrigger>
-            <TooltipContent side="bottom">
-              Verified against knowledge graph
-            </TooltipContent>
+            <TooltipContent side="bottom">Verified against knowledge graph</TooltipContent>
           </Tooltip>
         )}
       </div>
@@ -73,13 +67,7 @@ export function ResultsPanel({
       <ScrollArea className="-mr-2 flex-1 pr-2">
         <div className="space-y-3 px-0.5 pb-4">
           <AnimatePresence mode="wait">
-            {error && (
-              <ErrorState
-                key="error"
-                message={error.message}
-                onRetry={onRetry}
-              />
-            )}
+            {error && <ErrorState key="error" message={error.message} onRetry={onRetry} />}
 
             {!error && isLoading && (
               <motion.div
@@ -94,9 +82,7 @@ export function ResultsPanel({
               </motion.div>
             )}
 
-            {!error && !isLoading && !data && (
-              <EmptyState key="empty" />
-            )}
+            {!error && !isLoading && !data && <EmptyState key="empty" />}
 
             {!error && !isLoading && data && (
               <motion.div
@@ -139,23 +125,19 @@ export function ResultsPanel({
                         rank={i + 1}
                         delay={i * 0.08}
                         onHighlight={onHighlightDiagnosis}
-                        isHighlighted={
-                          highlightedDiagnosis === d.disease_name
-                        }
+                        isHighlighted={highlightedDiagnosis === d.disease_name}
                       />
                     ))}
                   </div>
                 ) : (
                   !data.emergency.triggered && (
-                    <p className="py-8 text-center text-sm text-muted-foreground">
+                    <p className="text-muted-foreground py-8 text-center text-sm">
                       No diagnoses could be generated.
                     </p>
                   )
                 )}
 
-                {data.reasoning_summary && (
-                  <ReasoningSummary text={data.reasoning_summary} />
-                )}
+                {data.reasoning_summary && <ReasoningSummary text={data.reasoning_summary} />}
               </motion.div>
             )}
           </AnimatePresence>
@@ -174,51 +156,35 @@ function EmptyState() {
       className="flex h-64 flex-col items-center justify-center text-center"
     >
       <div className="relative mb-4">
-        <div className="absolute inset-0 animate-pulse-glow rounded-full" />
-        <div className="relative flex h-14 w-14 items-center justify-center rounded-full border border-border bg-card">
-          <Brain className="h-6 w-6 text-muted-foreground" />
+        <div className="animate-pulse-glow absolute inset-0 rounded-full" />
+        <div className="border-border bg-card relative flex h-14 w-14 items-center justify-center rounded-full border">
+          <Brain className="text-muted-foreground h-6 w-6" />
         </div>
       </div>
-      <h3 className="text-sm font-medium text-foreground">
-        Ready to analyze
-      </h3>
-      <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-        Enter patient symptoms and press{" "}
-        <span className="font-mono text-foreground">Ctrl + ↵</span> to generate
-        a ranked differential diagnosis with graph-backed reasoning.
+      <h3 className="text-foreground text-sm font-medium">Ready to analyze</h3>
+      <p className="text-muted-foreground mt-1 max-w-xs text-xs">
+        Enter patient symptoms and press <span className="text-foreground font-mono">Ctrl + ↵</span>{" "}
+        to generate a ranked differential diagnosis with graph-backed reasoning.
       </p>
     </motion.div>
   );
 }
 
-function ErrorState({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry?: () => void;
-}) {
+function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="rounded-lg border border-destructive/40 bg-destructive/5 p-4"
+      className="border-destructive/40 bg-destructive/5 rounded-lg border p-4"
     >
       <div className="flex items-start gap-3">
-        <AlertOctagon className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+        <AlertOctagon className="text-destructive mt-0.5 h-4 w-4 shrink-0" />
         <div className="flex-1">
-          <h3 className="text-sm font-semibold text-destructive">
-            Diagnosis failed
-          </h3>
-          <p className="mt-1 text-xs text-muted-foreground">{message}</p>
+          <h3 className="text-destructive text-sm font-semibold">Diagnosis failed</h3>
+          <p className="text-muted-foreground mt-1 text-xs">{message}</p>
           {onRetry && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3 gap-1.5"
-              onClick={onRetry}
-            >
+            <Button variant="outline" size="sm" className="mt-3 gap-1.5" onClick={onRetry}>
               <RefreshCcw className="h-3 w-3" />
               Retry
             </Button>
@@ -259,12 +225,12 @@ function ReasoningSummary({ text }: { text: string }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="rounded-lg border border-border bg-muted/20 p-4"
+      className="border-border bg-muted/20 rounded-lg border p-4"
     >
-      <h4 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <h4 className="text-muted-foreground mb-1.5 text-[10px] font-semibold uppercase tracking-wider">
         Reasoning summary
       </h4>
-      <p className="text-xs leading-relaxed text-foreground/90">{text}</p>
+      <p className="text-foreground/90 text-xs leading-relaxed">{text}</p>
     </motion.div>
   );
 }

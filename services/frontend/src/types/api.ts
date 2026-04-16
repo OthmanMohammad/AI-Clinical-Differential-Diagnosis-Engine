@@ -39,13 +39,7 @@ export interface EmergencyResult {
   message: string;
 }
 
-export type GraphNodeType =
-  | "Disease"
-  | "Symptom"
-  | "Gene"
-  | "Drug"
-  | "Phenotype"
-  | "Anatomy";
+export type GraphNodeType = "Disease" | "Symptom" | "Gene" | "Drug" | "Phenotype" | "Anatomy";
 
 export interface GraphNode {
   id: string;

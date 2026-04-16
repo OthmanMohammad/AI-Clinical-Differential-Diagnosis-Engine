@@ -43,9 +43,7 @@ function getStoredTheme(): Theme {
 
 function getSystemTheme(): ResolvedTheme {
   if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: light)").matches
-    ? "light"
-    : "dark";
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
 function applyTheme(resolved: ResolvedTheme): void {
@@ -62,9 +60,7 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = React.useState<Theme>(() => getStoredTheme());
-  const [systemTheme, setSystemTheme] = React.useState<ResolvedTheme>(() =>
-    getSystemTheme(),
-  );
+  const [systemTheme, setSystemTheme] = React.useState<ResolvedTheme>(() => getSystemTheme());
 
   const resolvedTheme: ResolvedTheme = theme === "system" ? systemTheme : theme;
 

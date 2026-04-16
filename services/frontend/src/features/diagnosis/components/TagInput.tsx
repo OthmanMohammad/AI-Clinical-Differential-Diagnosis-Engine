@@ -128,9 +128,9 @@ export function TagInput({
     <div className="relative">
       <div
         className={cn(
-          "flex min-h-9 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-transparent px-2 py-1.5 text-sm shadow-sm",
+          "border-input flex min-h-9 w-full flex-wrap items-center gap-1 rounded-md border bg-transparent px-2 py-1.5 text-sm shadow-sm",
           "transition-colors",
-          focused && "border-ring ring-1 ring-ring/30",
+          focused && "border-ring ring-ring/30 ring-1",
         )}
       >
         <AnimatePresence initial={false}>
@@ -150,7 +150,7 @@ export function TagInput({
               <span>{tag}</span>
               <button
                 type="button"
-                className="rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-1 focus:ring-ring"
+                className="focus:ring-ring rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-1"
                 onClick={() => onRemove(idx)}
                 aria-label={`Remove ${tag}`}
               >
@@ -183,7 +183,7 @@ export function TagInput({
               backgroundColor: "hsl(var(--popover))",
               color: "hsl(var(--popover-foreground))",
             }}
-            className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-md border border-border shadow-2xl"
+            className="border-border absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-md border shadow-2xl"
           >
             <ul role="listbox" className="max-h-64 overflow-y-auto py-1">
               {/* "Add literal" row — always first, default highlighted */}
@@ -206,7 +206,7 @@ export function TagInput({
                       }
                     : undefined
                 }
-                className="flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm font-medium transition-colors hover:bg-muted/60"
+                className="hover:bg-muted/60 flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm font-medium transition-colors"
               >
                 <span className="flex items-center gap-2">
                   <span className="text-xs opacity-80">Add</span>
@@ -218,7 +218,7 @@ export function TagInput({
                 <>
                   <li
                     aria-hidden
-                    className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                    className="text-muted-foreground px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider"
                   >
                     Suggestions
                   </li>
@@ -246,7 +246,7 @@ export function TagInput({
                               }
                             : undefined
                         }
-                        className="cursor-pointer px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted/60"
+                        className="hover:bg-muted/60 cursor-pointer px-3 py-1.5 text-sm font-medium transition-colors"
                       >
                         {s}
                       </li>
@@ -255,10 +255,10 @@ export function TagInput({
                 </>
               )}
             </ul>
-            <div className="border-t border-border px-3 py-1.5 text-[10px] text-muted-foreground">
+            <div className="border-border text-muted-foreground border-t px-3 py-1.5 text-[10px]">
               <kbd className="font-mono">↵</kbd> add highlighted ·{" "}
-              <kbd className="font-mono">↑↓</kbd> navigate ·{" "}
-              <kbd className="font-mono">Tab</kbd> first match
+              <kbd className="font-mono">↑↓</kbd> navigate · <kbd className="font-mono">Tab</kbd>{" "}
+              first match
             </div>
           </motion.div>
         )}

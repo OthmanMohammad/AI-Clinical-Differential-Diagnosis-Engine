@@ -127,11 +127,7 @@ export function useDiagnosis(): UseDiagnosisState {
       const startAt = elapsed;
       simulatorTimers.current.push(
         setTimeout(() => {
-          setStages((prev) =>
-            prev.map((s, i) =>
-              i === index ? { ...s, status: "running" } : s,
-            ),
-          );
+          setStages((prev) => prev.map((s, i) => (i === index ? { ...s, status: "running" } : s)));
         }, startAt),
       );
 
@@ -141,9 +137,7 @@ export function useDiagnosis(): UseDiagnosisState {
         setTimeout(() => {
           setStages((prev) =>
             prev.map((s, i) =>
-              i === index
-                ? { ...s, status: "complete", elapsedMs: STAGE_DURATIONS_MS[stage] }
-                : s,
+              i === index ? { ...s, status: "complete", elapsedMs: STAGE_DURATIONS_MS[stage] } : s,
             ),
           );
         }, endAt),
@@ -155,9 +149,7 @@ export function useDiagnosis(): UseDiagnosisState {
 
   const markAllComplete = React.useCallback(() => {
     clearSimulatorTimers();
-    setStages((prev) =>
-      prev.map((s) => ({ ...s, status: "complete" as const })),
-    );
+    setStages((prev) => prev.map((s) => ({ ...s, status: "complete" as const })));
   }, [clearSimulatorTimers]);
 
   const markCurrentStageError = React.useCallback(() => {
@@ -166,9 +158,7 @@ export function useDiagnosis(): UseDiagnosisState {
       // Find first non-complete stage and mark it as error
       const idx = prev.findIndex((s) => s.status !== "complete");
       if (idx === -1) return prev;
-      return prev.map((s, i) =>
-        i === idx ? { ...s, status: "error" as const } : s,
-      );
+      return prev.map((s, i) => (i === idx ? { ...s, status: "error" as const } : s));
     });
   }, [clearSimulatorTimers]);
 
@@ -215,13 +205,7 @@ export function useDiagnosis(): UseDiagnosisState {
         abortRef.current = null;
       }
     },
-    [
-      cancel,
-      startStageSimulation,
-      markAllComplete,
-      markCurrentStageError,
-      clearSimulatorTimers,
-    ],
+    [cancel, startStageSimulation, markAllComplete, markCurrentStageError, clearSimulatorTimers],
   );
 
   // Cleanup on unmount

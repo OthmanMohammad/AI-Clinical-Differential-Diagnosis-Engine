@@ -43,11 +43,7 @@ function log(level: LogLevel, message: string, context?: LogContext): void {
       context,
     );
   } else {
-    console[level === "debug" ? "log" : level](
-      `${prefix} ${message}`,
-      style,
-      "color: inherit",
-    );
+    console[level === "debug" ? "log" : level](`${prefix} ${message}`, style, "color: inherit");
   }
 }
 

@@ -15,7 +15,7 @@ export function Footer({ modelUsed, promptVersion, requestId, className }: Foote
   return (
     <footer
       className={cn(
-        "flex h-8 shrink-0 items-center justify-between gap-4 border-t border-border bg-card px-4 text-[11px] text-muted-foreground",
+        "border-border bg-card text-muted-foreground flex h-8 shrink-0 items-center justify-between gap-4 border-t px-4 text-[11px]",
         className,
       )}
     >

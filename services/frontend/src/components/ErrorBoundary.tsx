@@ -42,22 +42,20 @@ export class ErrorBoundary extends React.Component<Props, State> {
   override render() {
     if (this.state.hasError) {
       return (
-        <div className="flex h-screen w-screen items-center justify-center bg-background p-8">
-          <div className="w-full max-w-md rounded-lg border border-destructive/40 bg-destructive/5 p-6 shadow-lg">
+        <div className="bg-background flex h-screen w-screen items-center justify-center p-8">
+          <div className="border-destructive/40 bg-destructive/5 w-full max-w-md rounded-lg border p-6 shadow-lg">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/15">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
+              <div className="bg-destructive/15 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                <AlertTriangle className="text-destructive h-5 w-5" />
               </div>
               <div className="flex-1">
-                <h2 className="text-base font-semibold text-foreground">
-                  Something went wrong
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  The application hit an unexpected error. You can try to recover
-                  without reloading the page.
+                <h2 className="text-foreground text-base font-semibold">Something went wrong</h2>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  The application hit an unexpected error. You can try to recover without reloading
+                  the page.
                 </p>
                 {this.state.error && (
-                  <pre className="mt-3 max-h-32 overflow-auto rounded-md border border-border bg-card p-2 font-mono text-[10px] text-muted-foreground">
+                  <pre className="border-border bg-card text-muted-foreground mt-3 max-h-32 overflow-auto rounded-md border p-2 font-mono text-[10px]">
                     {this.state.error.message}
                   </pre>
                 )}
@@ -66,11 +64,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
                     <RefreshCcw className="h-3 w-3" />
                     Try again
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.location.reload()}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
                     Reload page
                   </Button>
                 </div>

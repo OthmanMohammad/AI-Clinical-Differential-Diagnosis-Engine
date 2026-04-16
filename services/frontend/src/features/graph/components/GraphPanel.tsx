@@ -92,10 +92,7 @@ export function GraphPanel({ response, topPath }: GraphPanelProps) {
 
           {/* Overlays */}
           <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap items-start justify-between gap-2">
-            <GraphLegend
-              visibleTypes={visibleTypes}
-              onToggle={handleToggleType}
-            />
+            <GraphLegend visibleTypes={visibleTypes} onToggle={handleToggleType} />
             <GraphToolbar
               layout={layout}
               onLayoutChange={handleLayoutChange}

@@ -26,7 +26,7 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
   );
 
   return (
-    <main className="flex min-h-0 flex-1 bg-background">
+    <main className="bg-background flex min-h-0 flex-1">
       <AnimatePresence mode="wait" initial={false}>
         {graphFullscreen ? (
           <motion.div
@@ -54,19 +54,12 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
               className="h-full"
               autoSaveId={undefined}
             >
-              <Panel
-                defaultSize={panelSizes[0]}
-                minSize={16}
-                maxSize={45}
-                className="min-w-0"
-              >
+              <Panel defaultSize={panelSizes[0]} minSize={16} maxSize={45} className="min-w-0">
                 <WorkspacePanel label="Clinical intake">{intake}</WorkspacePanel>
               </Panel>
               <ResizeHandle />
               <Panel defaultSize={panelSizes[1]} minSize={18} className="min-w-0">
-                <WorkspacePanel label="Differential diagnosis">
-                  {results}
-                </WorkspacePanel>
+                <WorkspacePanel label="Differential diagnosis">{results}</WorkspacePanel>
               </Panel>
               <ResizeHandle />
               <Panel defaultSize={panelSizes[2]} minSize={18} className="min-w-0">
@@ -93,7 +86,7 @@ function WorkspacePanel({ label, children, noPadding }: WorkspacePanelProps) {
     <section
       aria-label={label}
       className={cn(
-        "flex h-full min-w-0 flex-col overflow-hidden bg-background",
+        "bg-background flex h-full min-w-0 flex-col overflow-hidden",
         !noPadding && "p-4",
       )}
     >
@@ -104,9 +97,9 @@ function WorkspacePanel({ label, children, noPadding }: WorkspacePanelProps) {
 
 function ResizeHandle() {
   return (
-    <PanelResizeHandle className="group relative w-px bg-border outline-none transition-colors data-[resize-handle-active]:bg-primary">
+    <PanelResizeHandle className="bg-border data-[resize-handle-active]:bg-primary group relative w-px outline-none transition-colors">
       <div className="absolute inset-y-0 -left-1 -right-1 cursor-col-resize" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-8 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-border transition-colors group-hover:bg-primary/60" />
+      <div className="bg-border group-hover:bg-primary/60 pointer-events-none absolute left-1/2 top-1/2 h-8 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors" />
     </PanelResizeHandle>
   );
 }

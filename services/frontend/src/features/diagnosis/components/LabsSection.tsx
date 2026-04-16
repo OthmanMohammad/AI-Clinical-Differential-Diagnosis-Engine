@@ -188,8 +188,7 @@ export function LabsSection() {
     }
   };
 
-  const dropdownOpen =
-    keyFocused && filteredLabs.length > 0 && dropdownPos !== null;
+  const dropdownOpen = keyFocused && filteredLabs.length > 0 && dropdownPos !== null;
 
   const dropdownNode = (
     <AnimatePresence>
@@ -216,7 +215,7 @@ export function LabsSection() {
             backgroundColor: "hsl(var(--popover))",
             color: "hsl(var(--popover-foreground))",
           }}
-          className="z-[60] overflow-y-auto overscroll-contain rounded-md border border-border shadow-2xl"
+          className="border-border z-[60] overflow-y-auto overscroll-contain rounded-md border shadow-2xl"
         >
           <ul role="listbox" className="py-1">
             {filteredLabs.map((l, i) => {
@@ -249,7 +248,7 @@ export function LabsSection() {
                         }
                       : undefined
                   }
-                  className="cursor-pointer px-3 py-1 text-xs font-medium transition-colors hover:bg-muted/60"
+                  className="hover:bg-muted/60 cursor-pointer px-3 py-1 text-xs font-medium transition-colors"
                 >
                   {l}
                 </li>
@@ -262,11 +261,11 @@ export function LabsSection() {
   );
 
   return (
-    <div className="rounded-md border border-border">
+    <div className="border-border rounded-md border">
       <button
         type="button"
         className={cn(
-          "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent/50",
+          "hover:bg-accent/50 flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors",
           expanded && "bg-accent/30",
         )}
         onClick={() => setField("labsExpanded", !expanded)}
@@ -276,12 +275,10 @@ export function LabsSection() {
           <FlaskConical className="h-3.5 w-3.5 text-[hsl(var(--gene))]" />
           Labs
           {labs.length > 0 && (
-            <span className="text-[10px] text-muted-foreground">({labs.length} set)</span>
+            <span className="text-muted-foreground text-[10px]">({labs.length} set)</span>
           )}
         </span>
-        <ChevronDown
-          className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")}
-        />
+        <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
       </button>
 
       <AnimatePresence initial={false}>
@@ -293,17 +290,17 @@ export function LabsSection() {
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <div className="space-y-2 border-t border-border p-3">
+            <div className="border-border space-y-2 border-t p-3">
               {labs.length > 0 && (
                 <ul className="space-y-1">
                   {labs.map((lab, i) => (
                     <li
                       key={`${lab.key}-${i}`}
-                      className="flex items-center justify-between rounded-sm bg-muted/30 px-2 py-1 text-xs"
+                      className="bg-muted/30 flex items-center justify-between rounded-sm px-2 py-1 text-xs"
                     >
                       <span className="font-mono">{lab.key}</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-foreground/80">{lab.value}</span>
+                        <span className="text-foreground/80 font-mono">{lab.value}</span>
                         <button
                           type="button"
                           onClick={() => removeLab(i)}
@@ -362,8 +359,7 @@ export function LabsSection() {
         )}
       </AnimatePresence>
 
-      {typeof document !== "undefined" &&
-        createPortal(dropdownNode, document.body)}
+      {typeof document !== "undefined" && createPortal(dropdownNode, document.body)}
     </div>
   );
 }

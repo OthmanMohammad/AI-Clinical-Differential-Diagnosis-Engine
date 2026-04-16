@@ -38,13 +38,13 @@ export function DiagnosisCard({
       <Card
         className={cn(
           "group relative overflow-hidden transition-all",
-          isHighlighted && "ring-2 ring-primary/40",
+          isHighlighted && "ring-primary/40 ring-2",
         )}
       >
         {rank === 1 && (
           <div
             aria-hidden
-            className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent"
+            className="via-primary/60 absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent"
           />
         )}
         <div className="p-4">
@@ -62,7 +62,7 @@ export function DiagnosisCard({
                 {rank}
               </span>
               <div className="min-w-0 flex-1">
-                <h3 className="break-words text-sm font-semibold leading-snug text-foreground">
+                <h3 className="text-foreground break-words text-sm font-semibold leading-snug">
                   {diagnosis.disease_name}
                 </h3>
                 <div className="mt-1.5">
@@ -76,15 +76,10 @@ export function DiagnosisCard({
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-3 flex items-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground mt-3 flex items-center gap-1 text-[11px] font-medium transition-colors"
             aria-expanded={expanded}
           >
-            <ChevronRight
-              className={cn(
-                "h-3 w-3 transition-transform",
-                expanded && "rotate-90",
-              )}
-            />
+            <ChevronRight className={cn("h-3 w-3 transition-transform", expanded && "rotate-90")} />
             {diagnosis.supporting_evidence.length} evidence items
           </button>
 
@@ -97,24 +92,24 @@ export function DiagnosisCard({
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <ul className="mt-2 space-y-1.5 border-t border-border pt-2">
+            <ul className="border-border mt-2 space-y-1.5 border-t pt-2">
               {diagnosis.supporting_evidence.map((ev, i) => (
                 <EvidenceRow key={i} text={ev} />
               ))}
             </ul>
             {diagnosis.graph_path.length > 0 && (
-              <div className="mt-2 border-t border-border pt-2">
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="border-border mt-2 border-t pt-2">
+                <p className="text-muted-foreground mb-1 text-[10px] font-semibold uppercase tracking-wider">
                   Graph path
                 </p>
                 <div className="flex flex-wrap items-center gap-1 font-mono text-[11px]">
                   {diagnosis.graph_path.map((node, i) => (
                     <React.Fragment key={i}>
-                      <span className="rounded-sm bg-muted/60 px-1.5 py-0.5 text-foreground/80">
+                      <span className="bg-muted/60 text-foreground/80 rounded-sm px-1.5 py-0.5">
                         {node}
                       </span>
                       {i < diagnosis.graph_path.length - 1 && (
-                        <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                        <ChevronRight className="text-muted-foreground h-3 w-3" />
                       )}
                     </React.Fragment>
                   ))}
@@ -132,8 +127,8 @@ function EvidenceRow({ text }: { text: string }) {
   const { copy, copied } = useCopyToClipboard();
 
   return (
-    <li className="group/row flex items-start gap-2 rounded-sm px-1.5 py-1 text-[11px] text-muted-foreground hover:bg-muted/40">
-      <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-primary/60" />
+    <li className="group/row text-muted-foreground hover:bg-muted/40 flex items-start gap-2 rounded-sm px-1.5 py-1 text-[11px]">
+      <span className="bg-primary/60 mt-1 h-1 w-1 shrink-0 rounded-full" />
       <span className="flex-1 break-words font-mono leading-snug">{text}</span>
       <Button
         variant="ghost"

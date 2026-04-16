@@ -31,9 +31,7 @@ export function GraphSearch({ nodes, open, onClose, onSelect, className }: Graph
   const matches = React.useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    return nodes
-      .filter((n) => n.name.toLowerCase().includes(q))
-      .slice(0, 8);
+    return nodes.filter((n) => n.name.toLowerCase().includes(q)).slice(0, 8);
   }, [nodes, query]);
 
   const handleKey = (e: React.KeyboardEvent) => {
@@ -63,12 +61,12 @@ export function GraphSearch({ nodes, open, onClose, onSelect, className }: Graph
             color: "hsl(var(--popover-foreground))",
           }}
           className={cn(
-            "pointer-events-auto w-80 rounded-md border border-border shadow-2xl",
+            "border-border pointer-events-auto w-80 rounded-md border shadow-2xl",
             className,
           )}
         >
-          <div className="flex items-center gap-2 border-b border-border px-2">
-            <Search className="h-3.5 w-3.5 text-muted-foreground" />
+          <div className="border-border flex items-center gap-2 border-b px-2">
+            <Search className="text-muted-foreground h-3.5 w-3.5" />
             <Input
               ref={inputRef}
               value={query}
@@ -104,7 +102,7 @@ export function GraphSearch({ nodes, open, onClose, onSelect, className }: Graph
                 >
                   <div className="flex items-center justify-between">
                     <span className="truncate">{n.name}</span>
-                    <span className="ml-2 shrink-0 font-mono text-[10px] text-muted-foreground">
+                    <span className="text-muted-foreground ml-2 shrink-0 font-mono text-[10px]">
                       {n.type}
                     </span>
                   </div>
@@ -113,9 +111,7 @@ export function GraphSearch({ nodes, open, onClose, onSelect, className }: Graph
             </ul>
           )}
           {query && matches.length === 0 && (
-            <div className="px-3 py-6 text-center text-xs text-muted-foreground">
-              No matches
-            </div>
+            <div className="text-muted-foreground px-3 py-6 text-center text-xs">No matches</div>
           )}
         </motion.div>
       )}

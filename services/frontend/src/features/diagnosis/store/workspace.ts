@@ -42,10 +42,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       helpOpen: false,
 
       setPanelSizes: (sizes) => set({ panelSizes: sizes }),
-      toggleSidebar: () =>
-        set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
-      toggleGraphFullscreen: () =>
-        set((state) => ({ graphFullscreen: !state.graphFullscreen })),
+      toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      toggleGraphFullscreen: () => set((state) => ({ graphFullscreen: !state.graphFullscreen })),
       setGraphFullscreen: (v) => set({ graphFullscreen: v }),
       setCommandPaletteOpen: (v) => set({ commandPaletteOpen: v }),
       toggleCommandPalette: () =>

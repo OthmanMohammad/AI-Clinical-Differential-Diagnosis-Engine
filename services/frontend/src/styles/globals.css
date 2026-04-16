@@ -46,24 +46,24 @@
     --ring: 221 83% 53%;
 
     /* Clinical entity colors — vivid and maximally distinct */
-    --disease: 280 88% 56%;       /* Vivid violet — primary medical entity */
-    --symptom: 220 55% 50%;       /* Vivid blue — patient-reported */
-    --gene: 142 80% 38%;          /* Vivid green — biological */
-    --drug: 25 95% 52%;           /* Vivid orange — pharmacology */
-    --phenotype: 199 95% 48%;     /* Vivid cyan — observable traits */
-    --anatomy: 175 80% 38%;       /* Vivid teal — body structures */
+    --disease: 280 88% 56%; /* Vivid violet — primary medical entity */
+    --symptom: 220 55% 50%; /* Vivid blue — patient-reported */
+    --gene: 142 80% 38%; /* Vivid green — biological */
+    --drug: 25 95% 52%; /* Vivid orange — pharmacology */
+    --phenotype: 199 95% 48%; /* Vivid cyan — observable traits */
+    --anatomy: 175 80% 38%; /* Vivid teal — body structures */
 
     /* State colors */
     --success: 142 72% 38%;
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
-    --emergency: 348 83% 47%;     /* Crimson — distinct from destructive */
+    --emergency: 348 83% 47%; /* Crimson — distinct from destructive */
     --emergency-foreground: 0 0% 100%;
   }
 
   .dark {
     /* --- DARK THEME --- */
-    --background: 222 47% 6%;     /* Deep slate, near-black but not pure */
+    --background: 222 47% 6%; /* Deep slate, near-black but not pure */
     --foreground: 210 40% 96%;
 
     --card: 222 47% 9%;
@@ -123,7 +123,9 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 
   /* Selection */

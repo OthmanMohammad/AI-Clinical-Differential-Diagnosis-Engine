@@ -152,9 +152,7 @@ function buildGraphData(
       const src = nodeById.get(e.source)!;
       const tgt = nodeById.get(e.target)!;
       const isHidden = hiddenTypes.has(src.type) || hiddenTypes.has(tgt.type);
-      const onPath =
-        pathSet.has(src.name.toLowerCase()) &&
-        pathSet.has(tgt.name.toLowerCase());
+      const onPath = pathSet.has(src.name.toLowerCase()) && pathSet.has(tgt.name.toLowerCase());
       return {
         id: `e-${i}`,
         source: e.source,
@@ -176,22 +174,12 @@ function buildGraphData(
 
 export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGraphProps>(
   function ReasoningGraph(
-    {
-      nodes,
-      edges,
-      topPath,
-      hiddenTypes,
-      layout = "radial",
-      onNodeClick,
-      className,
-    },
+    { nodes, edges, topPath, hiddenTypes, layout = "radial", onNodeClick, className },
     ref,
   ) {
     const containerRef = React.useRef<HTMLDivElement>(null);
     const graphRef = React.useRef<Graph | null>(null);
-    const resizeObserverDebounce = React.useRef<ReturnType<typeof setTimeout> | null>(
-      null,
-    );
+    const resizeObserverDebounce = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const { resolvedTheme } = useTheme();
 
     // Latest values exposed via refs so the G6 instance can read them
@@ -201,10 +189,7 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       onNodeClickRef.current = onNodeClick;
     }, [onNodeClick]);
 
-    const hidden = React.useMemo(
-      () => hiddenTypes ?? new Set<string>(),
-      [hiddenTypes],
-    );
+    const hidden = React.useMemo(() => hiddenTypes ?? new Set<string>(), [hiddenTypes]);
 
     /** Rebuild G6 data from the current props (and current theme CSS vars). */
     const data = React.useMemo(
@@ -431,11 +416,7 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
     }
 
     return (
-      <div
-        ref={containerRef}
-        className={className}
-        style={{ width: "100%", height: "100%" }}
-      />
+      <div ref={containerRef} className={className} style={{ width: "100%", height: "100%" }} />
     );
   },
 );

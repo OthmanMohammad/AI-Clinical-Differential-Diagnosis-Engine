@@ -20,7 +20,7 @@ const TooltipContent = React.forwardRef<
         color: "hsl(var(--popover-foreground))",
       }}
       className={cn(
-        "z-50 overflow-hidden rounded-md border border-border px-2 py-1 text-xs shadow-xl",
+        "border-border z-50 overflow-hidden rounded-md border px-2 py-1 text-xs shadow-xl",
         "data-[state=delayed-open]:data-[side=top]:animate-slide-down",
         "data-[state=delayed-open]:data-[side=bottom]:animate-slide-up",
         "data-[state=delayed-open]:data-[side=left]:animate-slide-up",

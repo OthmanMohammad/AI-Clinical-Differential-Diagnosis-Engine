@@ -6,10 +6,7 @@
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-import {
-  getStageLabel,
-  type StageStatus,
-} from "@/features/diagnosis/hooks/useDiagnosis";
+import { getStageLabel, type StageStatus } from "@/features/diagnosis/hooks/useDiagnosis";
 import { formatDuration } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -19,14 +16,14 @@ interface PipelineStepperProps {
 
 export function PipelineStepper({ stages }: PipelineStepperProps) {
   return (
-    <div className="rounded-lg border border-border bg-card/50 p-4">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="border-border bg-card/50 rounded-lg border p-4">
+      <h3 className="text-muted-foreground mb-3 text-xs font-semibold uppercase tracking-wider">
         Pipeline
       </h3>
       <ol className="relative space-y-3">
         <span
           aria-hidden
-          className="absolute left-[9px] top-2 h-[calc(100%-16px)] w-px bg-border"
+          className="bg-border absolute left-[9px] top-2 h-[calc(100%-16px)] w-px"
         />
         {stages.map((stage, idx) => (
           <StepRow key={stage.name} stage={stage} index={idx} />
@@ -61,7 +58,7 @@ function StepRow({ stage, index }: StepRowProps) {
             {label}
           </span>
           {stage.elapsedMs != null && stage.status === "complete" && (
-            <span className="font-mono text-[10px] text-muted-foreground/70">
+            <span className="text-muted-foreground/70 font-mono text-[10px]">
               {formatDuration(stage.elapsedMs)}
             </span>
           )}
@@ -71,13 +68,7 @@ function StepRow({ stage, index }: StepRowProps) {
   );
 }
 
-function StepIcon({
-  status,
-  index,
-}: {
-  status: StageStatus["status"];
-  index: number;
-}) {
+function StepIcon({ status, index }: { status: StageStatus["status"]; index: number }) {
   return (
     <motion.div
       initial={{ scale: 0.6, opacity: 0 }}
@@ -95,9 +86,7 @@ function StepIcon({
       {status === "running" && <Loader2 className="h-3 w-3 animate-spin" />}
       {status === "complete" && <Check className="h-3 w-3" strokeWidth={3} />}
       {status === "error" && <AlertCircle className="h-3 w-3" />}
-      {status === "pending" && (
-        <span className="h-1.5 w-1.5 rounded-full bg-current opacity-40" />
-      )}
+      {status === "pending" && <span className="h-1.5 w-1.5 rounded-full bg-current opacity-40" />}
     </motion.div>
   );
 }

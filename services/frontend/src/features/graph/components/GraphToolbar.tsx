@@ -19,11 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Kbd } from "@/components/ui/kbd";
 import { LAYOUT_LABELS, type LayoutType } from "@/features/graph/config/layouts";
 import { cn } from "@/lib/utils";
@@ -56,7 +52,7 @@ export function GraphToolbar({
   return (
     <div
       className={cn(
-        "pointer-events-auto flex items-center gap-0.5 rounded-md border border-border bg-card/80 p-0.5 shadow-sm backdrop-blur",
+        "border-border bg-card/80 pointer-events-auto flex items-center gap-0.5 rounded-md border p-0.5 shadow-sm backdrop-blur",
         className,
       )}
     >
@@ -87,7 +83,7 @@ export function GraphToolbar({
         <TooltipContent side="bottom">Zoom out</TooltipContent>
       </Tooltip>
 
-      <div className="mx-0.5 h-4 w-px bg-border" />
+      <div className="bg-border mx-0.5 h-4 w-px" />
 
       <Tooltip>
         <TooltipTrigger asChild>
@@ -134,7 +130,7 @@ export function GraphToolbar({
         <TooltipContent side="bottom">Export PNG</TooltipContent>
       </Tooltip>
 
-      <div className="mx-0.5 h-4 w-px bg-border" />
+      <div className="bg-border mx-0.5 h-4 w-px" />
 
       <Tooltip>
         <TooltipTrigger asChild>

@@ -11,7 +11,7 @@ export function GraphLegend({ visibleTypes, onToggle, className }: GraphLegendPr
   return (
     <div
       className={cn(
-        "pointer-events-auto flex flex-wrap items-center gap-1.5 rounded-md border border-border bg-card/80 px-2 py-1.5 shadow-sm backdrop-blur",
+        "border-border bg-card/80 pointer-events-auto flex flex-wrap items-center gap-1.5 rounded-md border px-2 py-1.5 shadow-sm backdrop-blur",
         className,
       )}
     >

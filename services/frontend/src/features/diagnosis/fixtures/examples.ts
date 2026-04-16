@@ -51,8 +51,7 @@ export const EXAMPLE_CASES: ExampleCase[] = [
       sex: "male",
       history: [],
       medications: [],
-      free_text:
-        "Sudden onset severe headache with photophobia, neck stiffness, and fever 39.5°C.",
+      free_text: "Sudden onset severe headache with photophobia, neck stiffness, and fever 39.5°C.",
     },
   },
   {

@@ -32,11 +32,11 @@ export function VitalsSection() {
   const setField = useIntakeStore((s) => s.setField);
 
   return (
-    <div className="rounded-md border border-border">
+    <div className="border-border rounded-md border">
       <button
         type="button"
         className={cn(
-          "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent/50",
+          "hover:bg-accent/50 flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors",
           expanded && "bg-accent/30",
         )}
         onClick={() => setField("vitalsExpanded", !expanded)}
@@ -46,14 +46,12 @@ export function VitalsSection() {
           <Heart className="h-3.5 w-3.5 text-[hsl(var(--drug))]" />
           Vital signs
           {Object.values(vitals).some((v) => v != null) && (
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-muted-foreground text-[10px]">
               ({Object.values(vitals).filter((v) => v != null).length} set)
             </span>
           )}
         </span>
-        <ChevronDown
-          className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")}
-        />
+        <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
       </button>
 
       <AnimatePresence initial={false}>
@@ -65,7 +63,7 @@ export function VitalsSection() {
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <div className="grid grid-cols-2 gap-3 border-t border-border p-3">
+            <div className="border-border grid grid-cols-2 gap-3 border-t p-3">
               {FIELDS.map((f) => (
                 <div key={f.key} className="space-y-1">
                   <Label className="text-[10px]">
@@ -79,12 +77,7 @@ export function VitalsSection() {
                     step={f.step}
                     value={vitals[f.key] ?? ""}
                     onChange={(e) =>
-                      setVital(
-                        f.key,
-                        e.target.value === ""
-                          ? null
-                          : Number(e.target.value),
-                      )
+                      setVital(f.key, e.target.value === "" ? null : Number(e.target.value))
                     }
                     className="h-8 text-sm"
                     aria-label={f.label}
