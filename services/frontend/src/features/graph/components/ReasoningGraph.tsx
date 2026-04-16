@@ -360,13 +360,16 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
           // Convert page coords to container-relative
           const rect = container.getBoundingClientRect();
           const scale = dist / pinchStartDist;
-          graph.zoomTo(pinchStartZoom * scale, [midX - rect.left, midY - rect.top]);
+          void graph.zoomTo(pinchStartZoom * scale, [midX - rect.left, midY - rect.top]);
         } else if (touchMode === "pan" && e.touches.length === 1) {
           const dx = e.touches[0]!.clientX - lastTouchX;
           const dy = e.touches[0]!.clientY - lastTouchY;
           lastTouchX = e.touches[0]!.clientX;
           lastTouchY = e.touches[0]!.clientY;
-          graph.translate(dx, dy);
+          void (graph as unknown as { translate(dx: number, dy: number): unknown }).translate(
+            dx,
+            dy,
+          );
         }
       };
 
