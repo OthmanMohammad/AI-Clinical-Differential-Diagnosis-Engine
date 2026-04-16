@@ -59,13 +59,9 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
           {results}
         </section>
 
-        {/* Graph — tall container with touch-action so pinch-zoom works
-             instead of fighting the page scroll */}
-        <section
-          aria-label="Reasoning graph"
-          className="h-[80vh] min-h-[400px]"
-          style={{ touchAction: "none" }}
-        >
+        {/* Graph — view-only on mobile. Touch events go to page scroll,
+             not graph interaction. For detailed graph exploration, use desktop. */}
+        <section aria-label="Reasoning graph" className="h-[80vh] min-h-[400px]">
           {graph}
         </section>
       </main>
