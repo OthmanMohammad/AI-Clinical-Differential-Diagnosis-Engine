@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - MooseGlove</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.7; color: #1a1a1a; background: #fafafa; padding: 2rem 1rem; }
+    .container { max-width: 680px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1.5rem; }
+    h2 { font-size: 1.1rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem; }
+    p { margin-bottom: 1rem; }
+    ul { margin-bottom: 1rem; padding-left: 1.5rem; }
+    li { margin-bottom: 0.5rem; }
+    a { color: #2563eb; text-decoration: underline; }
+    .back { display: inline-block; margin-bottom: 2rem; font-size: 0.875rem; }
+    .updated { font-size: 0.8rem; color: #6b7280; margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back">&larr; Back to MooseGlove</a>
+    <h1>Privacy Policy</h1>
+
+    <h2>What This Tool Is</h2>
+    <p>
+      MooseGlove is an open-source portfolio project. It is not a
+      commercial service and does not collect personal information for
+      marketing, advertising, or resale.
+    </p>
+
+    <h2>Data You Submit</h2>
+    <p>
+      When you submit a clinical scenario through the interface, the
+      following data is sent to the backend API:
+    </p>
+    <ul>
+      <li>Symptoms, age, sex, medical history, medications, vital signs, and lab values you enter</li>
+      <li>Free-text clinical notes (if provided)</li>
+    </ul>
+    <p>
+      This data is processed in real time to generate a differential
+      diagnosis. It is not stored in a database, not written to disk,
+      and not retained after the request completes. The backend does not
+      have a user account system and does not associate requests with
+      identifiable individuals.
+    </p>
+
+    <h2>Do Not Submit Real Patient Data</h2>
+    <p>
+      This is a demonstration tool. Do not enter identifiable patient
+      information (names, dates of birth, medical record numbers,
+      addresses, or any other protected health information). The system
+      is not designed to comply with HIPAA, GDPR health data
+      requirements, or equivalent regulations.
+    </p>
+
+    <h2>Observability and Logging</h2>
+    <p>
+      The backend logs structured events (request latency, error codes,
+      model used) via Langfuse for performance monitoring. These logs
+      contain request metadata, not the clinical content you submit.
+      No symptoms, diagnoses, or patient data are written to logs.
+    </p>
+
+    <h2>Analytics</h2>
+    <p>
+      The frontend uses Cloudflare Web Analytics, a privacy-focused
+      analytics service that does not use cookies, does not track users
+      across sites, and does not collect personally identifiable
+      information. It records aggregate page views and performance
+      metrics only.
+    </p>
+
+    <h2>Cookies and Local Storage</h2>
+    <p>
+      MooseGlove does not set cookies. It uses browser local storage
+      to remember your theme preference (light or dark mode) and
+      sidebar layout state. No authentication tokens or tracking
+      identifiers are stored.
+    </p>
+
+    <h2>Third-Party Services</h2>
+    <ul>
+      <li>Cloudflare (CDN, DNS, tunnel, Web Analytics)</li>
+      <li>Groq / Cerebras (LLM inference, receives the clinical scenario for processing)</li>
+      <li>Langfuse (backend performance monitoring, no clinical data)</li>
+    </ul>
+    <p>
+      Each service has its own privacy policy. The LLM providers (Groq,
+      Cerebras) receive the clinical scenario text as part of the
+      inference request. Consult their privacy policies for details on
+      how they handle input data.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      For questions about this policy, contact Mohammad Othman via the
+      repository at
+      <a href="https://github.com/OthmanMohammad/AI-Clinical-Differential-Diagnosis-Engine">
+        github.com/OthmanMohammad/AI-Clinical-Differential-Diagnosis-Engine</a>.
+    </p>
+
+    <p class="updated">Last updated: April 2026</p>
+  </div>
+</body>
+</html>
