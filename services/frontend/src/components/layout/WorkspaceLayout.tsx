@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Maximize2, X } from "lucide-react";
+import { Maximize2, Minus, Plus, X } from "lucide-react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -44,7 +44,8 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
   );
 
   // ------------------------------------------------------------------
-  // Mobile fullscreen graph overlay
+  // Mobile fullscreen graph: covers entire viewport, touch-action: none
+  // so pinch/drag go to the graph canvas. Floating controls in corners.
   // ------------------------------------------------------------------
   if (isMobile && mobileGraphExpanded) {
     return (
@@ -52,27 +53,55 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
         className="bg-background fixed inset-0 z-50 flex flex-col"
         style={{ touchAction: "none" }}
       >
-        <div className="border-border flex items-center justify-between border-b px-3 py-2">
-          <span className="text-muted-foreground text-xs font-medium">
-            Pinch to zoom, drag to pan
-          </span>
+        {/* Graph fills the screen */}
+        <div className="relative flex-1">
+          {graph}
+
+          {/* Floating close button — top right, above the graph toolbar */}
           <button
             type="button"
             onClick={() => setMobileGraphExpanded(false)}
-            className="bg-muted hover:bg-accent flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
+            className="bg-background/90 border-border absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border shadow-md backdrop-blur-sm"
+            aria-label="Close fullscreen"
           >
-            <X className="h-3.5 w-3.5" />
-            Close
+            <X className="h-4 w-4" />
           </button>
+
+          {/* Floating zoom controls — bottom right */}
+          <div className="absolute bottom-4 right-3 z-20 flex flex-col gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                // Dispatch a custom zoom-in event the graph can pick up
+                document.dispatchEvent(new CustomEvent("mooseglove:graph-zoom", { detail: 1.3 }));
+              }}
+              className="bg-background/90 border-border flex h-9 w-9 items-center justify-center rounded-full border shadow-md backdrop-blur-sm"
+              aria-label="Zoom in"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                document.dispatchEvent(new CustomEvent("mooseglove:graph-zoom", { detail: 0.7 }));
+              }}
+              className="bg-background/90 border-border flex h-9 w-9 items-center justify-center rounded-full border shadow-md backdrop-blur-sm"
+              aria-label="Zoom out"
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Hint text — bottom left, fades after 3s */}
+          <MobileHint />
         </div>
-        <div className="flex-1">{graph}</div>
       </div>
     );
   }
 
   // ------------------------------------------------------------------
-  // Mobile: single-column page scroll. Graph section has a "Tap to
-  // explore" overlay that opens the fullscreen interactive mode.
+  // Mobile: single-column page scroll. Graph section is a static
+  // preview with an overlay blocking interaction.
   // ------------------------------------------------------------------
   if (isMobile) {
     return (
@@ -85,16 +114,17 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
           {results}
         </section>
 
+        {/* Graph preview — pointer-events: none blocks all interaction.
+            The overlay button has pointer-events: auto so it's tappable. */}
         <section aria-label="Reasoning graph" className="relative h-[70vh] min-h-[300px]">
-          {graph}
-          {/* Fullscreen overlay button */}
+          <div className="pointer-events-none h-full">{graph}</div>
           <button
             type="button"
             onClick={() => setMobileGraphExpanded(true)}
-            className="bg-background/80 border-border text-foreground absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium shadow-lg backdrop-blur-sm transition-colors"
+            className="bg-primary text-primary-foreground pointer-events-auto absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium shadow-lg"
           >
-            <Maximize2 className="h-3.5 w-3.5" />
-            Tap to explore graph
+            <Maximize2 className="h-4 w-4" />
+            Explore graph
           </button>
         </section>
       </main>
@@ -151,6 +181,21 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
         )}
       </AnimatePresence>
     </main>
+  );
+}
+
+/** Hint that fades out after 3 seconds. */
+function MobileHint() {
+  const [visible, setVisible] = React.useState(true);
+  React.useEffect(() => {
+    const t = setTimeout(() => setVisible(false), 3000);
+    return () => clearTimeout(t);
+  }, []);
+  if (!visible) return null;
+  return (
+    <div className="bg-background/80 text-muted-foreground absolute bottom-4 left-3 z-20 rounded-full px-3 py-1.5 text-xs backdrop-blur-sm transition-opacity">
+      Pinch to zoom, drag to pan
+    </div>
   );
 }
 

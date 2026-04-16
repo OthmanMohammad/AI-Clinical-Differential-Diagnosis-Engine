@@ -130,7 +130,7 @@ export function GraphToolbar({
         <TooltipContent side="bottom">Export PNG</TooltipContent>
       </Tooltip>
 
-      <div className="bg-border mx-0.5 h-4 w-px" />
+      <div className="bg-border mx-0.5 hidden h-4 w-px md:block" />
 
       <Tooltip>
         <TooltipTrigger asChild>
@@ -139,6 +139,7 @@ export function GraphToolbar({
             size="icon-sm"
             onClick={onToggleFullscreen}
             aria-label="Toggle fullscreen"
+            className="hidden md:inline-flex"
           >
             {fullscreen ? (
               <Minimize2 className="h-3.5 w-3.5" />

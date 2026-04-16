@@ -268,14 +268,18 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
             multiple: false,
           },
         ],
-        plugins: [
-          {
-            type: "minimap",
-            size: [160, 100],
-            className: "mooseglove-minimap",
-            position: "right-bottom",
-          },
-        ],
+        // Minimap is expensive on mobile — skip it below md breakpoint.
+        plugins:
+          window.innerWidth >= 768
+            ? [
+                {
+                  type: "minimap",
+                  size: [160, 100],
+                  className: "mooseglove-minimap",
+                  position: "right-bottom",
+                },
+              ]
+            : [],
       });
 
       graphRef.current = graph;
@@ -290,6 +294,16 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       });
 
       safeCall("render", () => graph.render());
+
+      // Listen for mobile zoom custom events dispatched by the
+      // fullscreen overlay's +/- buttons.
+      const handleZoom = (e: Event) => {
+        const factor = (e as CustomEvent<number>).detail;
+        if (factor && typeof factor === "number") {
+          safeCall("zoom", () => graph.zoomTo(graph.getZoom() * factor));
+        }
+      };
+      document.addEventListener("mooseglove:graph-zoom", handleZoom);
 
       // Track container size changes (panel resize, fullscreen toggle, etc.)
       // The window resize handler only fires on viewport changes — it
@@ -310,6 +324,7 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       resizeObserver.observe(container);
 
       return () => {
+        document.removeEventListener("mooseglove:graph-zoom", handleZoom);
         window.removeEventListener("resize", handleResize);
         resizeObserver.disconnect();
         if (resizeObserverDebounce.current) {
