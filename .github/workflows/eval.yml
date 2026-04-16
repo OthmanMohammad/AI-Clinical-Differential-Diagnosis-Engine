@@ -1,11 +1,26 @@
+# =============================================================
+# Evaluation — run the golden-case harness against production
+#
+# Triggers:
+#   - Manual (workflow_dispatch) with configurable max_cases
+#   - Scheduled: weekly Monday 2 AM UTC
+#
+# Calls the live api.mooseglove.com endpoint, not a local stack.
+# Results are uploaded as an artifact and printed to the log.
+#
+# Required GitHub repo config:
+#   Variables: API_URL  (e.g. https://api.mooseglove.com)
+#   Secrets:   API_KEY  (same as API_KEY in ~/mooseglove/.env)
+# =============================================================
+
 name: Evaluation
 
 on:
   workflow_dispatch:
     inputs:
       max_cases:
-        description: "Max eval cases to run"
-        default: "50"
+        description: "Max eval cases to run (0 = all)"
+        default: "0"
         type: string
   schedule:
     - cron: "0 2 * * 1" # Weekly Monday 2 AM UTC
@@ -18,17 +33,47 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - name: Install dependencies
         run: |
-          pip install httpx
+          pip install httpx pyyaml
+
       - name: Run evaluation
         run: |
           python -m eval.run_eval \
-            --api-url ${{ vars.API_URL }} \
-            --api-key ${{ secrets.API_KEY }} \
-            --max-cases ${{ inputs.max_cases || '50' }}
+            --api-url "${{ vars.API_URL }}" \
+            --api-key "${{ secrets.API_KEY }}" \
+            --max-cases "${{ inputs.max_cases || '0' }}" \
+            --output eval/results.json
+        env:
+          PYTHONPATH: .
+
+      - name: Print summary
+        if: always()
+        run: |
+          if [ -f eval/results.json ]; then
+            python -c "
+          import json
+          from eval.metrics import compute_metrics, format_summary
+          with open('eval/results.json') as f:
+              data = json.load(f)
+          results = data.get('results', data) if isinstance(data, dict) else data
+          if isinstance(results, list):
+              m = compute_metrics(results)
+              print(format_summary(m, label='CI Eval'))
+          else:
+              print('Unexpected results format')
+          "
+          else
+            echo "No results file found"
+          fi
+        env:
+          PYTHONPATH: .
+
       - name: Upload results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: eval-results-${{ github.sha }}
+          name: eval-results-${{ github.run_id }}
           path: eval/results.json
+          retention-days: 90

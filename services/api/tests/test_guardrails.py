@@ -65,14 +65,18 @@ class TestTokenBudget:
         gate_token_budget(basic_intake)  # should not raise
 
     def test_exceeds_budget(self):
+        # Use a valid free_text (≤2000 chars) but lower the max_tokens
+        # threshold so the budget check triggers. The previous version
+        # used free_text="word " * 20000 which Pydantic rejects at
+        # max_length=2000 before the guardrail runs.
         intake = PatientIntake(
             symptoms=["headache"],
             age=30,
             sex="male",
-            free_text="word " * 20000,  # ~100k chars
+            free_text="word " * 300,  # 1500 chars ≈ 375 tokens
         )
         with pytest.raises(InputValidationError) as exc_info:
-            gate_token_budget(intake)
+            gate_token_budget(intake, max_tokens=50)
         assert exc_info.value.gate == "2.5"
 
 

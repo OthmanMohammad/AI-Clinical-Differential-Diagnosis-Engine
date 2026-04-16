@@ -16,7 +16,10 @@ ignore = ["E501"]
 known-first-party = ["app"]
 
 [tool.pytest.ini_options]
-testpaths = ["services/api/tests"]
+testpaths = ["services/api/tests", "tests/unit"]
 pythonpath = ["services/api"]
 asyncio_mode = "auto"
 filterwarnings = ["ignore::DeprecationWarning"]
+# importlib mode: each test file is imported independently, avoiding
+# "No module named tests.unit" when __init__.py files are present.
+addopts = "--import-mode=importlib"

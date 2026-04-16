@@ -1,0 +1,58 @@
+# =============================================================
+# Dependabot — automated dependency security updates
+#
+# Creates PRs for:
+#   - Python (pip) — services/api/requirements.in
+#   - JavaScript (npm) — services/frontend/package.json
+#   - GitHub Actions — .github/workflows/*.yml
+#
+# Security-only updates (not feature bumps). PRs are auto-created
+# weekly and require the same CI checks as any other PR before
+# merge. Grouped by ecosystem to reduce PR noise.
+# =============================================================
+
+version: 2
+
+updates:
+  # Python backend dependencies
+  - package-ecosystem: pip
+    directory: /services/api
+    schedule:
+      interval: weekly
+      day: wednesday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - python
+    groups:
+      python-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  # Frontend npm dependencies
+  - package-ecosystem: npm
+    directory: /services/frontend
+    schedule:
+      interval: weekly
+      day: wednesday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - javascript
+    groups:
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  # GitHub Actions versions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: wednesday
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - ci
