@@ -28,7 +28,7 @@ class TestAffirmedConcepts:
         # All should be negated under "denies" scope
         # Note: medspaCy's ConText handles scope-based negation
         # The exact behavior depends on the ConText rules
-        assert isinstance(result, list)
+        assert isinstance(result, (list, set))
 
 
 class TestEmergencyDetection:

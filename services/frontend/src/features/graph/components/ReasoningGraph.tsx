@@ -394,11 +394,12 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
               type: "image/png",
               encoderOptions: 1,
             } as Record<string, unknown>);
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises, @typescript-eslint/no-unnecessary-type-assertion -- g6 toDataURL returns unknown | Promise<string>
+            /* eslint-disable @typescript-eslint/no-misused-promises, @typescript-eslint/no-unnecessary-type-assertion -- g6 toDataURL returns unknown | Promise<string> */
             const dataUrl =
               result && typeof (result as Promise<string>).then === "function"
                 ? await (result as Promise<string>)
                 : (result as string);
+            /* eslint-enable @typescript-eslint/no-misused-promises, @typescript-eslint/no-unnecessary-type-assertion */
 
             if (!dataUrl || typeof dataUrl !== "string") {
               throw new Error("Empty data URL from graph");
