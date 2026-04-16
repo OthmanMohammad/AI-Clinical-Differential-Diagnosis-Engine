@@ -41,22 +41,35 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
     [setPanelSizes],
   );
 
-  // Mobile: simple vertical scroll layout, no resizable panels
+  // ------------------------------------------------------------------
+  // Mobile: single-column page scroll. No PanelGroup, no resize handles.
+  // Each section flows naturally — the user scrolls the entire page from
+  // intake form through results through graph, like a normal mobile page.
+  // ------------------------------------------------------------------
   if (isMobile) {
     return (
-      <main className="bg-background flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <WorkspacePanel label="Clinical intake">{intake}</WorkspacePanel>
-        <div className="bg-border h-px shrink-0" />
-        <WorkspacePanel label="Differential diagnosis">{results}</WorkspacePanel>
-        <div className="bg-border h-px shrink-0" />
-        <WorkspacePanel label="Reasoning graph" noPadding>
-          <div className="h-[50vh]">{graph}</div>
-        </WorkspacePanel>
+      <main className="bg-background flex-1">
+        {/* Intake form — flows to natural height */}
+        <section aria-label="Clinical intake" className="border-border border-b p-3">
+          {intake}
+        </section>
+
+        {/* Results — flows to natural height */}
+        <section aria-label="Differential diagnosis" className="border-border border-b p-3">
+          {results}
+        </section>
+
+        {/* Graph — fixed height so it's visible without scrolling inside */}
+        <section aria-label="Reasoning graph" className="h-[60vh] min-h-[300px]">
+          {graph}
+        </section>
       </main>
     );
   }
 
-  // Desktop: resizable 3-panel horizontal layout
+  // ------------------------------------------------------------------
+  // Desktop: resizable 3-panel horizontal layout (unchanged from original)
+  // ------------------------------------------------------------------
   return (
     <main className="bg-background flex min-h-0 flex-1">
       <AnimatePresence mode="wait" initial={false}>
@@ -87,17 +100,17 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
               autoSaveId={undefined}
             >
               <Panel defaultSize={panelSizes[0]} minSize={16} maxSize={45} className="min-w-0">
-                <WorkspacePanel label="Clinical intake">{intake}</WorkspacePanel>
+                <DesktopPanel label="Clinical intake">{intake}</DesktopPanel>
               </Panel>
               <ResizeHandle />
               <Panel defaultSize={panelSizes[1]} minSize={18} className="min-w-0">
-                <WorkspacePanel label="Differential diagnosis">{results}</WorkspacePanel>
+                <DesktopPanel label="Differential diagnosis">{results}</DesktopPanel>
               </Panel>
               <ResizeHandle />
               <Panel defaultSize={panelSizes[2]} minSize={18} className="min-w-0">
-                <WorkspacePanel label="Reasoning graph" noPadding>
+                <DesktopPanel label="Reasoning graph" noPadding>
                   {graph}
-                </WorkspacePanel>
+                </DesktopPanel>
               </Panel>
             </PanelGroup>
           </motion.div>
@@ -107,20 +120,22 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
   );
 }
 
-interface WorkspacePanelProps {
+/** Desktop panel: fixed height, internal scroll, padding. */
+function DesktopPanel({
+  label,
+  children,
+  noPadding,
+}: {
   label: string;
   children: React.ReactNode;
   noPadding?: boolean;
-}
-
-function WorkspacePanel({ label, children, noPadding }: WorkspacePanelProps) {
+}) {
   return (
     <section
       aria-label={label}
       className={cn(
-        "bg-background flex min-w-0 flex-col overflow-hidden",
-        "h-auto md:h-full",
-        !noPadding && "p-3 md:p-4",
+        "bg-background flex h-full min-w-0 flex-col overflow-hidden",
+        !noPadding && "p-4",
       )}
     >
       {children}

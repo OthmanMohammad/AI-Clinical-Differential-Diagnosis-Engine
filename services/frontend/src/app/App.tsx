@@ -74,7 +74,7 @@ export function App() {
   }, [data, highlightedDiagnosis]);
 
   return (
-    <div className="bg-background text-foreground flex h-screen w-screen flex-col overflow-hidden">
+    <div className="bg-background text-foreground flex min-h-screen w-screen flex-col overflow-x-hidden md:h-screen md:overflow-hidden">
       <TopBar connectionStatus={connectionStatus} />
       <div className="flex min-h-0 flex-1">
         <Sidebar />
