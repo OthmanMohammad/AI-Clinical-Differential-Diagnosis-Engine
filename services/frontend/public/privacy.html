@@ -3,8 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Privacy Policy - MooseGlove</title>
+    <title>Privacy Policy | MooseGlove</title>
+    <meta
+      name="description"
+      content="Privacy policy for MooseGlove, an AI clinical differential diagnosis demonstration."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <style>
+      :root {
+        --bg: #fafafa;
+        --fg: #111;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --accent: #2563eb;
+        --card: #fff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #09090b;
+          --fg: #fafafa;
+          --muted: #a1a1aa;
+          --border: #27272a;
+          --accent: #60a5fa;
+          --card: #18181b;
+        }
+      }
       *,
       *::before,
       *::after {
@@ -13,57 +36,99 @@
         padding: 0;
       }
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
         line-height: 1.7;
-        color: #1a1a1a;
-        background: #fafafa;
-        padding: 2rem 1rem;
+        color: var(--fg);
+        background: var(--bg);
+        min-height: 100vh;
       }
-      .container {
-        max-width: 680px;
+      .page {
+        max-width: 640px;
         margin: 0 auto;
+        padding: 3rem 1.5rem 4rem;
+      }
+      .back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.8125rem;
+        color: var(--accent);
+        text-decoration: none;
+        margin-bottom: 2.5rem;
+      }
+      .back:hover {
+        text-decoration: underline;
       }
       h1 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
+        font-size: 1.75rem;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        margin-bottom: 0.5rem;
+      }
+      .subtitle {
+        font-size: 0.875rem;
+        color: var(--muted);
+        margin-bottom: 2.5rem;
       }
       h2 {
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
         margin-top: 2rem;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.625rem;
+        color: var(--fg);
       }
       p {
         margin-bottom: 1rem;
+        font-size: 0.9375rem;
+        color: var(--fg);
+        opacity: 0.88;
       }
       ul {
         margin-bottom: 1rem;
-        padding-left: 1.5rem;
+        padding-left: 1.25rem;
       }
       li {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.375rem;
+        font-size: 0.9375rem;
+        color: var(--fg);
+        opacity: 0.88;
       }
       a {
-        color: #2563eb;
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
         text-decoration: underline;
       }
-      .back {
-        display: inline-block;
-        margin-bottom: 2rem;
-        font-size: 0.875rem;
-      }
       .updated {
-        font-size: 0.8rem;
-        color: #6b7280;
-        margin-top: 2rem;
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <a href="/" class="back">&larr; Back to MooseGlove</a>
+    <div class="page">
+      <a href="/" class="back">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+        Back to MooseGlove
+      </a>
       <h1>Privacy Policy</h1>
+      <p class="subtitle">How MooseGlove handles your data.</p>
 
       <h2>What This Tool Is</h2>
       <p>
@@ -73,42 +138,24 @@
 
       <h2>Data You Submit</h2>
       <p>
-        When you submit a clinical scenario through the interface, the following data is sent to the
-        backend API:
-      </p>
-      <ul>
-        <li>
-          Symptoms, age, sex, medical history, medications, vital signs, and lab values you enter
-        </li>
-        <li>Free-text clinical notes (if provided)</li>
-      </ul>
-      <p>
-        This data is processed in real time to generate a differential diagnosis. It is not stored
-        in a database, not written to disk, and not retained after the request completes. The
-        backend does not have a user account system and does not associate requests with
-        identifiable individuals.
+        When you submit a clinical scenario through the interface, the symptoms, age, sex, medical
+        history, medications, vital signs, lab values, and free-text notes you enter are sent to the
+        backend for processing. This data is processed in real time and is not stored in a database,
+        not written to disk, and not retained after the request completes.
       </p>
 
       <h2>Do Not Submit Real Patient Data</h2>
       <p>
-        This is a demonstration tool. Do not enter identifiable patient information (names, dates of
-        birth, medical record numbers, addresses, or any other protected health information). The
-        system is not designed to comply with HIPAA, GDPR health data requirements, or equivalent
-        regulations.
-      </p>
-
-      <h2>Observability and Logging</h2>
-      <p>
-        The backend logs structured events (request latency, error codes, model used) via Langfuse
-        for performance monitoring. These logs contain request metadata, not the clinical content
-        you submit. No symptoms, diagnoses, or patient data are written to logs.
+        This is a demonstration tool. Do not enter identifiable patient information such as names,
+        dates of birth, medical record numbers, or addresses. The system is not designed to comply
+        with HIPAA, GDPR, or equivalent health data regulations.
       </p>
 
       <h2>Analytics</h2>
       <p>
-        The frontend uses Cloudflare Web Analytics, a privacy-focused analytics service that does
-        not use cookies, does not track users across sites, and does not collect personally
-        identifiable information. It records aggregate page views and performance metrics only.
+        The frontend uses Cloudflare Web Analytics, a privacy-focused service that does not use
+        cookies, does not track users across sites, and does not collect personally identifiable
+        information. It records aggregate page views and performance metrics only.
       </p>
 
       <h2>Cookies and Local Storage</h2>
@@ -119,22 +166,29 @@
       </p>
 
       <h2>Third-Party Services</h2>
-      <ul>
-        <li>Cloudflare (CDN, DNS, tunnel, Web Analytics)</li>
-        <li>Groq / Cerebras (LLM inference, receives the clinical scenario for processing)</li>
-        <li>Langfuse (backend performance monitoring, no clinical data)</li>
-      </ul>
       <p>
-        Each service has its own privacy policy. The LLM providers (Groq, Cerebras) receive the
-        clinical scenario text as part of the inference request. Consult their privacy policies for
-        details on how they handle input data.
+        The application uses third-party services for content delivery, DNS, and AI inference. Each
+        service has its own privacy policy. The clinical scenario text you enter is sent to an AI
+        inference provider as part of the diagnosis request.
+      </p>
+
+      <h2>Liability</h2>
+      <p>
+        MooseGlove is provided "as is" without warranty of any kind. The developer assumes no
+        liability for any harm, loss, or damage arising from the use of this tool or any data
+        submitted to it.
       </p>
 
       <h2>Contact</h2>
       <p>
-        For questions about this policy, contact Mohammad Othman via the repository at
-        <a href="https://github.com/OthmanMohammad/AI-Clinical-Differential-Diagnosis-Engine">
-          github.com/OthmanMohammad/AI-Clinical-Differential-Diagnosis-Engine</a
+        For questions about this policy, reach out to Mohammad Othman at
+        <a href="mailto:Mo@MohammadOthman.com">Mo@MohammadOthman.com</a>
+        or on
+        <a
+          href="https://www.linkedin.com/in/real-mohammad-othman/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >LinkedIn</a
         >.
       </p>
 

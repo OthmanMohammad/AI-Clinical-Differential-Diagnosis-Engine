@@ -11,10 +11,26 @@ interface WorkspaceLayoutProps {
   graph: React.ReactNode;
 }
 
+/** True when viewport is below the md breakpoint (768px). */
+function useIsMobile(): boolean {
+  const [mobile, setMobile] = React.useState(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false,
+  );
+  React.useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches);
+    mq.addEventListener("change", handler);
+    setMobile(mq.matches);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return mobile;
+}
+
 export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps) {
   const panelSizes = useWorkspaceStore((s) => s.panelSizes);
   const setPanelSizes = useWorkspaceStore((s) => s.setPanelSizes);
   const graphFullscreen = useWorkspaceStore((s) => s.graphFullscreen);
+  const isMobile = useIsMobile();
 
   const handleLayout = React.useCallback(
     (sizes: number[]) => {
@@ -25,6 +41,22 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
     [setPanelSizes],
   );
 
+  // Mobile: simple vertical scroll layout, no resizable panels
+  if (isMobile) {
+    return (
+      <main className="bg-background flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <WorkspacePanel label="Clinical intake">{intake}</WorkspacePanel>
+        <div className="bg-border h-px shrink-0" />
+        <WorkspacePanel label="Differential diagnosis">{results}</WorkspacePanel>
+        <div className="bg-border h-px shrink-0" />
+        <WorkspacePanel label="Reasoning graph" noPadding>
+          <div className="h-[50vh]">{graph}</div>
+        </WorkspacePanel>
+      </main>
+    );
+  }
+
+  // Desktop: resizable 3-panel horizontal layout
   return (
     <main className="bg-background flex min-h-0 flex-1">
       <AnimatePresence mode="wait" initial={false}>
@@ -86,8 +118,9 @@ function WorkspacePanel({ label, children, noPadding }: WorkspacePanelProps) {
     <section
       aria-label={label}
       className={cn(
-        "bg-background flex h-full min-w-0 flex-col overflow-hidden",
-        !noPadding && "p-4",
+        "bg-background flex min-w-0 flex-col overflow-hidden",
+        "h-auto md:h-full",
+        !noPadding && "p-3 md:p-4",
       )}
     >
       {children}

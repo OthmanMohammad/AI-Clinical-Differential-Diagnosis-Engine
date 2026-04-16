@@ -8,58 +8,53 @@ interface FooterProps {
   className?: string;
 }
 
-const DISCLAIMER =
-  "This is a clinical decision support tool, not a diagnostic device. It has not been validated by a physician. Do not use as the sole basis for any clinical decision.";
-
 export function Footer({ modelUsed, promptVersion, requestId, className }: FooterProps) {
   const year = new Date().getFullYear();
 
   return (
     <footer
       className={cn(
-        "border-border bg-card text-muted-foreground flex shrink-0 flex-col border-t px-4 py-2 text-[11px]",
+        "border-border bg-card text-muted-foreground shrink-0 border-t text-[10px]",
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <ShieldAlert className="h-3 w-3 shrink-0 text-[hsl(var(--warning))]" />
-          <span className="truncate">{DISCLAIMER}</span>
-        </div>
-        <div className="flex shrink-0 items-center gap-3 font-mono">
+      {/* Top row: disclaimer bar */}
+      <div className="flex items-center gap-2 px-3 py-1.5 md:px-4">
+        <ShieldAlert className="h-3 w-3 shrink-0 text-[hsl(var(--warning))]" />
+        <span className="truncate">
+          Clinical decision support tool. Not a diagnostic device. Not validated by a physician.
+        </span>
+        <div className="ml-auto hidden shrink-0 items-center gap-3 font-mono md:flex">
           {modelUsed && (
             <span>
-              model <span className="text-foreground/70">{modelUsed}</span>
+              model <span className="text-foreground/60">{modelUsed}</span>
             </span>
           )}
           {promptVersion && (
             <span>
-              prompt <span className="text-foreground/70">v{promptVersion}</span>
+              prompt <span className="text-foreground/60">v{promptVersion}</span>
             </span>
           )}
           {requestId && (
             <span>
-              req <span className="text-foreground/70">{requestId.slice(0, 8)}</span>
+              req <span className="text-foreground/60">{requestId.slice(0, 8)}</span>
             </span>
           )}
         </div>
       </div>
-      <div className="mt-1 flex items-center justify-between">
-        <span>&copy; {year} Mohammad Othman. MooseGlove is a portfolio demonstration project.</span>
-        <div className="flex items-center gap-3">
-          <a
-            href="/disclaimer.html"
-            className="hover:text-foreground underline underline-offset-2 transition-colors"
-          >
+
+      {/* Bottom row: copyright + legal links */}
+      <div className="border-border flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t px-3 py-1.5 md:px-4">
+        <span className="text-muted-foreground/70">&copy; {year} Mohammad Othman</span>
+        <nav className="flex items-center gap-3" aria-label="Legal">
+          <a href="/disclaimer.html" className="hover:text-foreground transition-colors">
             Medical Disclaimer
           </a>
-          <a
-            href="/privacy.html"
-            className="hover:text-foreground underline underline-offset-2 transition-colors"
-          >
-            Privacy Policy
+          <span className="text-border">|</span>
+          <a href="/privacy.html" className="hover:text-foreground transition-colors">
+            Privacy
           </a>
-        </div>
+        </nav>
       </div>
     </footer>
   );

@@ -20,7 +20,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Sidebar() {
   return (
-    <aside className="border-border bg-card flex w-14 shrink-0 flex-col border-r">
+    <aside className="border-border bg-card hidden w-14 shrink-0 flex-col border-r md:flex">
       <nav className="flex flex-1 flex-col items-center gap-1 p-2">
         {NAV_ITEMS.map((item, idx) => (
           <SidebarItem key={item.label} {...item} delay={idx * 0.04} />
