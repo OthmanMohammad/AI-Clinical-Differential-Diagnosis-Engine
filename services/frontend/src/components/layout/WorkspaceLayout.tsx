@@ -12,7 +12,6 @@ interface WorkspaceLayoutProps {
   graph: React.ReactNode;
 }
 
-/** True when viewport is below the md breakpoint (768px). */
 function useIsMobile(): boolean {
   const [mobile, setMobile] = React.useState(
     typeof window !== "undefined" ? window.innerWidth < 768 : false,
@@ -32,7 +31,7 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
   const setPanelSizes = useWorkspaceStore((s) => s.setPanelSizes);
   const graphFullscreen = useWorkspaceStore((s) => s.graphFullscreen);
   const isMobile = useIsMobile();
-  const [mobileGraphExpanded, setMobileGraphExpanded] = React.useState(false);
+  const [mobileGraphOpen, setMobileGraphOpen] = React.useState(false);
 
   const handleLayout = React.useCallback(
     (sizes: number[]) => {
@@ -43,100 +42,90 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
     [setPanelSizes],
   );
 
-  // ------------------------------------------------------------------
-  // Mobile: single-column page scroll. The graph section uses CSS-only
-  // fullscreen (position: fixed when expanded) so the G6 instance
-  // stays mounted and doesn't need to re-initialize.
-  // ------------------------------------------------------------------
+  // Mobile layout
   if (isMobile) {
     return (
-      <main className="bg-background flex-1">
-        <section aria-label="Clinical intake" className="border-border border-b p-3">
-          {intake}
-        </section>
-
-        <section aria-label="Differential diagnosis" className="border-border border-b p-3">
-          {results}
-        </section>
-
-        {/* Graph section — transforms between preview and fullscreen via CSS.
-            The G6 graph instance stays mounted in both modes (no re-init).
-            ResizeObserver in the graph component handles the container resize. */}
-        <section
-          aria-label="Reasoning graph"
-          className={cn(
-            "relative",
-            mobileGraphExpanded
-              ? "bg-background fixed inset-0 z-50 h-screen w-screen"
-              : "h-[70vh] min-h-[300px]",
-          )}
-          style={mobileGraphExpanded ? { touchAction: "none" } : undefined}
-        >
-          {/* Graph — interaction disabled in preview, enabled in fullscreen */}
-          <div className={cn("h-full", !mobileGraphExpanded && "pointer-events-none")}>{graph}</div>
-
-          {/* Preview mode: "Explore graph" button */}
-          {!mobileGraphExpanded && (
-            <button
-              type="button"
-              onClick={() => setMobileGraphExpanded(true)}
-              className="bg-primary text-primary-foreground pointer-events-auto absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium shadow-lg"
-            >
-              <Maximize2 className="h-4 w-4" />
-              Explore graph
-            </button>
-          )}
-
-          {/* Fullscreen mode: floating controls */}
-          {mobileGraphExpanded && (
-            <>
-              {/* Close — top left to avoid overlapping the graph legend */}
+      <>
+        <main className="bg-background flex-1">
+          <section aria-label="Clinical intake" className="border-border border-b p-3">
+            {intake}
+          </section>
+          <section aria-label="Differential diagnosis" className="border-border border-b p-3">
+            {results}
+          </section>
+          {/* Graph preview — non-interactive, just a visual */}
+          <section aria-label="Reasoning graph" className="relative h-[60vh] min-h-[250px]">
+            <div className="pointer-events-none h-full opacity-60">{graph}</div>
+            <div className="absolute inset-0 flex items-center justify-center">
               <button
                 type="button"
-                onClick={() => setMobileGraphExpanded(false)}
-                className="bg-background/90 border-border absolute left-3 top-3 z-30 flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium shadow-md backdrop-blur-sm"
+                onClick={() => setMobileGraphOpen(true)}
+                className="bg-primary text-primary-foreground pointer-events-auto flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium shadow-xl"
               >
-                <X className="h-3.5 w-3.5" />
-                Close
+                <Maximize2 className="h-4 w-4" />
+                Explore graph
               </button>
+            </div>
+          </section>
+        </main>
 
-              {/* Zoom controls — bottom right, above any footer */}
-              <div className="absolute bottom-6 right-3 z-30 flex flex-col gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    document.dispatchEvent(
-                      new CustomEvent("mooseglove:graph-zoom", { detail: 1.4 }),
-                    );
-                  }}
-                  className="bg-background/90 border-border flex h-10 w-10 items-center justify-center rounded-full border shadow-md backdrop-blur-sm"
-                  aria-label="Zoom in"
-                >
-                  <Plus className="h-5 w-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    document.dispatchEvent(
-                      new CustomEvent("mooseglove:graph-zoom", { detail: 0.7 }),
-                    );
-                  }}
-                  className="bg-background/90 border-border flex h-10 w-10 items-center justify-center rounded-full border shadow-md backdrop-blur-sm"
-                  aria-label="Zoom out"
-                >
-                  <Minus className="h-5 w-5" />
-                </button>
-              </div>
-            </>
-          )}
-        </section>
-      </main>
+        {/* Fullscreen graph overlay — completely separate from the page layout.
+            Uses inline styles for bulletproof background coverage. */}
+        {mobileGraphOpen && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 9999,
+              backgroundColor: "hsl(var(--background))",
+              touchAction: "none",
+            }}
+          >
+            <div className="h-full w-full">{graph}</div>
+
+            {/* Close button — top left */}
+            <button
+              type="button"
+              onClick={() => setMobileGraphOpen(false)}
+              className="absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white shadow-lg"
+            >
+              <X className="h-3.5 w-3.5" />
+              Close
+            </button>
+
+            {/* Zoom buttons — bottom right */}
+            <div className="absolute bottom-8 right-3 z-10 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  document.dispatchEvent(new CustomEvent("mooseglove:graph-zoom", { detail: 1.4 }))
+                }
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg"
+                aria-label="Zoom in"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  document.dispatchEvent(new CustomEvent("mooseglove:graph-zoom", { detail: 0.7 }))
+                }
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg"
+                aria-label="Zoom out"
+              >
+                <Minus className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
-  // ------------------------------------------------------------------
-  // Desktop: resizable 3-panel horizontal layout
-  // ------------------------------------------------------------------
+  // Desktop layout — unchanged
   return (
     <main className="bg-background flex min-h-0 flex-1">
       <AnimatePresence mode="wait" initial={false}>
@@ -187,7 +176,6 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
   );
 }
 
-/** Desktop panel: fixed height, internal scroll, padding. */
 function DesktopPanel({
   label,
   children,
