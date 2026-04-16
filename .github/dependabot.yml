@@ -1,52 +1,49 @@
 # =============================================================
 # Dependabot — automated dependency security updates
 #
-# Creates PRs for:
-#   - Python (pip) — services/api/requirements.in
-#   - JavaScript (npm) — services/frontend/package.json
-#   - GitHub Actions — .github/workflows/*.yml
+# CONSERVATIVE config: only creates PRs for PATCH-level bumps
+# and GitHub Actions version updates. Major and minor bumps are
+# ignored because they often have breaking changes (e.g.
+# langfuse 2→4, eslint 9→10) that need manual review.
 #
-# Security-only updates (not feature bumps). PRs are auto-created
-# weekly and require the same CI checks as any other PR before
-# merge. Grouped by ecosystem to reduce PR noise.
+# To bump a major/minor dep, do it manually:
+#   cd services/frontend && npm install <pkg>@latest
+#   cd services/api && pip-compile --upgrade-package <pkg>
 # =============================================================
 
 version: 2
 
 updates:
-  # Python backend dependencies
+  # Python backend — patch-only (security fixes)
   - package-ecosystem: pip
     directory: /services/api
     schedule:
       interval: weekly
       day: wednesday
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     labels:
       - dependencies
       - python
-    groups:
-      python-minor-patch:
-        update-types:
-          - minor
-          - patch
+    ignore:
+      # Block major and minor bumps — only allow patch
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
-  # Frontend npm dependencies
+  # Frontend npm — patch-only (security fixes)
   - package-ecosystem: npm
     directory: /services/frontend
     schedule:
       interval: weekly
       day: wednesday
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     labels:
       - dependencies
       - javascript
-    groups:
-      npm-minor-patch:
-        update-types:
-          - minor
-          - patch
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
-  # GitHub Actions versions
+  # GitHub Actions — all updates (safe, just version tags)
   - package-ecosystem: github-actions
     directory: /
     schedule:

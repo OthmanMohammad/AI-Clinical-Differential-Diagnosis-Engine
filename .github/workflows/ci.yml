@@ -162,67 +162,55 @@ jobs:
         run: npm run build
 
   # ---------------------------------------------------------------
-  # Deploy backend to Oracle VM via SSH
+  # Deploy backend — self-hosted runner on the Oracle VM
   #
-  # Only runs on push to main (not PRs) and only after all checks
-  # pass. SSHs into the VM, pulls the latest code, rebuilds the
-  # API container, and waits for it to become healthy.
+  # Runs ON the VM itself via a GitHub Actions self-hosted runner.
+  # No SSH, no open ports — the runner process pulls jobs from
+  # GitHub over outbound HTTPS (same as the Cloudflare Tunnel).
   #
-  # Frontend deploys automatically via Cloudflare Pages — no CI
-  # job needed. Pages watches main and rebuilds on every push.
+  # The runner must be installed on the VM first:
+  #   1. GitHub → repo Settings → Actions → Runners → New self-hosted runner
+  #   2. Follow the Linux ARM64 instructions on the VM
+  #   3. Configure with label: mooseglove-vm
+  #   4. Install as systemd service: sudo ./svc.sh install && sudo ./svc.sh start
   #
-  # Required GitHub Secrets (set in repo Settings → Secrets):
-  #   VM_SSH_KEY  — private key for SSH to the Oracle VM
-  #   VM_HOST     — public IP of the VM (e.g. 151.145.91.80)
-  #   VM_USER     — SSH username (e.g. ubuntu)
+  # Frontend deploys automatically via Cloudflare Pages on push
+  # to main — no CI job needed for that.
   # ---------------------------------------------------------------
   deploy-backend:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, mooseglove-vm]
     needs: [backend-lint, backend-test, frontend-check]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: production
     steps:
-      - name: Deploy to Oracle VM
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.VM_SSH_KEY }}
-          script_stop: true
-          command_timeout: 5m
-          script: |
-            set -euo pipefail
-            cd ~/mooseglove/app
+      - name: Pull latest code
+        run: |
+          cd ~/mooseglove/app
+          git pull origin main
 
-            echo "=== Pulling latest code ==="
-            git pull origin main
+      - name: Rebuild and roll out API
+        run: |
+          cd ~/mooseglove/app
+          docker compose -f docker-compose.prod.yml \
+            --env-file ~/mooseglove/.env \
+            build api
+          docker compose -f docker-compose.prod.yml \
+            --env-file ~/mooseglove/.env \
+            up -d api
 
-            echo "=== Rebuilding API container ==="
-            docker compose -f docker-compose.prod.yml \
-              --env-file ~/mooseglove/.env \
-              build api
-
-            echo "=== Rolling out new API ==="
-            docker compose -f docker-compose.prod.yml \
-              --env-file ~/mooseglove/.env \
-              up -d api
-
-            echo "=== Waiting for API health (up to 90s) ==="
-            for i in $(seq 1 18); do
-              HEALTH=$(docker inspect --format='{{.State.Health.Status}}' api 2>/dev/null || echo "unknown")
-              echo "  attempt $i/18: $HEALTH"
-              if [ "$HEALTH" = "healthy" ]; then
-                echo "=== API is healthy ==="
-                docker compose -f docker-compose.prod.yml \
-                  --env-file ~/mooseglove/.env \
-                  ps api
-                exit 0
-              fi
-              sleep 5
-            done
-
-            echo "=== ERROR: API did not become healthy ==="
-            docker compose -f docker-compose.prod.yml \
-              --env-file ~/mooseglove/.env \
-              logs --tail=40 api
-            exit 1
+      - name: Wait for healthy
+        run: |
+          for i in $(seq 1 18); do
+            HEALTH=$(docker inspect --format='{{.State.Health.Status}}' api 2>/dev/null || echo "unknown")
+            echo "attempt $i/18: $HEALTH"
+            if [ "$HEALTH" = "healthy" ]; then
+              echo "API is healthy!"
+              docker compose -f ~/mooseglove/app/docker-compose.prod.yml \
+                --env-file ~/mooseglove/.env ps api
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "ERROR: API did not become healthy within 90s"
+          docker compose -f ~/mooseglove/app/docker-compose.prod.yml \
+            --env-file ~/mooseglove/.env logs --tail=40 api
+          exit 1
