@@ -629,11 +629,11 @@ distro==1.9.0 \
 fastapi==0.135.3 \
     --hash=sha256:9b0f590c813acd13d0ab43dd8494138eb58e484bfac405db1f3187cfc5810d98 \
     --hash=sha256:bd6d7caf1a2bdd8d676843cdcd2287729572a1ef524fc4d65c17ae002a1be654
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 fastembed==0.8.0 \
     --hash=sha256:40bee672657574a1009e35ec50030a55f2b426842cb011845379817641bbbbd0 \
     --hash=sha256:75966edfa8b006ee78514c726bd7f6a50721dadc89305279052be9db72fd53e8
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 fastuuid==0.14.0 \
     --hash=sha256:05a8dde1f395e0c9b4be515b7a521403d1e8349443e7641761af07c7ad1624b1 \
     --hash=sha256:0737606764b29785566f968bd8005eace73d3666bd0862f33a760796e26d1ede \
@@ -921,71 +921,6 @@ grpcio==1.80.0 \
     --hash=sha256:f14b618fc30de822681ee986cfdcc2d9327229dc4c98aed16896761cacd468b9 \
     --hash=sha256:f49eddcac43c3bf350c0385366a58f36bed8cc2c0ec35ef7b74b49e56552c0c2 \
     --hash=sha256:f7691a6788ad9196872f95716df5bc643ebba13c97140b7a5ee5c8e75d1dea81
-    # via
-    #   grpcio-tools
-    #   qdrant-client
-grpcio-tools==1.80.0 \
-    --hash=sha256:017945c3e98a4ed1c4e21399781b4137fc08dfc1f802c8ace2e64ef52d32b142 \
-    --hash=sha256:12f950470449dbeec78317dbc090add7a00eb6ca812af7b0538ab7441e0a42c3 \
-    --hash=sha256:13f60f8d9397c514c6745a967d22b5c8c698347e88deebca1ff2e1b94555e450 \
-    --hash=sha256:1816e8e512402ed0b3fe4a336aaff14f9cb42455aa88fa86f754d53973668bd6 \
-    --hash=sha256:1872a867eb6217de19edb70a4ce4a374ced9d94293533dfd42fa649713f55bf4 \
-    --hash=sha256:18c51e07652ac7386fcdbd11866f8d55a795de073337c12447b5805575339f74 \
-    --hash=sha256:1ba1ffbf2cff71533615e2c5a138ed5569611eec9ae7f9c67b8898e127b54ac0 \
-    --hash=sha256:1c43e5c768578fe0c6de3dbfaabe64af642951e1aa05c487cacedda63fa6c6c4 \
-    --hash=sha256:25742de5958ae4325249a37e724e7c0e5120f8e302a24a977ebd1737b48a5e97 \
-    --hash=sha256:258bc30654a9a2236be4ca8e2ad443e2ac6db7c8cc20454d34cce60265922726 \
-    --hash=sha256:26052b19c6ce0dcf52d1024496aea3e2bdfa864159f06dc7b97b22d041a94b26 \
-    --hash=sha256:31fd01a4038b5dfc4ec79504a17061344f670f851833411717fef66920f13cd7 \
-    --hash=sha256:3399b5fd7b59bcffd59c6b9975a969d9f37a3c87f3e3d63c3a09c147907acb0d \
-    --hash=sha256:3954b5d07ac19d752ee70c7d63ee0ba0f9a840c33e042decf355f04b1ff41d93 \
-    --hash=sha256:3db830eaff1f2c2797328f2fa86c9dcdbd7d81af573a68db81e27afa2182a611 \
-    --hash=sha256:3e8dcfebe34cb54df095de3d5871a4562a85a29f26d0f8bb41ee2c3dcfb11c3c \
-    --hash=sha256:4534022e4d5dd3d7d2183ff5846bf950cbaf889af0ea5290f94212001f7cad84 \
-    --hash=sha256:4c615f3b5c6f7e8e0b06f60e3fa9cebf88372296255268db9e9a23e72bb698bf \
-    --hash=sha256:51caf99c28999e7e0f97e9cea190c1405b7681a57bb2e0631205accd92b43fa4 \
-    --hash=sha256:526b4402d47a0e9b31cd6087e42b7674784617916cc73c764e0bc35ed41b4ee5 \
-    --hash=sha256:57da9e19607fac4a01c48ead333c0dd15d91ed38794dce1194eda308f73e2038 \
-    --hash=sha256:5de4eb2d08bddeee28265c10369934b2d23b8c4acc39d419ee6a58afe34d754f \
-    --hash=sha256:623ee31fc2ff7df9a987b4f3d139c30af17ce46a861ae0e25fb8c112daa32dd8 \
-    --hash=sha256:6451b3f4eb52d12c7f32d04bf8e0185f80521f3f088ad04b8d222b3a4819c71e \
-    --hash=sha256:6a35a73042dc4bbcdd7aafc141ee9966c8ae97bf4b9f0f49e10e3e1aa54139ac \
-    --hash=sha256:6c129da370c5f85f569be2e545317dda786a60dd51d7deea29b03b0c05f6aac3 \
-    --hash=sha256:6c6ce08167fd77fa057dc44fea8501c66d108eeef536073dba55c8fd3684c7a9 \
-    --hash=sha256:727477b9afa4b53f5ec70cafb41c3965d893835e0d4ea9b542fe3d0d005602bf \
-    --hash=sha256:75f00450e08fe648ad8a1eeb25bc52219679d54cdd02f04dfdddc747309d83f6 \
-    --hash=sha256:7843b9ac6ff8ca508424d0dd968bd9a1a4559967e4a290f26be5bd6f04af2234 \
-    --hash=sha256:797c08460cae16b402326eac329aec720dccf45c9f9279b95a352792eb53cf0f \
-    --hash=sha256:7982b5fe42f012686b667dda12916884de95c4b1c65ff64371fb7232a1474b23 \
-    --hash=sha256:7a0106af212748823a6ebd8ffbd9043414216f47cae3835f3187de0a62c415d3 \
-    --hash=sha256:85fe8d15f146c62cb76f38d963e256392d287442b9232717d30ae9e3bbda9bc3 \
-    --hash=sha256:865a2b8e6334c838976ab02a322cbd55c863d2eaf3c1e1a0255883c63996772a \
-    --hash=sha256:88d77bad5dd3cd5e6f952c4ecdd0ee33e0c02ecfc2e4b0cbee3391ac19e0a431 \
-    --hash=sha256:90968f751851abb8b145593609800fa70c837e1c93ba0792c480b1c8d8bc29ef \
-    --hash=sha256:95f0fffb5ca00519f3b602f938169b4dfa04b165e03258323965a9dfe8cc4d80 \
-    --hash=sha256:970ec058fa469dd6dae6ebc687501c5da670d95dead75f62f5b0933dce2c9794 \
-    --hash=sha256:9a765334d3080d147ecf7b8ab04900e56108f6457dde0a3ba7f68c270f9d6efc \
-    --hash=sha256:9c6abc08d3485b2aac99bb58afcd31dc6cd4316ce36cf263ff09cb6df15f287f \
-    --hash=sha256:a225348456575f3ac7851d8e23163195e76d2a905ee340cf73f33da62fba08aa \
-    --hash=sha256:a33e265d4db803495007a6c623eafb0f6b9bb123ff4a0af89e44567dad809b88 \
-    --hash=sha256:a447f28958a8fe84ff0d9d3d9473868feb27ee4a9c9c805e66f5b670121cec59 \
-    --hash=sha256:a9396f02820d3f51c368c2c9dee15c55c77636c91be48a4d5c702e98d6fe0fdc \
-    --hash=sha256:ac6fdd42d5bb18f0d903a067e2825be172deff70cf197164b6f65676cb506c9b \
-    --hash=sha256:b46570a68378539ee2b75a5a43202561f8d753c832798b1047099e3c551cf5d6 \
-    --hash=sha256:b69dc5d6376ab43406304d1e2fc61ccf960b287d4325d77c3d45448c37a9d2da \
-    --hash=sha256:bbf8eeef78fda1966f732f79c1c802fadd5cfd203d845d2af4d314d18569069c \
-    --hash=sha256:c18def9c38d36767946932d2cc7baf39dcae5fea5a02843ea34399871f981a09 \
-    --hash=sha256:cdaa1c9aa8d3a87891a96700cadd29beec214711d6522818d207277f6452567c \
-    --hash=sha256:d19d5a8244311947b96f749c417b32d144641c6953f1164824579e1f0a51d040 \
-    --hash=sha256:d3f9a376a29c9adf62bb56f7ff5bc81eb4abeaf53d1e7dde5015564832901a51 \
-    --hash=sha256:db122ba5ee357e3bb14e8944d69bbebcbdae91d5eace29ed4df3edc53cbc6528 \
-    --hash=sha256:ddefd48c227e6f4d640fe576fac5fb2c4a8898196f513604c8ec7671b3b3d421 \
-    --hash=sha256:e3b6d09f87eb87a8cab58f7e99cae3551467f51b2bcbab17a2fe931e94e7efef \
-    --hash=sha256:e7046837859bbfd10b01786056145480155c16b222c9e209215b68d3be13060e \
-    --hash=sha256:ee101ecda7231770f6a5da1024a9a6ed587a7785f8fe23ab8283f4a1acb3ffe6 \
-    --hash=sha256:f760ac1722f33e774814c37b6aa0444143f612e85088ead7447a0e9cd306a1f1 \
-    --hash=sha256:fb599a3dc89ed1bb24489a2724b2f6dd4cddbbf0f7bdd69c073477bab0dc7554 \
-    --hash=sha256:fc622ed4ca400695f41c9eae3266276c6ba007e4c28164ce53b44e7ccc5e492b
     # via qdrant-client
 h11==0.16.0 \
     --hash=sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1 \
@@ -1081,7 +1016,7 @@ httpx[http2]==0.28.1 \
     --hash=sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc \
     --hash=sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad
     # via
-    #   -r services/api/requirements.in
+    #   -r requirements.in
     #   huggingface-hub
     #   langfuse
     #   litellm
@@ -1252,7 +1187,7 @@ langcodes==3.5.1 \
 langfuse==2.60.10 \
     --hash=sha256:815c6369194aa5b2a24f88eb9952f7c3fc863272c41e90642a71f3bc76f4a11f \
     --hash=sha256:a26d0d927a28ee01b2d12bb5b862590b643cc4e60a28de6e2b0c2cfff5dbfc6a
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 limits==5.8.0 \
     --hash=sha256:ae1b008a43eb43073c3c579398bd4eb4c795de60952532dc24720ab45e1ac6b8 \
     --hash=sha256:c9e0d74aed837e8f6f50d1fcebcf5fd8130957287206bc3799adaee5092655da
@@ -1260,7 +1195,7 @@ limits==5.8.0 \
 litellm==1.83.8 \
     --hash=sha256:38db022b4bf5a51cbe597a8308e6e51eb71254ae684d41aa210b76df0c827063 \
     --hash=sha256:3bc8cfeff9d73a6a11409006c0d66bafeed9a23db65f642000f72f1cdb2e9ce8
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 loguru==0.7.3 \
     --hash=sha256:19480589e77d47b8d85b2c827ad95d49bf31b0dcde16593892eb51dd18706eb6 \
     --hash=sha256:31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c
@@ -1368,7 +1303,7 @@ mdurl==0.1.2 \
     # via markdown-it-py
 medspacy==1.3.1 \
     --hash=sha256:976599d9446e98018b311951cfa926be5a59d0c140967b828fe98bc4bada40fe
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 medspacy-quickumls==3.2 \
     --hash=sha256:eeea4c94f4e46529470b9de894bac3384fe883f843d321cd578a62f880439165
     # via medspacy
@@ -1747,7 +1682,7 @@ murmurhash==1.0.15 \
 neo4j==6.1.0 \
     --hash=sha256:3bd93941f3a3559af197031157220af9fd71f4f93a311db687bd69ffa417b67d \
     --hash=sha256:b5dde8c0d8481e7b6ae3733569d990dd3e5befdc5d452f531ad1884ed3500b84
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 nltk==3.9.4 \
     --hash=sha256:ed03bc098a40481310320808b2db712d95d13ca65b27372f8a403949c8b523d0 \
     --hash=sha256:f2fa301c3a12718ce4a0e9305c5675299da5ad9e26068218b69d692fda84828f
@@ -2006,7 +1941,7 @@ preshed==3.0.13 \
 prometheus-client==0.25.0 \
     --hash=sha256:5e373b75c31afb3c86f1a52fa1ad470c9aace18082d39ec0d2f918d11cc9ba28 \
     --hash=sha256:d5aec89e349a6ec230805d0df882f3807f74fd6c1a2fa86864e3c2279059fed1
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 propcache==0.4.1 \
     --hash=sha256:0002004213ee1f36cfb3f9a42b5066100c44276b9b72b4e1504cddd3d692e86e \
     --hash=sha256:0013cb6f8dde4b2a2f66903b8ba740bdfe378c943c4377a200551ceb27f379e4 \
@@ -2145,8 +2080,8 @@ protobuf==6.33.6 \
     --hash=sha256:e9db7e292e0ab79dd108d7f1a94fe31601ce1ee3f7b79e0692043423020b0593 \
     --hash=sha256:f443a394af5ed23672bc6c486be138628fbe5c651ccbc536873d7da23d1868cf
     # via
-    #   grpcio-tools
     #   onnxruntime
+    #   qdrant-client
 py-rust-stemmers==0.1.5 \
     --hash=sha256:019221c57a7bcc51097fa3f124b62d0577b5b6167184ee51abd3aea822d78f69 \
     --hash=sha256:07b3b8582313ef8a7f544acf2c887f27c3dd48c5ddca028fa0f498de7380e24f \
@@ -2218,7 +2153,7 @@ pydantic==2.12.5 \
     --hash=sha256:4d351024c75c0f085a9febbb665ce8c0c6ec5d30e903bdb6394b7ede26aebb49 \
     --hash=sha256:e561593fccf61e8a20fc46dfc2dfe075b8be7d0188df33f221ad1f0139180f9d
     # via
-    #   -r services/api/requirements.in
+    #   -r requirements.in
     #   confection
     #   fastapi
     #   langfuse
@@ -2355,7 +2290,7 @@ pydantic-core==2.41.5 \
 pydantic-settings==2.13.1 \
     --hash=sha256:b4c11847b15237fb0171e1462bf540e294affb9b86db4d9aa5c01730bdbe4025 \
     --hash=sha256:d56fd801823dbeae7f0975e1f8c8e25c258eb75d278ea7abb5d9cebb01b56237
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 pyfastner==1.0.10 \
     --hash=sha256:259665dd8a84c907559645d2ce33ec807be0fb03664cfdb14a50aa6436cedb72 \
     --hash=sha256:d477fc4f7acbb68f0c828b0bed478206092bb8190997dfda006993db5813b262
@@ -2426,18 +2361,18 @@ pytest==9.0.3 \
     --hash=sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9 \
     --hash=sha256:b86ada508af81d19edeb213c681b1d48246c1a91d304c6c81a427674c17eb91c
     # via
-    #   -r services/api/requirements.in
+    #   -r requirements.in
     #   medspacy-quickumls
     #   pytest-asyncio
     #   pytest-cov
 pytest-asyncio==1.3.0 \
     --hash=sha256:611e26147c7f77640e6d0a92a38ed17c3e9848063698d5c93d5aa7aa11cebff5 \
     --hash=sha256:d7f52f36d231b80ee124cd216ffb19369aa168fc10095013c6b014a34d3ee9e5
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 pytest-cov==7.1.0 \
     --hash=sha256:30674f2b5f6351aa09702a9c8c364f6a01c27aae0c1366ae8016160d1efc56b2 \
     --hash=sha256:a0461110b7865f9a271aa1b51e516c9a95de9d696734a2f71e3e78f46e1d4678
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 python-dotenv==1.0.1 \
     --hash=sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca \
     --hash=sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a
@@ -2524,13 +2459,13 @@ pyyaml==6.0.3 \
     --hash=sha256:fa160448684b4e94d80416c0fa4aac48967a969efe22931448d853ada8baf926 \
     --hash=sha256:fc09d0aa354569bc501d4e787133afc08552722d3ab34836a80547331bb5d4a0
     # via
-    #   -r services/api/requirements.in
+    #   -r requirements.in
     #   huggingface-hub
     #   uvicorn
-qdrant-client==1.12.2 \
-    --hash=sha256:2777e09b3e89bb22bb490384d8b1fa8140f3915287884f18984f7031a346aba5 \
-    --hash=sha256:a0ae500a46a679ff3521ba3f1f1cf3d72b57090a768cec65fc317066bcbac1e6
-    # via -r services/api/requirements.in
+qdrant-client==1.17.1 \
+    --hash=sha256:22f990bbd63485ed97ba551a4c498181fcb723f71dcab5d6e4e43fe1050a2bc0 \
+    --hash=sha256:6cda4064adfeaf211c751f3fbc00edbbdb499850918c7aff4855a9a759d56cbd
+    # via -r requirements.in
 quicksectx==0.4.1 \
     --hash=sha256:086e1e4e7541c2a57be23067ddbc3cb13bbd68bc9977dba7bdd4e229fdb8c04f \
     --hash=sha256:21e7123982f6e33f8b25b9f0f102c80f900fba0cebfec4c14a17a81a987eb24c \
@@ -2818,7 +2753,7 @@ six==1.17.0 \
 slowapi==0.1.9 \
     --hash=sha256:639192d0f1ca01b1c6d95bf6c71d794c3a9ee189855337b4821f7f457dddad77 \
     --hash=sha256:cfad116cfb84ad9d763ee155c1e5c5cbf00b0d47399a769b227865f5df576e36
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 smart-open==7.6.0 \
     --hash=sha256:2a78f454610a826aa688065b54b4a0a9b12a5599fa61d5190e9bac2df5e5f53f \
     --hash=sha256:44717f46b5ff276fac03b88e5d13d1c416f064f3b7b081381b0fa8889004bd7e
@@ -2859,7 +2794,7 @@ spacy==3.7.5 \
     --hash=sha256:faa1e2b6234ae33c0b1f8dfa5a8dcb66fb891f19231725dfcff4b2666125c250 \
     --hash=sha256:fdbb667792d6ca93899645774d1db3fccc327088a92072029be1e4bc25d7cf15
     # via
-    #   -r services/api/requirements.in
+    #   -r requirements.in
     #   medspacy
     #   medspacy-quickumls
     #   pyrush
@@ -2941,7 +2876,7 @@ starlette==1.0.0 \
 structlog==25.5.0 \
     --hash=sha256:098522a3bebed9153d4570c6d0288abf80a031dfdb2048d59a49e9dc2190fc98 \
     --hash=sha256:a8453e9b9e636ec59bd9e79bbd4a72f025981b3ba0f5837aebf48f02f37a7f9f
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 sympy==1.14.0 \
     --hash=sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517 \
     --hash=sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5
@@ -3113,7 +3048,7 @@ urllib3==2.6.3 \
 uvicorn[standard]==0.44.0 \
     --hash=sha256:6c942071b68f07e178264b9152f1f16dfac5da85880c4ce06366a96d70d4f31e \
     --hash=sha256:ce937c99a2cc70279556967274414c087888e8cec9f9c94644dfca11bd3ced89
-    # via -r services/api/requirements.in
+    # via -r requirements.in
 uvloop==0.22.1 \
     --hash=sha256:017bd46f9e7b78e81606329d07141d3da446f8798c6baeec124260e22c262772 \
     --hash=sha256:0530a5fbad9c9e4ee3f2b33b148c6a64d47bbad8000ea63704fa8260f4cf728e \
@@ -3576,7 +3511,6 @@ setuptools==82.0.1 \
     --hash=sha256:7d872682c5d01cfde07da7bccc7b65469d3dca203318515ada1de5eda35efbf9 \
     --hash=sha256:a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb
     # via
-    #   grpcio-tools
     #   pyrush
     #   spacy
     #   thinc

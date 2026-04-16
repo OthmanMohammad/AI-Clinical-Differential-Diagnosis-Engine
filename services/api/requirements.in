@@ -19,7 +19,7 @@ neo4j>=5.25.0
 # docker-compose.prod.yml. Major.minor must match between client
 # and server or you get a noisy UserWarning on every call; worse,
 # some methods silently stop working when they drift too far.
-qdrant-client>=1.12.0,<1.13.0
+qdrant-client>=1.12.0,<1.18.0
 fastembed>=0.4.0
 
 # Observability
