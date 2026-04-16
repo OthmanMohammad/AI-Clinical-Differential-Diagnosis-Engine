@@ -6,7 +6,7 @@
     <title>Privacy Policy | MooseGlove</title>
     <meta
       name="description"
-      content="Privacy policy for MooseGlove, an AI clinical differential diagnosis demonstration."
+      content="Privacy policy for MooseGlove, a clinical differential diagnosis demonstration."
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <style>
@@ -16,16 +16,21 @@
         --muted: #6b7280;
         --border: #e5e7eb;
         --accent: #2563eb;
-        --card: #fff;
+      }
+      .dark {
+        --bg: #09090b;
+        --fg: #fafafa;
+        --muted: #a1a1aa;
+        --border: #27272a;
+        --accent: #60a5fa;
       }
       @media (prefers-color-scheme: dark) {
-        :root {
+        :root:not(.light) {
           --bg: #09090b;
           --fg: #fafafa;
           --muted: #a1a1aa;
           --border: #27272a;
           --accent: #60a5fa;
-          --card: #18181b;
         }
       }
       *,
@@ -76,12 +81,10 @@
         font-weight: 600;
         margin-top: 2rem;
         margin-bottom: 0.625rem;
-        color: var(--fg);
       }
       p {
         margin-bottom: 1rem;
         font-size: 0.9375rem;
-        color: var(--fg);
         opacity: 0.88;
       }
       ul {
@@ -91,7 +94,6 @@
       li {
         margin-bottom: 0.375rem;
         font-size: 0.9375rem;
-        color: var(--fg);
         opacity: 0.88;
       }
       a {
@@ -109,6 +111,15 @@
         border-top: 1px solid var(--border);
       }
     </style>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("mooseglove.theme");
+          if (t === "dark") document.documentElement.classList.add("dark");
+          else if (t === "light") document.documentElement.classList.add("light");
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div class="page">
@@ -132,8 +143,9 @@
 
       <h2>What This Tool Is</h2>
       <p>
-        MooseGlove is an open-source portfolio project. It is not a commercial service and does not
-        collect personal information for marketing, advertising, or resale.
+        MooseGlove is an open-source project for clinical differential diagnosis. It is not a
+        commercial service and does not collect personal information for marketing, advertising, or
+        resale.
       </p>
 
       <h2>Data You Submit</h2>
@@ -167,8 +179,8 @@
 
       <h2>Third-Party Services</h2>
       <p>
-        The application uses third-party services for content delivery, DNS, and AI inference. Each
-        service has its own privacy policy. The clinical scenario text you enter is sent to an AI
+        The application uses third-party services for content delivery, DNS, and inference. Each
+        service has its own privacy policy. The clinical scenario text you enter is sent to an
         inference provider as part of the diagnosis request.
       </p>
 

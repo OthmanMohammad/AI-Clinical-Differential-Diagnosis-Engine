@@ -3,7 +3,7 @@
  */
 
 export const APP_NAME = "MooseGlove";
-export const APP_TAGLINE = "AI Clinical Differential Diagnosis Engine";
+export const APP_TAGLINE = "Clinical Differential Diagnosis Engine";
 export const APP_VERSION = "0.1.0";
 
 /** localStorage keys (namespaced to avoid collisions). */

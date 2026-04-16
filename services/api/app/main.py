@@ -126,7 +126,7 @@ _app_settings = get_settings()
 
 app = FastAPI(
     title="MooseGlove",
-    description="AI Clinical Differential Diagnosis Engine",
+    description="Clinical Differential Diagnosis Engine",
     version="0.1.0",
     lifespan=lifespan,
     docs_url=None if _app_settings.is_production else "/docs",
