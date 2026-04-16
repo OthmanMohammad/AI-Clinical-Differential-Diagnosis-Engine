@@ -83,6 +83,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   if (!response.ok) {
     let detail: unknown = response.statusText;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- response.json() is inherently untyped
       const parsed = await response.json();
       detail = (parsed as { detail?: unknown }).detail ?? parsed;
     } catch {

@@ -87,7 +87,7 @@ import structlog
 
 from app.core.lab_rules import RuleBoost, apply_rules
 from app.observability.metrics import NEO4J_LATENCY
-from app.services.disease_index import DiseaseRecord, get_disease_index
+from app.services.disease_index import get_disease_index
 
 if TYPE_CHECKING:
     from neo4j import AsyncDriver
@@ -150,7 +150,7 @@ class MatchedEdge:
 
     phenotype_id: str
     phenotype_name: str
-    rel_type: str      # e.g. "disease_phenotype_positive"
+    rel_type: str  # e.g. "disease_phenotype_positive"
 
 
 @dataclass
@@ -166,13 +166,13 @@ class Candidate:
     it for ordering and nothing else depends on it being in [0,1].
     """
 
-    disease_id: str              # Neo4j elementId
-    disease_name: str            # human-readable name
-    overlap_count: int           # number of patient phenotypes matched
-    score: float                 # combined final score
+    disease_id: str  # Neo4j elementId
+    disease_name: str  # human-readable name
+    overlap_count: int  # number of patient phenotypes matched
+    score: float  # combined final score
     matched_edges: list[MatchedEdge] = field(default_factory=list)
     rule_boosts: list[RuleBoost] = field(default_factory=list)
-    source: str = "graph"        # "graph" | "clinical_rule"
+    source: str = "graph"  # "graph" | "clinical_rule"
 
 
 class RetrievalError(Exception):
@@ -228,6 +228,7 @@ LIMIT $limit
 # The cache is small (LRU 256 entries) and in-process; if the PrimeKG
 # data is re-ingested we restart the container which clears it.
 
+
 @lru_cache(maxsize=256)
 def _intersection_cache_key(
     phenotype_ids_sorted: tuple[str, ...],
@@ -237,9 +238,7 @@ def _intersection_cache_key(
     return phenotype_ids_sorted  # only used for the cache key
 
 
-_intersection_results: dict[
-    tuple[tuple[str, ...], int, int], list[Candidate]
-] = {}
+_intersection_results: dict[tuple[tuple[str, ...], int, int], list[Candidate]] = {}
 
 
 def _clear_intersection_cache() -> None:
@@ -368,9 +367,7 @@ def _apply_rule_boosts(
     that did NOT land on any existing candidate. Those are the
     candidates for fallback seeding in `_seed_from_rules`.
     """
-    by_name_lower: dict[str, Candidate] = {
-        c.disease_name.lower(): c for c in candidates
-    }
+    by_name_lower: dict[str, Candidate] = {c.disease_name.lower(): c for c in candidates}
 
     unmatched: dict[str, list[RuleBoost]] = {}
     for boost in rule_boosts:
@@ -465,7 +462,7 @@ async def _seed_from_rules(
     idx = get_disease_index()
     seeds: list[Candidate] = []
     cap_reached = False
-    for name_lower, boosts in unmatched_boosts.items():
+    for _name_lower, boosts in unmatched_boosts.items():
         if len(seeds) >= max_seeds:
             cap_reached = True
             break
@@ -534,9 +531,9 @@ async def _seed_from_rules(
 
 
 async def retrieve_candidates(
-    intake: "PatientIntake",
+    intake: PatientIntake,
     phenotype_ids: list[str],
-    neo4j_driver: "AsyncDriver",
+    neo4j_driver: AsyncDriver,
     *,
     min_overlap: int = DEFAULT_MIN_OVERLAP,
     limit: int = DEFAULT_CANDIDATE_LIMIT,

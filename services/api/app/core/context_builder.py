@@ -62,9 +62,7 @@ def serialize_subgraph(nodes: list[dict], relationships: list[dict]) -> str:
     lines.extend(["", "Relationships:"])
 
     # Build a name lookup for readable edge display
-    id_to_name: dict[str, str] = {
-        node["id"]: node.get("name", "unnamed") for node in nodes
-    }
+    id_to_name: dict[str, str] = {node["id"]: node.get("name", "unnamed") for node in nodes}
 
     for rel in relationships:
         source_name = id_to_name.get(rel.get("source", ""), "?")
@@ -80,7 +78,7 @@ def serialize_subgraph(nodes: list[dict], relationships: list[dict]) -> str:
 # ---------------------------------------------------------------------------
 
 
-def serialize_candidates(candidates: "list[Candidate]") -> str:
+def serialize_candidates(candidates: list[Candidate]) -> str:
     """Convert a ranked Candidate list into structured text for v3 prompts.
 
     Each candidate gets its own block with:
@@ -129,10 +127,7 @@ def serialize_candidates(candidates: "list[Candidate]") -> str:
         if cand.matched_edges:
             lines.append(f"      matched phenotypes ({len(cand.matched_edges)}):")
             for edge in cand.matched_edges:
-                lines.append(
-                    f"        - {edge.phenotype_name:<35s} "
-                    f"via {edge.rel_type}"
-                )
+                lines.append(f"        - {edge.phenotype_name:<35s} via {edge.rel_type}")
         else:
             lines.append("      matched phenotypes: (none — rule-only candidate)")
 
@@ -141,9 +136,7 @@ def serialize_candidates(candidates: "list[Candidate]") -> str:
             lines.append("      clinical rules that fired:")
             for boost in cand.rule_boosts:
                 rationale = boost.rationale or boost.rule_label
-                lines.append(
-                    f"        - {rationale}  (x{boost.multiplier:.1f})"
-                )
+                lines.append(f"        - {rationale}  (x{boost.multiplier:.1f})")
 
         lines.append("")  # blank line between candidates
 
@@ -283,7 +276,7 @@ def _maybe_prune_v2(
 
 def build_messages_v3(
     intake: PatientIntake,
-    candidates: "list[Candidate]",
+    candidates: list[Candidate],
     prompt_version: str = "v3",
     max_candidates: int = 12,
 ) -> tuple[list[dict], str]:

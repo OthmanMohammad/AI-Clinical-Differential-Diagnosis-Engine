@@ -54,6 +54,7 @@ ERRORS = Counter(
 
 # --- Structured logging ---
 
+
 def configure_logging(environment: str) -> None:
     """Configure structlog for JSON output and silence noisy third-party loggers."""
     import logging

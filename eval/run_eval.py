@@ -147,7 +147,9 @@ def run_case(
                 sleep_s = DEFAULT_429_FLAT_SLEEP
             logger.warning(
                 "case rate_limited case_id=%s attempt=%d sleeping=%.1fs",
-                case_id, attempt + 1, sleep_s,
+                case_id,
+                attempt + 1,
+                sleep_s,
             )
             time.sleep(sleep_s)
             continue
@@ -156,10 +158,7 @@ def run_case(
         elapsed = time.monotonic() - total_start
         if resp.status_code == 200:
             response_data = resp.json()
-            predicted = [
-                d.get("disease_name", "")
-                for d in response_data.get("diagnoses", [])
-            ]
+            predicted = [d.get("disease_name", "") for d in response_data.get("diagnoses", [])]
         else:
             predicted = []
             response_data = {"error": resp.text[:500]}
@@ -192,7 +191,7 @@ def run_case(
     }
 
 
-class RunnerBailOut(RuntimeError):
+class RunnerBailOutError(RuntimeError):
     """Raised when the circuit breaker trips."""
 
 

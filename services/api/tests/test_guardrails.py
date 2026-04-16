@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from app.guardrails.input_validator import (
     InputValidationError,
@@ -86,11 +87,11 @@ class TestOutputSchemaValidation:
         assert len(result.diagnoses) == 2
 
     def test_invalid_output_raises(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             gate_schema_validation({"bad": "data"})
 
     def test_empty_diagnoses_rejected(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             gate_schema_validation({"diagnoses": []})
 
 

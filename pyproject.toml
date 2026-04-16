@@ -10,7 +10,13 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "TCH"]
-ignore = ["E501"]
+ignore = [
+    "E501",   # Line too long — handled by formatter, not linter
+    "B008",   # Depends() in argument defaults — the STANDARD FastAPI DI pattern
+    "TC001",  # Move app import into TYPE_CHECKING — zero perf benefit here,
+    "TC002",  # Move third-party import into TYPE_CHECKING — risky auto-fix
+    "TC003",  # Move stdlib import into TYPE_CHECKING — for a startup-loaded app
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

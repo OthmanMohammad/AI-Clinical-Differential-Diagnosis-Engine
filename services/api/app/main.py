@@ -15,8 +15,8 @@ from __future__ import annotations
 import asyncio
 import os
 import uuid
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, Awaitable, Callable
 
 import litellm
 import structlog
@@ -51,6 +51,7 @@ logger = structlog.get_logger()
 # ---------------------------------------------------------------------------
 # Lifespan
 # ---------------------------------------------------------------------------
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -155,6 +156,7 @@ app.mount("/metrics", make_asgi_app())
 # Middleware
 # ---------------------------------------------------------------------------
 
+
 @app.middleware("http")
 async def add_request_id(
     request: Request, call_next: Callable[[Request], Awaitable[Response]]
@@ -230,7 +232,7 @@ async def timeout_middleware(
             call_next(request),
             timeout=float(settings.request_timeout),
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.error("request_timeout", path=request.url.path)
         return JSONResponse(
             status_code=504,
@@ -247,10 +249,9 @@ async def timeout_middleware(
 # Exception handlers — sanitize errors in production
 # ---------------------------------------------------------------------------
 
+
 @app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(
-    request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """Format HTTPException as RFC 7807 Problem Details."""
     detail = exc.detail
     if isinstance(detail, dict):
@@ -290,9 +291,7 @@ async def validation_exception_handler(
 
 
 @app.exception_handler(Exception)
-async def unhandled_exception_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch-all for unhandled exceptions. Logs the full trace but only
     returns a generic message to the client in production."""
     settings = get_settings()

@@ -44,9 +44,7 @@ def get_embedder() -> TextEmbedding:
         settings = get_settings()
         model_name = settings.embedding_model
         cache_dir = os.environ.get("FASTEMBED_CACHE_PATH")
-        logger.info(
-            "loading_embedding_model", model=model_name, cache_dir=cache_dir
-        )
+        logger.info("loading_embedding_model", model=model_name, cache_dir=cache_dir)
         kwargs = {"model_name": model_name}
         if cache_dir:
             kwargs["cache_dir"] = cache_dir

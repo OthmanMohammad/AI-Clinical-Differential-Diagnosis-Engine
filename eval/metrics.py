@@ -29,11 +29,32 @@ from typing import Any
 # include "type", "acute", "chronic", "primary", "secondary" — those
 # carry real clinical meaning (Type 1 vs Type 2 diabetes, acute vs
 # chronic kidney disease, primary vs secondary hypothyroidism).
-_MATCH_STOPWORDS = frozenset({
-    "the", "a", "an", "of", "and", "or", "in", "on", "with", "to", "for",
-    "by", "at", "from", "as", "is", "be", "syndrome", "disease", "disorder",
-    "condition", "mellitus",
-})
+_MATCH_STOPWORDS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "of",
+        "and",
+        "or",
+        "in",
+        "on",
+        "with",
+        "to",
+        "for",
+        "by",
+        "at",
+        "from",
+        "as",
+        "is",
+        "be",
+        "syndrome",
+        "disease",
+        "disorder",
+        "condition",
+        "mellitus",
+    }
+)
 
 
 def _tokenize_name(name: str) -> set[str]:
@@ -46,11 +67,7 @@ def _tokenize_name(name: str) -> set[str]:
     if not name:
         return set()
     raw = re.findall(r"[a-z0-9]+", name.lower())
-    return {
-        t for t in raw
-        if t not in _MATCH_STOPWORDS
-        and (t.isdigit() or len(t) > 1)
-    }
+    return {t for t in raw if t not in _MATCH_STOPWORDS and (t.isdigit() or len(t) > 1)}
 
 
 def _matches(predicted: str, expected_set: set[str]) -> bool:
@@ -181,8 +198,7 @@ def compute_metrics(results: list[dict]) -> dict:
     # is well below graph_path_rate, the LLM is citing edges it never
     # saw — that's citation theater, not grounded reasoning.
     evidence_grounding_rate = (
-        grounded_evidence_entries / total_evidence_entries
-        if total_evidence_entries > 0 else 0.0
+        grounded_evidence_entries / total_evidence_entries if total_evidence_entries > 0 else 0.0
     )
 
     # Latency
@@ -191,9 +207,7 @@ def compute_metrics(results: list[dict]) -> dict:
     sorted_latencies = sorted(latencies)
     p95_idx = int(len(sorted_latencies) * 0.95)
     p95_latency = (
-        sorted_latencies[min(p95_idx, len(sorted_latencies) - 1)]
-        if sorted_latencies
-        else 0
+        sorted_latencies[min(p95_idx, len(sorted_latencies) - 1)] if sorted_latencies else 0
     )
 
     # Metrics by mapping confidence (preserved from original)
@@ -249,7 +263,9 @@ def format_summary(metrics: dict, label: str = "") -> str:
     lines.append(f"  Top-1 accuracy:      {metrics.get('top1_accuracy', 0):.1%}")
     lines.append(f"  Top-3 accuracy:      {metrics.get('top3_accuracy', 0):.1%}")
     lines.append(f"  Top-5 accuracy:      {metrics.get('top5_accuracy', 0):.1%}")
-    lines.append(f"  Graph-path rate:     {metrics.get('graph_path_rate', 0):.1%}  (weak signal — cites non-empty)")
+    lines.append(
+        f"  Graph-path rate:     {metrics.get('graph_path_rate', 0):.1%}  (weak signal — cites non-empty)"
+    )
     eg = metrics.get("evidence_grounding_rate", 0)
     total_e = metrics.get("total_evidence_entries", 0)
     grounded_e = metrics.get("grounded_evidence_entries", 0)
@@ -264,6 +280,7 @@ def format_summary(metrics: dict, label: str = "") -> str:
 
 def diff_metrics(baseline: dict, current: dict) -> str:
     """Format a before/after comparison between two metrics dicts."""
+
     def _delta(key: str, fmt: str = "{:+.3f}") -> str:
         b = baseline.get(key, 0)
         c = current.get(key, 0)

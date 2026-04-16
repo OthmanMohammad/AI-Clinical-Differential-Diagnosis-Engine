@@ -50,7 +50,7 @@ export type GraphNodeType =
 export interface GraphNode {
   id: string;
   name: string;
-  type: GraphNodeType | string;
+  type: string;
 }
 
 export interface GraphEdge {

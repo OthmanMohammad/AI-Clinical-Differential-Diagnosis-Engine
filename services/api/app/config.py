@@ -8,6 +8,7 @@ from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 # Project root — walk up from this file looking for the `prompts` and
 # `data` marker directories. Works in both layouts we care about:
 #   - dev:       <repo>/services/api/app/config.py   → PROJECT_ROOT = <repo>

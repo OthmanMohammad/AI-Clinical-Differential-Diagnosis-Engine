@@ -5,7 +5,7 @@ from __future__ import annotations
 import structlog
 from fastapi import Depends, HTTPException, Request, Security
 from fastapi.security import APIKeyHeader
-from neo4j import AsyncGraphDatabase, AsyncDriver
+from neo4j import AsyncDriver, AsyncGraphDatabase
 from qdrant_client import AsyncQdrantClient
 
 from app.config import Settings, get_settings

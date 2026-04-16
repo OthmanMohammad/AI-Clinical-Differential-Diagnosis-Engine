@@ -26,11 +26,18 @@ EMERGENCY_PATTERNS = [
     {
         "name": "cardiac_emergency",
         "primary": [
-            "chest pain", "chest tightness", "chest pressure", "crushing chest",
+            "chest pain",
+            "chest tightness",
+            "chest pressure",
+            "crushing chest",
         ],
         "secondary": [
-            "shortness of breath", "left arm pain", "jaw pain",
-            "cold sweat", "diaphoresis", "nausea",
+            "shortness of breath",
+            "left arm pain",
+            "jaw pain",
+            "cold sweat",
+            "diaphoresis",
+            "nausea",
         ],
         "min_primary": 1,
         "min_secondary": 1,
@@ -38,12 +45,18 @@ EMERGENCY_PATTERNS = [
     {
         "name": "stroke",
         "primary": [
-            "facial drooping", "arm weakness", "leg weakness",
-            "slurred speech", "sudden numbness",
+            "facial drooping",
+            "arm weakness",
+            "leg weakness",
+            "slurred speech",
+            "sudden numbness",
         ],
         "secondary": [
-            "sudden onset", "worst headache", "vision loss",
-            "confusion", "difficulty walking",
+            "sudden onset",
+            "worst headache",
+            "vision loss",
+            "confusion",
+            "difficulty walking",
         ],
         "min_primary": 1,
         "min_secondary": 1,
@@ -51,10 +64,15 @@ EMERGENCY_PATTERNS = [
     {
         "name": "meningitis",
         "primary": [
-            "severe headache", "neck stiffness", "nuchal rigidity",
+            "severe headache",
+            "neck stiffness",
+            "nuchal rigidity",
         ],
         "secondary": [
-            "fever", "photophobia", "altered mental status", "petechial rash",
+            "fever",
+            "photophobia",
+            "altered mental status",
+            "petechial rash",
         ],
         "min_primary": 1,
         "min_secondary": 2,
@@ -62,11 +80,16 @@ EMERGENCY_PATTERNS = [
     {
         "name": "anaphylaxis",
         "primary": [
-            "throat swelling", "airway compromise", "angioedema",
+            "throat swelling",
+            "airway compromise",
+            "angioedema",
             "difficulty breathing",
         ],
         "secondary": [
-            "hives", "urticaria", "wheezing", "allergic reaction",
+            "hives",
+            "urticaria",
+            "wheezing",
+            "allergic reaction",
             "recent exposure",
         ],
         "min_primary": 1,
@@ -75,11 +98,15 @@ EMERGENCY_PATTERNS = [
     {
         "name": "pulmonary_embolism",
         "primary": [
-            "sudden shortness of breath", "pleuritic chest pain",
+            "sudden shortness of breath",
+            "pleuritic chest pain",
         ],
         "secondary": [
-            "leg swelling", "recent surgery", "immobility",
-            "hemoptysis", "tachycardia",
+            "leg swelling",
+            "recent surgery",
+            "immobility",
+            "hemoptysis",
+            "tachycardia",
         ],
         "min_primary": 1,
         "min_secondary": 1,
@@ -87,8 +114,12 @@ EMERGENCY_PATTERNS = [
     {
         "name": "suicidal_ideation",
         "primary": [
-            "want to die", "kill myself", "suicidal", "end my life",
-            "self-harm", "suicide",
+            "want to die",
+            "kill myself",
+            "suicidal",
+            "end my life",
+            "self-harm",
+            "suicide",
         ],
         "secondary": [],
         "min_primary": 1,
@@ -193,18 +224,13 @@ def check_emergency(intake: PatientIntake) -> EmergencyResult:
 
     for pattern in EMERGENCY_PATTERNS:
         primary_hits = sum(
-            1 for kw in pattern["primary"]
-            if any(kw in concept for concept in affirmed)
+            1 for kw in pattern["primary"] if any(kw in concept for concept in affirmed)
         )
         secondary_hits = sum(
-            1 for kw in pattern["secondary"]
-            if any(kw in concept for concept in affirmed)
+            1 for kw in pattern["secondary"] if any(kw in concept for concept in affirmed)
         )
 
-        if (
-            primary_hits >= pattern["min_primary"]
-            and secondary_hits >= pattern["min_secondary"]
-        ):
+        if primary_hits >= pattern["min_primary"] and secondary_hits >= pattern["min_secondary"]:
             EMERGENCY_TRIGGERS.labels(pattern_name=pattern["name"]).inc()
             GATE_TRIGGERS.labels(gate_name="emergency", result="triggered").inc()
 

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- Context + Provider must co-export */
 /**
  * Theme context and provider.
  *

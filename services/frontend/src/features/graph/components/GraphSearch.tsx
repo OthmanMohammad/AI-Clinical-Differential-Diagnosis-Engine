@@ -39,7 +39,7 @@ export function GraphSearch({ nodes, open, onClose, onSelect, className }: Graph
   const handleKey = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") onClose();
     else if (e.key === "Enter" && matches[activeIndex]) {
-      onSelect(matches[activeIndex]!.id);
+      onSelect(matches[activeIndex].id);
       onClose();
     } else if (e.key === "ArrowDown") {
       e.preventDefault();

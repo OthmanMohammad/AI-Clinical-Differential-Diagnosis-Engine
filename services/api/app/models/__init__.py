@@ -1,4 +1,4 @@
-from app.models.diagnosis import DifferentialDiagnosis, DiagnosisItem, DiagnosisResponse
+from app.models.diagnosis import DiagnosisItem, DiagnosisResponse, DifferentialDiagnosis
 from app.models.patient import PatientIntake, Vitals
 
 __all__ = [

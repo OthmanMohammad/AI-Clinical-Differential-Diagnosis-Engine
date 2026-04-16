@@ -23,11 +23,11 @@ import structlog
 from neo4j import AsyncDriver
 from qdrant_client import AsyncQdrantClient
 
+from app.config import get_settings
 from app.core.context_builder import build_messages
 from app.core.graph_traversal import traverse_graph
 from app.core.llm_client import LLMError, LLMSchemaError, call_llm
 from app.core.vector_search import NoSeedNodesError, get_seed_nodes
-from app.config import get_settings
 from app.guardrails.emergency import check_emergency
 from app.guardrails.input_validator import InputValidationError, run_input_gates
 from app.guardrails.output_validator import run_output_gates

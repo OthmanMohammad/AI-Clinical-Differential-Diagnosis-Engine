@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from app.models.diagnosis import DiagnosisItem, DifferentialDiagnosis, DiagnosisResponse
+from app.models.diagnosis import DiagnosisItem, DiagnosisResponse, DifferentialDiagnosis
 from app.models.patient import PatientIntake, Vitals
 
 
@@ -62,7 +62,9 @@ class TestPatientIntake:
     def test_free_text_max_length(self):
         with pytest.raises(ValidationError):
             PatientIntake(
-                symptoms=["headache"], age=30, sex="male",
+                symptoms=["headache"],
+                age=30,
+                sex="male",
                 free_text="x" * 2001,
             )
 

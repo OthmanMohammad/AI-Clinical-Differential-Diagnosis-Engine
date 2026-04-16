@@ -49,11 +49,32 @@ logger = structlog.get_logger()
 
 # Stopwords match the set used by the hallucination gate — keep them in
 # sync or Jaccard matching drifts between the two layers.
-_MATCH_STOPWORDS = frozenset({
-    "the", "a", "an", "of", "and", "or", "in", "on", "with", "to", "for",
-    "by", "at", "from", "as", "is", "be", "type", "syndrome", "disease",
-    "disorder", "condition",
-})
+_MATCH_STOPWORDS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "of",
+        "and",
+        "or",
+        "in",
+        "on",
+        "with",
+        "to",
+        "for",
+        "by",
+        "at",
+        "from",
+        "as",
+        "is",
+        "be",
+        "type",
+        "syndrome",
+        "disease",
+        "disorder",
+        "condition",
+    }
+)
 
 
 def _meaningful_tokens(name: str) -> frozenset[str]:
@@ -71,9 +92,9 @@ DEFAULT_TTL = 300.0
 class DiseaseRecord:
     """One disease node as it appears in the shared index."""
 
-    element_id: str       # Neo4j elementId — used by the retrieval layer
-    name: str             # canonical Neo4j name field
-    name_lower: str       # pre-lowered for O(1) case-insensitive lookup
+    element_id: str  # Neo4j elementId — used by the retrieval layer
+    name: str  # canonical Neo4j name field
+    name_lower: str  # pre-lowered for O(1) case-insensitive lookup
     tokens: frozenset[str]  # meaningful tokens for Jaccard matching
 
 
@@ -138,9 +159,7 @@ class DiseaseIndex:
         self._by_name_lower = by_name_lower
         self._loaded_at = time.monotonic()
         elapsed_ms = round((self._loaded_at - start) * 1000)
-        logger.info(
-            "disease_index_loaded", count=len(records), elapsed_ms=elapsed_ms
-        )
+        logger.info("disease_index_loaded", count=len(records), elapsed_ms=elapsed_ms)
 
     async def _ensure_loaded(self, driver: AsyncDriver) -> None:
         """Load on first use or when TTL has expired."""
@@ -163,9 +182,7 @@ class DiseaseIndex:
         await self._ensure_loaded(driver)
         return self._records
 
-    async def find_by_name(
-        self, driver: AsyncDriver, name: str
-    ) -> DiseaseRecord | None:
+    async def find_by_name(self, driver: AsyncDriver, name: str) -> DiseaseRecord | None:
         """Exact-name lookup (case-insensitive)."""
         await self._ensure_loaded(driver)
         return self._by_name_lower.get(name.lower())

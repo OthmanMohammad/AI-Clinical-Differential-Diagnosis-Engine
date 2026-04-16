@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 import structlog
 
-from app.models.diagnosis import DISCLAIMER_TEXT, DifferentialDiagnosis, DiagnosisResponse
+from app.models.diagnosis import DISCLAIMER_TEXT, DiagnosisResponse, DifferentialDiagnosis
 from app.observability.metrics import GATE_TRIGGERS
 from app.services.disease_index import get_disease_index
 
@@ -156,11 +156,32 @@ async def gate_hallucination_check(
 # Tokenizer + stopwords kept in sync with app/services/disease_index.py.
 # If the two ever drift the hallucination check would see different token
 # sets than the retrieval layer, which is how silent mismatches happen.
-_STOPWORDS = frozenset({
-    "the", "a", "an", "of", "and", "or", "in", "on", "with", "to", "for",
-    "by", "at", "from", "as", "is", "be", "type", "syndrome", "disease",
-    "disorder", "condition",
-})
+_STOPWORDS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "of",
+        "and",
+        "or",
+        "in",
+        "on",
+        "with",
+        "to",
+        "for",
+        "by",
+        "at",
+        "from",
+        "as",
+        "is",
+        "be",
+        "type",
+        "syndrome",
+        "disease",
+        "disorder",
+        "condition",
+    }
+)
 
 
 def _meaningful_tokens(name: str) -> list[str]:
@@ -188,10 +209,7 @@ def gate_treatment_filter(diagnosis: DifferentialDiagnosis) -> tuple[Differentia
     # Check and clean reasoning summary
     if TREATMENT_KEYWORDS.search(diagnosis.reasoning_summary):
         sentences = diagnosis.reasoning_summary.split(". ")
-        clean_sentences = [
-            s for s in sentences
-            if not TREATMENT_KEYWORDS.search(s)
-        ]
+        clean_sentences = [s for s in sentences if not TREATMENT_KEYWORDS.search(s)]
         diagnosis.reasoning_summary = ". ".join(clean_sentences)
         stripped = True
 
@@ -260,11 +278,32 @@ def gate_confidence_threshold(
 # eval harness reads these fields to compute evidence_grounding_rate
 # across cases.
 
-_MATCH_STOPWORDS = frozenset({
-    "the", "a", "an", "of", "and", "or", "in", "on", "with", "to", "for",
-    "by", "at", "from", "as", "is", "be", "syndrome", "disease", "disorder",
-    "condition", "mellitus",
-})
+_MATCH_STOPWORDS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "of",
+        "and",
+        "or",
+        "in",
+        "on",
+        "with",
+        "to",
+        "for",
+        "by",
+        "at",
+        "from",
+        "as",
+        "is",
+        "be",
+        "syndrome",
+        "disease",
+        "disorder",
+        "condition",
+        "mellitus",
+    }
+)
 
 
 def _name_tokens(name: str) -> frozenset[str]:
@@ -275,10 +314,7 @@ def _name_tokens(name: str) -> frozenset[str]:
     if not name:
         return frozenset()
     raw = re.findall(r"[a-z0-9]+", name.lower())
-    return frozenset(
-        t for t in raw
-        if t not in _MATCH_STOPWORDS and (t.isdigit() or len(t) > 1)
-    )
+    return frozenset(t for t in raw if t not in _MATCH_STOPWORDS and (t.isdigit() or len(t) > 1))
 
 
 def _names_match(a: str, b: str) -> bool:
@@ -330,9 +366,7 @@ def gate_evidence_grounding(
     graph_edges = graph_edges or []
 
     # Index nodes by elementId for fast lookup.
-    nodes_by_id: dict[str, dict] = {
-        n.get("id"): n for n in graph_nodes if n.get("id")
-    }
+    nodes_by_id: dict[str, dict] = {n.get("id"): n for n in graph_nodes if n.get("id")}
 
     # Build disease_id -> set of phenotype names it connects to (via edges).
     disease_id_to_phenotype_names: dict[str, set[str]] = {}
@@ -395,22 +429,16 @@ def gate_evidence_grounding(
             grounding_rate=round(grounding_rate, 3),
         )
         if hallucinated > 0:
-            GATE_TRIGGERS.labels(
-                gate_name="evidence_grounding", result="partial"
-            ).inc()
+            GATE_TRIGGERS.labels(gate_name="evidence_grounding", result="partial").inc()
             logger.warning(
                 "evidence_grounding_hallucinations",
                 count=hallucinated,
                 total=total_entries,
             )
         else:
-            GATE_TRIGGERS.labels(
-                gate_name="evidence_grounding", result="clean"
-            ).inc()
+            GATE_TRIGGERS.labels(gate_name="evidence_grounding", result="clean").inc()
     else:
-        GATE_TRIGGERS.labels(
-            gate_name="evidence_grounding", result="empty"
-        ).inc()
+        GATE_TRIGGERS.labels(gate_name="evidence_grounding", result="empty").inc()
 
     return diagnosis, total_entries, grounded_entries
 

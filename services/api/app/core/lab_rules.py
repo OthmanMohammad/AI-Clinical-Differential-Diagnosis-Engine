@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import logging
 import operator
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -178,9 +178,7 @@ def load_rules(path: Path | None = None) -> list[ClinicalRule]:
         doc = yaml.safe_load(f) or {}
 
     if doc.get("version") != 1:
-        raise ClinicalRuleError(
-            f"{path}: unsupported version {doc.get('version')!r}; expected 1"
-        )
+        raise ClinicalRuleError(f"{path}: unsupported version {doc.get('version')!r}; expected 1")
 
     raw_rules = doc.get("rules") or []
     compiled: list[ClinicalRule] = []
@@ -211,13 +209,10 @@ def load_rules(path: Path | None = None) -> list[ClinicalRule]:
             name = b.get("name")
             mult = b.get("multiplier")
             if not isinstance(name, str) or not name:
-                raise ClinicalRuleError(
-                    f"{path}: rule '{rid}' boost missing name"
-                )
+                raise ClinicalRuleError(f"{path}: rule '{rid}' boost missing name")
             if not isinstance(mult, (int, float)) or mult <= 0:
                 raise ClinicalRuleError(
-                    f"{path}: rule '{rid}' boost '{name}' has invalid "
-                    f"multiplier {mult!r}"
+                    f"{path}: rule '{rid}' boost '{name}' has invalid multiplier {mult!r}"
                 )
             boosts.append(
                 DiseaseBoost(

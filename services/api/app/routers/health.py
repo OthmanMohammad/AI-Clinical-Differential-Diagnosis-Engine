@@ -1,7 +1,7 @@
 """Health check endpoints — public, no auth required.
 
-  /health   — liveness probe. Always 200 if the process is up.
-  /ready    — readiness probe. 200 only if Neo4j + Qdrant are reachable.
+/health   — liveness probe. Always 200 if the process is up.
+/ready    — readiness probe. 200 only if Neo4j + Qdrant are reachable.
 """
 
 from __future__ import annotations
@@ -51,9 +51,7 @@ async def ready() -> JSONResponse:
         try:
             t0 = time.monotonic()
             async with neo4j_driver.session() as session:
-                result = await asyncio.wait_for(
-                    session.run("RETURN 1 AS ok"), timeout=2.0
-                )
+                result = await asyncio.wait_for(session.run("RETURN 1 AS ok"), timeout=2.0)
                 record = await result.single()
                 if record and record.get("ok") == 1:
                     checks["neo4j"] = {
@@ -76,9 +74,7 @@ async def ready() -> JSONResponse:
     else:
         try:
             t0 = time.monotonic()
-            collections = await asyncio.wait_for(
-                qdrant_client.get_collections(), timeout=2.0
-            )
+            collections = await asyncio.wait_for(qdrant_client.get_collections(), timeout=2.0)
             checks["qdrant"] = {
                 "ok": True,
                 "collections": len(collections.collections),

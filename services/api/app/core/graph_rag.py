@@ -161,6 +161,7 @@ async def run_diagnosis_pipeline(
     # "groq/" provider prefix, so strip the prefix from the configured primary
     # before comparing.
     from app.config import get_settings
+
     primary = get_settings().primary_llm
     primary_bare = primary.split("/", 1)[-1] if "/" in primary else primary
     model_bare = model_used.split("/", 1)[-1] if "/" in model_used else model_used

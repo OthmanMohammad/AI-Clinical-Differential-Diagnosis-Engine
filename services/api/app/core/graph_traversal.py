@@ -100,8 +100,8 @@ RETURN
 
 
 async def expand_candidates(
-    candidates: list["Candidate"],
-    neo4j_driver: "AsyncDriver",
+    candidates: list[Candidate],
+    neo4j_driver: AsyncDriver,
     per_candidate: int = 15,
 ) -> tuple[list[dict], list[dict]]:
     """Expand 1 hop out from each candidate disease.
@@ -282,7 +282,7 @@ RETURN
 
 async def traverse_graph(
     seed_ids: list[str],
-    neo4j_driver: "AsyncDriver",
+    neo4j_driver: AsyncDriver,
     min_nodes: int = 3,
 ) -> tuple[list[dict], list[dict]]:
     """Legacy 2-hop traversal from vector-search seeds.
@@ -329,7 +329,7 @@ async def traverse_graph(
 
 async def verify_disease_exists(
     disease_name: str,
-    neo4j_driver: "AsyncDriver",
+    neo4j_driver: AsyncDriver,
 ) -> bool:
     """Check if a disease name exists in Neo4j (case-insensitive)."""
     async with neo4j_driver.session() as session:

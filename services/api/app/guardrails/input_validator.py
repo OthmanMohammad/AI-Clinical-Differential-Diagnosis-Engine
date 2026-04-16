@@ -128,8 +128,7 @@ def gate_prompt_injection(intake: PatientIntake) -> None:
     normalized = unicodedata.normalize("NFKC", all_text)
     # Strip control characters except newline and tab
     sanitized = "".join(
-        ch for ch in normalized
-        if unicodedata.category(ch)[0] != "C" or ch in ("\n", "\t")
+        ch for ch in normalized if unicodedata.category(ch)[0] != "C" or ch in ("\n", "\t")
     )
 
     # Layer 2: Regex patterns

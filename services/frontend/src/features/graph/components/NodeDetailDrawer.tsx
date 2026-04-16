@@ -34,7 +34,7 @@ export function NodeDetailDrawer({
           return {
             node: other,
             edgeType: e.type,
-            direction: (e.source === node.id ? "out" : "in") as "out" | "in",
+            direction: e.source === node.id ? "out" : "in",
           };
         })
         .filter((n): n is { node: GraphNode; edgeType: string; direction: "out" | "in" } =>
