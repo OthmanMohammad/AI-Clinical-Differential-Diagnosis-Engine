@@ -1,4 +1,4 @@
-"""Evaluation metrics for PathoDX.
+"""Evaluation metrics for MooseGlove.
 
 Computes:
 - success_rate    — fraction of cases where the API returned HTTP 200

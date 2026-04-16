@@ -1,7 +1,7 @@
 {
   "dashboard": {
-    "title": "PathoDX - Clinical Diagnosis Engine",
-    "uid": "pathodx-main",
+    "title": "MooseGlove - Clinical Diagnosis Engine",
+    "uid": "mooseglove-main",
     "timezone": "browser",
     "refresh": "30s",
     "panels": [
@@ -11,7 +11,7 @@
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
         "targets": [
           {
-            "expr": "histogram_quantile(0.95, rate(pathodx_request_latency_seconds_bucket[5m]))",
+            "expr": "histogram_quantile(0.95, rate(mooseglove_request_latency_seconds_bucket[5m]))",
             "legendFormat": "p95"
           }
         ]
@@ -22,7 +22,7 @@
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
         "targets": [
           {
-            "expr": "histogram_quantile(0.95, rate(pathodx_llm_latency_seconds_bucket[5m]))",
+            "expr": "histogram_quantile(0.95, rate(mooseglove_llm_latency_seconds_bucket[5m]))",
             "legendFormat": "{{ model }}"
           }
         ]
@@ -33,7 +33,7 @@
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
         "targets": [
           {
-            "expr": "increase(pathodx_gate_triggers_total[1h])",
+            "expr": "increase(mooseglove_gate_triggers_total[1h])",
             "legendFormat": "{{ gate_name }} ({{ result }})"
           }
         ]
@@ -44,7 +44,7 @@
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
         "targets": [
           {
-            "expr": "increase(pathodx_emergency_triggers_total[24h])",
+            "expr": "increase(mooseglove_emergency_triggers_total[24h])",
             "legendFormat": "{{ pattern_name }}"
           }
         ]
@@ -55,7 +55,7 @@
         "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
         "targets": [
           {
-            "expr": "rate(pathodx_errors_total[5m])",
+            "expr": "rate(mooseglove_errors_total[5m])",
             "legendFormat": "{{ error_type }}"
           }
         ]

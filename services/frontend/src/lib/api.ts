@@ -1,5 +1,5 @@
 /**
- * HTTP client for the PathoDX backend.
+ * HTTP client for the MooseGlove backend.
  *
  * Single typed entry point. All requests are normalized to either a
  * successful JSON response or an `ApiError` with a usable detail string.

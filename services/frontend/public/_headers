@@ -46,9 +46,10 @@
   #
   # Cloudflare Pages auto-injects a Web Analytics beacon loaded from
   # static.cloudflareinsights.com that POSTs to cloudflareinsights.com.
-  # We allow both so free pageview stats work. If you want to disable
-  # analytics entirely, remove those two origins here AND toggle Web
-  # Analytics off in the Pages project settings.
+  # Pages also injects a small inline <script> for beacon init — the
+  # sha256 hash below whitelists that specific inline snippet. If
+  # Cloudflare changes the snippet, the hash will need updating (the
+  # browser console will show the new required hash).
   #
   # connect-src must list every host the app fetches from:
   #   - api.mooseglove.com           our backend (diagnose, health, etc.)
@@ -62,7 +63,7 @@
   # inline <style> blocks at runtime (Radix Popover/Tooltip positioning,
   # Tailwind's JIT keyframes). Without it, every dialog/menu renders
   # unstyled. This is the single intentional softening of the policy.
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; script-src-elem 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.mooseglove.com https://cloudflareinsights.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com 'sha256-TR849JESJFRCmdqpvQEudzPO3W2S1UALyNWckWJ9nwA='; script-src-elem 'self' https://static.cloudflareinsights.com 'sha256-TR849JESJFRCmdqpvQEudzPO3W2S1UALyNWckWJ9nwA='; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.mooseglove.com https://cloudflareinsights.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
 
   # -- Cross-origin isolation ---------------------------------------------
   # COOP/CORP protect against Spectre-style cross-origin leaks. COEP is

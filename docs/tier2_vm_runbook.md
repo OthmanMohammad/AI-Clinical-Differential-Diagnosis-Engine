@@ -184,14 +184,14 @@ docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env build api
 # Start it
 docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env up -d api
 
-# Watch the logs until you see pathodx_started
+# Watch the logs until you see mooseglove_started
 docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env logs -f api
 ```
 
 **Expected startup sequence** (new things vs. old pipeline in **bold**):
 
 ```
-starting_pathodx
+starting_mooseglove
 neo4j_driver_initialized
 qdrant_client_initialized
 preloading_models
@@ -200,7 +200,7 @@ nlp_pipeline_preloaded
 embedding_model_preloaded                          ← no HF Hub fetch, instant
 **clinical_rules_loaded  count=12  path=/app/data/clinical_rules.yaml**
 **disease_index_loaded  count=~17000  elapsed_ms=<300**
-pathodx_started
+mooseglove_started
 Uvicorn running on http://0.0.0.0:8080
 ```
 
@@ -213,7 +213,7 @@ Uvicorn running on http://0.0.0.0:8080
 
 If any of those appear, stop and paste me the logs.
 
-Press **Ctrl+C** to exit the log follower once you see `pathodx_started`.
+Press **Ctrl+C** to exit the log follower once you see `mooseglove_started`.
 
 ---
 
@@ -551,9 +551,9 @@ docker tag mooseglove-api:pre-tier2 mooseglove-api:latest
 docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env up -d api
 sleep 20  # let it boot + download fastembed model
 
-# Wait for the old-style pathodx_started (no disease_index_loaded
+# Wait for the old-style mooseglove_started (no disease_index_loaded
 # log line — that's Tier 2 only)
-docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env logs --tail 30 api | grep pathodx_started
+docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env logs --tail 30 api | grep mooseglove_started
 
 # Run the baseline eval, paced at 8s, against the OLD retrieval pipeline
 API_KEY=$(grep ^API_KEY= ~/mooseglove/.env | cut -d= -f2-)
@@ -580,7 +580,7 @@ docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env up -d api
 sleep 10
 
 # Confirm Tier 2 is actually running (look for disease_index_loaded)
-docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env logs --tail 30 api | grep -E "pathodx_started|disease_index_loaded|clinical_rules_loaded"
+docker compose -f docker-compose.prod.yml --env-file ~/mooseglove/.env logs --tail 30 api | grep -E "mooseglove_started|disease_index_loaded|clinical_rules_loaded"
 
 # Now the clean post-Tier-2 eval, diffed against the clean baseline
 PYTHONPATH=. /tmp/eval-venv/bin/python -m eval.run_eval \

@@ -53,7 +53,7 @@ export function HelpDialog() {
         <DialogHeader>
           <DialogTitle>Keyboard shortcuts</DialogTitle>
           <DialogDescription>
-            Navigate PathoDX without ever reaching for your mouse.
+            Navigate MooseGlove without ever reaching for your mouse.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">

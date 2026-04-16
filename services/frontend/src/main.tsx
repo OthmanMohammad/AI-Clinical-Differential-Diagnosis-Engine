@@ -1,5 +1,5 @@
 /**
- * PathoDX — application entry point.
+ * MooseGlove — application entry point.
  */
 
 import { StrictMode } from "react";
