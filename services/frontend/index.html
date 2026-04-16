@@ -4,18 +4,60 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
+
+    <!-- Primary meta -->
+    <title>MooseGlove | AI Clinical Differential Diagnosis Engine</title>
     <meta
       name="description"
-      content="MooseGlove — AI Clinical Differential Diagnosis Engine. Graph RAG + LLM reasoning for clinical decision support."
+      content="AI-powered clinical differential diagnosis using Graph RAG and large language models. Enter patient symptoms and receive ranked diagnoses backed by a biomedical knowledge graph."
     />
-    <title>MooseGlove — Clinical Differential Diagnosis</title>
+    <meta name="author" content="Mohammad Othman" />
+    <link rel="canonical" href="https://mooseglove.com/" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <!--
-      Theme bootstrap — runs before React mounts to prevent a flash of
-      wrong theme. Lives as an external file at public/theme-init.js so
-      our CSP (in public/_headers) doesn't need a sha256 hash to allow
-      inline execution.
-    -->
+
+    <!-- OpenGraph (Facebook, LinkedIn, Slack, etc.) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mooseglove.com/" />
+    <meta property="og:title" content="MooseGlove | AI Clinical Differential Diagnosis" />
+    <meta
+      property="og:description"
+      content="Enter patient symptoms and receive ranked differential diagnoses backed by a biomedical knowledge graph and LLM reasoning."
+    />
+    <meta property="og:site_name" content="MooseGlove" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="MooseGlove | AI Clinical Differential Diagnosis" />
+    <meta
+      name="twitter:description"
+      content="AI-powered clinical differential diagnosis using Graph RAG and large language models."
+    />
+
+    <!-- JSON-LD structured data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "MooseGlove",
+        "url": "https://mooseglove.com",
+        "description": "AI-powered clinical differential diagnosis engine using Graph RAG and large language models. Portfolio project by Mohammad Othman.",
+        "applicationCategory": "HealthApplication",
+        "operatingSystem": "Web",
+        "author": {
+          "@type": "Person",
+          "name": "Mohammad Othman",
+          "url": "https://www.linkedin.com/in/real-mohammad-othman/"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+
+    <!-- Theme bootstrap -->
     <script src="/theme-init.js"></script>
   </head>
   <body class="bg-background text-foreground antialiased">
