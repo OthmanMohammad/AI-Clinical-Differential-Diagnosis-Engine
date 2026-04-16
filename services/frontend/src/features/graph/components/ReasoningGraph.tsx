@@ -205,7 +205,8 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       if (!container) return;
       if (nodes.length === 0) return;
 
-      logger.debug("graph.init", { nodes: nodes.length, edges: edges.length });
+      const isMobile = window.innerWidth < 768;
+      logger.debug("graph.init", { nodes: nodes.length, edges: edges.length, isMobile });
 
       const graph = new Graph({
         container,
@@ -216,30 +217,34 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
         padding: 32,
         data,
         node: {
-          state: {
-            hover: {
-              lineWidth: 3,
-              shadowBlur: 14,
-              shadowColor: getPrimaryColor(),
-            },
-            selected: {
-              lineWidth: 3,
-              stroke: getPrimaryColor(),
-              shadowBlur: 18,
-              shadowColor: getPrimaryColor(),
-            },
-            inactive: {
-              fillOpacity: 0.18,
-              strokeOpacity: 0.18,
-              labelFillOpacity: 0.18,
-            },
-          },
+          state: isMobile
+            ? {} // No hover/shadow states on mobile — saves GPU
+            : {
+                hover: {
+                  lineWidth: 3,
+                  shadowBlur: 14,
+                  shadowColor: getPrimaryColor(),
+                },
+                selected: {
+                  lineWidth: 3,
+                  stroke: getPrimaryColor(),
+                  shadowBlur: 18,
+                  shadowColor: getPrimaryColor(),
+                },
+                inactive: {
+                  fillOpacity: 0.18,
+                  strokeOpacity: 0.18,
+                  labelFillOpacity: 0.18,
+                },
+              },
         },
         edge: {
-          style: {
-            type: "quadratic",
-            curveOffset: 16,
-          } as Record<string, unknown>,
+          style: isMobile
+            ? ({} as Record<string, unknown>) // Straight lines on mobile — 3-4x faster
+            : ({
+                type: "quadratic",
+                curveOffset: 16,
+              } as Record<string, unknown>),
           state: {
             hover: {
               stroke: getPrimaryColor(),
@@ -254,16 +259,20 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
         layout: getLayoutConfig(layout),
         behaviors: [
           "drag-canvas",
-          // zoom-canvas handles both wheel (desktop) and pinch (mobile).
-          // sensitivity controls how fast the zoom responds.
           { type: "zoom-canvas", sensitivity: 1.5 },
           "drag-element",
-          {
-            type: "hover-activate",
-            degree: 1,
-            state: "hover",
-            inactiveState: "inactive",
-          },
+          // hover-activate recomputes adjacent node states every frame —
+          // expensive on mobile GPUs. Only enable on desktop.
+          ...(isMobile
+            ? []
+            : [
+                {
+                  type: "hover-activate",
+                  degree: 1,
+                  state: "hover",
+                  inactiveState: "inactive",
+                },
+              ]),
           {
             type: "click-select",
             state: "selected",
@@ -307,15 +316,30 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       };
       document.addEventListener("mooseglove:graph-zoom", handleZoom);
 
-      // Pinch-to-zoom on touch devices. G6's zoom-canvas behavior
-      // handles wheel events (desktop trackpads synthesize wheel+ctrlKey
-      // for pinch), but mobile browsers deliver raw multi-touch events
-      // instead. We track two-finger distance and call graph.zoomTo().
+      // Pinch-to-zoom on touch devices. G6's zoom-canvas only handles
+      // wheel events; mobile Chrome delivers raw multi-touch events.
+      // We track two-finger distance and zoom toward the midpoint.
+      // rAF-throttled to avoid calling zoomTo() 60+ times per second.
       let pinchInitialDistance = 0;
       let pinchInitialZoom = 1;
+      let pendingPinchScale: number | null = null;
+      let pendingPinchMid: [number, number] = [0, 0];
+      let pinchRafId: number | null = null;
+
+      const applyPinchZoom = () => {
+        if (pendingPinchScale !== null) {
+          safeCall("pinch-zoom", () =>
+            graph.zoomTo(pinchInitialZoom * pendingPinchScale!, pendingPinchMid),
+          );
+          pendingPinchScale = null;
+        }
+        pinchRafId = null;
+      };
 
       const handleTouchStart = (e: TouchEvent) => {
         if (e.touches.length === 2) {
+          // Stop G6's drag-canvas from firing on the first finger
+          e.stopPropagation();
           pinchInitialDistance = Math.hypot(
             e.touches[0]!.clientX - e.touches[1]!.clientX,
             e.touches[0]!.clientY - e.touches[1]!.clientY,
@@ -326,15 +350,21 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       const handleTouchMove = (e: TouchEvent) => {
         if (e.touches.length === 2) {
           e.preventDefault();
-          const distance = Math.hypot(
-            e.touches[0]!.clientX - e.touches[1]!.clientX,
-            e.touches[0]!.clientY - e.touches[1]!.clientY,
-          );
-          const scale = distance / pinchInitialDistance;
-          safeCall("pinch-zoom", () => graph.zoomTo(pinchInitialZoom * scale));
+          e.stopPropagation();
+          const dx = e.touches[0]!.clientX - e.touches[1]!.clientX;
+          const dy = e.touches[0]!.clientY - e.touches[1]!.clientY;
+          const distance = Math.hypot(dx, dy);
+          pendingPinchScale = distance / pinchInitialDistance;
+          pendingPinchMid = [
+            (e.touches[0]!.clientX + e.touches[1]!.clientX) / 2,
+            (e.touches[0]!.clientY + e.touches[1]!.clientY) / 2,
+          ];
+          if (pinchRafId === null) {
+            pinchRafId = requestAnimationFrame(applyPinchZoom);
+          }
         }
       };
-      container.addEventListener("touchstart", handleTouchStart, { passive: true });
+      container.addEventListener("touchstart", handleTouchStart, { passive: false });
       container.addEventListener("touchmove", handleTouchMove, { passive: false });
 
       // Track container size changes (panel resize, fullscreen toggle, etc.)
@@ -356,6 +386,7 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       resizeObserver.observe(container);
 
       return () => {
+        if (pinchRafId !== null) cancelAnimationFrame(pinchRafId);
         container.removeEventListener("touchstart", handleTouchStart);
         container.removeEventListener("touchmove", handleTouchMove);
         document.removeEventListener("mooseglove:graph-zoom", handleZoom);
