@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Maximize2, X } from "lucide-react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -31,6 +32,7 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
   const setPanelSizes = useWorkspaceStore((s) => s.setPanelSizes);
   const graphFullscreen = useWorkspaceStore((s) => s.graphFullscreen);
   const isMobile = useIsMobile();
+  const [mobileGraphExpanded, setMobileGraphExpanded] = React.useState(false);
 
   const handleLayout = React.useCallback(
     (sizes: number[]) => {
@@ -42,34 +44,65 @@ export function WorkspaceLayout({ intake, results, graph }: WorkspaceLayoutProps
   );
 
   // ------------------------------------------------------------------
-  // Mobile: single-column page scroll. No PanelGroup, no resize handles.
-  // Each section flows naturally — the user scrolls the entire page from
-  // intake form through results through graph, like a normal mobile page.
+  // Mobile fullscreen graph overlay
+  // ------------------------------------------------------------------
+  if (isMobile && mobileGraphExpanded) {
+    return (
+      <div
+        className="bg-background fixed inset-0 z-50 flex flex-col"
+        style={{ touchAction: "none" }}
+      >
+        <div className="border-border flex items-center justify-between border-b px-3 py-2">
+          <span className="text-muted-foreground text-xs font-medium">
+            Pinch to zoom, drag to pan
+          </span>
+          <button
+            type="button"
+            onClick={() => setMobileGraphExpanded(false)}
+            className="bg-muted hover:bg-accent flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+            Close
+          </button>
+        </div>
+        <div className="flex-1">{graph}</div>
+      </div>
+    );
+  }
+
+  // ------------------------------------------------------------------
+  // Mobile: single-column page scroll. Graph section has a "Tap to
+  // explore" overlay that opens the fullscreen interactive mode.
   // ------------------------------------------------------------------
   if (isMobile) {
     return (
       <main className="bg-background flex-1">
-        {/* Intake form — flows to natural height */}
         <section aria-label="Clinical intake" className="border-border border-b p-3">
           {intake}
         </section>
 
-        {/* Results — flows to natural height */}
         <section aria-label="Differential diagnosis" className="border-border border-b p-3">
           {results}
         </section>
 
-        {/* Graph — view-only on mobile. Touch events go to page scroll,
-             not graph interaction. For detailed graph exploration, use desktop. */}
-        <section aria-label="Reasoning graph" className="h-[80vh] min-h-[400px]">
+        <section aria-label="Reasoning graph" className="relative h-[70vh] min-h-[300px]">
           {graph}
+          {/* Fullscreen overlay button */}
+          <button
+            type="button"
+            onClick={() => setMobileGraphExpanded(true)}
+            className="bg-background/80 border-border text-foreground absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium shadow-lg backdrop-blur-sm transition-colors"
+          >
+            <Maximize2 className="h-3.5 w-3.5" />
+            Tap to explore graph
+          </button>
         </section>
       </main>
     );
   }
 
   // ------------------------------------------------------------------
-  // Desktop: resizable 3-panel horizontal layout (unchanged from original)
+  // Desktop: resizable 3-panel horizontal layout
   // ------------------------------------------------------------------
   return (
     <main className="bg-background flex min-h-0 flex-1">
