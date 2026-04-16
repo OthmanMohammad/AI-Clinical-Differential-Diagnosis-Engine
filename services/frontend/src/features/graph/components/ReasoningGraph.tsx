@@ -254,7 +254,9 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
         layout: getLayoutConfig(layout),
         behaviors: [
           "drag-canvas",
-          "zoom-canvas",
+          // zoom-canvas handles both wheel (desktop) and pinch (mobile).
+          // sensitivity controls how fast the zoom responds.
+          { type: "zoom-canvas", sensitivity: 1.5 },
           "drag-element",
           {
             type: "hover-activate",
