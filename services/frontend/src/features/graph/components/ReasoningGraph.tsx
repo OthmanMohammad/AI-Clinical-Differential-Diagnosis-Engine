@@ -307,6 +307,36 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       };
       document.addEventListener("mooseglove:graph-zoom", handleZoom);
 
+      // Pinch-to-zoom on touch devices. G6's zoom-canvas behavior
+      // handles wheel events (desktop trackpads synthesize wheel+ctrlKey
+      // for pinch), but mobile browsers deliver raw multi-touch events
+      // instead. We track two-finger distance and call graph.zoomTo().
+      let pinchInitialDistance = 0;
+      let pinchInitialZoom = 1;
+
+      const handleTouchStart = (e: TouchEvent) => {
+        if (e.touches.length === 2) {
+          pinchInitialDistance = Math.hypot(
+            e.touches[0]!.clientX - e.touches[1]!.clientX,
+            e.touches[0]!.clientY - e.touches[1]!.clientY,
+          );
+          pinchInitialZoom = graph.getZoom();
+        }
+      };
+      const handleTouchMove = (e: TouchEvent) => {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          const distance = Math.hypot(
+            e.touches[0]!.clientX - e.touches[1]!.clientX,
+            e.touches[0]!.clientY - e.touches[1]!.clientY,
+          );
+          const scale = distance / pinchInitialDistance;
+          safeCall("pinch-zoom", () => graph.zoomTo(pinchInitialZoom * scale));
+        }
+      };
+      container.addEventListener("touchstart", handleTouchStart, { passive: true });
+      container.addEventListener("touchmove", handleTouchMove, { passive: false });
+
       // Track container size changes (panel resize, fullscreen toggle, etc.)
       // The window resize handler only fires on viewport changes — it
       // misses Workspace panel drags. ResizeObserver catches every layout
@@ -326,6 +356,8 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       resizeObserver.observe(container);
 
       return () => {
+        container.removeEventListener("touchstart", handleTouchStart);
+        container.removeEventListener("touchmove", handleTouchMove);
         document.removeEventListener("mooseglove:graph-zoom", handleZoom);
         window.removeEventListener("resize", handleResize);
         resizeObserver.disconnect();
