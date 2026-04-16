@@ -257,28 +257,35 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
           },
         },
         layout: getLayoutConfig(layout),
-        behaviors: [
-          "drag-canvas",
-          { type: "zoom-canvas", sensitivity: 1.5 },
-          "drag-element",
-          // hover-activate recomputes adjacent node states every frame —
-          // expensive on mobile GPUs. Only enable on desktop.
-          ...(isMobile
-            ? []
-            : [
-                {
-                  type: "hover-activate",
-                  degree: 1,
-                  state: "hover",
-                  inactiveState: "inactive",
-                },
-              ]),
-          {
-            type: "click-select",
-            state: "selected",
-            multiple: false,
-          },
-        ],
+        // On mobile: remove drag-canvas and zoom-canvas entirely — we
+        // handle all touch gestures ourselves (single-finger pan + two-
+        // finger pinch zoom). This eliminates the "shift then zoom"
+        // conflict where drag-canvas fires on the first finger before
+        // the second finger lands.
+        behaviors: isMobile
+          ? [
+              {
+                type: "click-select",
+                state: "selected",
+                multiple: false,
+              },
+            ]
+          : [
+              "drag-canvas",
+              { type: "zoom-canvas", sensitivity: 1.5 },
+              "drag-element",
+              {
+                type: "hover-activate",
+                degree: 1,
+                state: "hover",
+                inactiveState: "inactive",
+              },
+              {
+                type: "click-select",
+                state: "selected",
+                multiple: false,
+              },
+            ],
         // Minimap is expensive on mobile — skip it below md breakpoint.
         plugins:
           window.innerWidth >= 768
@@ -306,8 +313,7 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
 
       safeCall("render", () => graph.render());
 
-      // Listen for mobile zoom custom events dispatched by the
-      // fullscreen overlay's +/- buttons.
+      // +/- button zoom events from the fullscreen overlay.
       const handleZoom = (e: Event) => {
         const factor = (e as CustomEvent<number>).detail;
         if (factor && typeof factor === "number") {
@@ -316,56 +322,64 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       };
       document.addEventListener("mooseglove:graph-zoom", handleZoom);
 
-      // Pinch-to-zoom on touch devices. G6's zoom-canvas only handles
-      // wheel events; mobile Chrome delivers raw multi-touch events.
-      // We track two-finger distance and zoom toward the midpoint.
-      // rAF-throttled to avoid calling zoomTo() 60+ times per second.
-      let pinchInitialDistance = 0;
-      let pinchInitialZoom = 1;
-      let pendingPinchScale: number | null = null;
-      let pendingPinchMid: [number, number] = [0, 0];
-      let pinchRafId: number | null = null;
-
-      const applyPinchZoom = () => {
-        if (pendingPinchScale !== null) {
-          safeCall("pinch-zoom", () =>
-            graph.zoomTo(pinchInitialZoom * pendingPinchScale!, pendingPinchMid),
-          );
-          pendingPinchScale = null;
-        }
-        pinchRafId = null;
-      };
+      // ---- Mobile touch: full pan + pinch-zoom handler ----
+      // We own ALL touch gestures on mobile (G6 behaviors are stripped).
+      // Single finger = pan. Two fingers = pinch-zoom toward midpoint.
+      let touchMode: "none" | "pan" | "pinch" = "none";
+      let lastTouchX = 0;
+      let lastTouchY = 0;
+      let pinchStartDist = 0;
+      let pinchStartZoom = 1;
 
       const handleTouchStart = (e: TouchEvent) => {
         if (e.touches.length === 2) {
-          // Stop G6's drag-canvas from firing on the first finger
-          e.stopPropagation();
-          pinchInitialDistance = Math.hypot(
+          e.preventDefault();
+          touchMode = "pinch";
+          pinchStartDist = Math.hypot(
             e.touches[0]!.clientX - e.touches[1]!.clientX,
             e.touches[0]!.clientY - e.touches[1]!.clientY,
           );
-          pinchInitialZoom = graph.getZoom();
+          pinchStartZoom = graph.getZoom();
+        } else if (e.touches.length === 1) {
+          touchMode = "pan";
+          lastTouchX = e.touches[0]!.clientX;
+          lastTouchY = e.touches[0]!.clientY;
         }
       };
+
       const handleTouchMove = (e: TouchEvent) => {
-        if (e.touches.length === 2) {
-          e.preventDefault();
-          e.stopPropagation();
-          const dx = e.touches[0]!.clientX - e.touches[1]!.clientX;
-          const dy = e.touches[0]!.clientY - e.touches[1]!.clientY;
-          const distance = Math.hypot(dx, dy);
-          pendingPinchScale = distance / pinchInitialDistance;
-          pendingPinchMid = [
-            (e.touches[0]!.clientX + e.touches[1]!.clientX) / 2,
-            (e.touches[0]!.clientY + e.touches[1]!.clientY) / 2,
-          ];
-          if (pinchRafId === null) {
-            pinchRafId = requestAnimationFrame(applyPinchZoom);
-          }
+        e.preventDefault();
+
+        if (touchMode === "pinch" && e.touches.length === 2) {
+          const dist = Math.hypot(
+            e.touches[0]!.clientX - e.touches[1]!.clientX,
+            e.touches[0]!.clientY - e.touches[1]!.clientY,
+          );
+          const midX = (e.touches[0]!.clientX + e.touches[1]!.clientX) / 2;
+          const midY = (e.touches[0]!.clientY + e.touches[1]!.clientY) / 2;
+          // Convert page coords to container-relative
+          const rect = container.getBoundingClientRect();
+          const scale = dist / pinchStartDist;
+          graph.zoomTo(pinchStartZoom * scale, [midX - rect.left, midY - rect.top]);
+        } else if (touchMode === "pan" && e.touches.length === 1) {
+          const dx = e.touches[0]!.clientX - lastTouchX;
+          const dy = e.touches[0]!.clientY - lastTouchY;
+          lastTouchX = e.touches[0]!.clientX;
+          lastTouchY = e.touches[0]!.clientY;
+          graph.translate(dx, dy);
         }
       };
-      container.addEventListener("touchstart", handleTouchStart, { passive: false });
-      container.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+      const handleTouchEnd = () => {
+        touchMode = "none";
+      };
+
+      if (isMobile) {
+        container.addEventListener("touchstart", handleTouchStart, { passive: false });
+        container.addEventListener("touchmove", handleTouchMove, { passive: false });
+        container.addEventListener("touchend", handleTouchEnd);
+        container.addEventListener("touchcancel", handleTouchEnd);
+      }
 
       // Track container size changes (panel resize, fullscreen toggle, etc.)
       // The window resize handler only fires on viewport changes — it
@@ -386,9 +400,10 @@ export const ReasoningGraph = React.forwardRef<ReasoningGraphHandle, ReasoningGr
       resizeObserver.observe(container);
 
       return () => {
-        if (pinchRafId !== null) cancelAnimationFrame(pinchRafId);
         container.removeEventListener("touchstart", handleTouchStart);
         container.removeEventListener("touchmove", handleTouchMove);
+        container.removeEventListener("touchend", handleTouchEnd);
+        container.removeEventListener("touchcancel", handleTouchEnd);
         document.removeEventListener("mooseglove:graph-zoom", handleZoom);
         window.removeEventListener("resize", handleResize);
         resizeObserver.disconnect();

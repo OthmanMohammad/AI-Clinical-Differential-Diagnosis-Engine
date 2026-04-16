@@ -93,52 +93,7 @@ export function WorkspaceLayout({
 
         {/* Fullscreen graph — G6 only mounts here when opened. */}
         {mobileGraphOpen && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 9999,
-              backgroundColor: "hsl(var(--background))",
-              touchAction: "none",
-            }}
-          >
-            <div className="h-full w-full">{graph}</div>
-
-            <button
-              type="button"
-              onClick={() => setMobileGraphOpen(false)}
-              className="absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white shadow-lg"
-            >
-              <X className="h-3.5 w-3.5" />
-              Close
-            </button>
-
-            <div className="absolute bottom-8 right-3 z-10 flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  document.dispatchEvent(new CustomEvent("mooseglove:graph-zoom", { detail: 1.4 }))
-                }
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg"
-                aria-label="Zoom in"
-              >
-                <Plus className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  document.dispatchEvent(new CustomEvent("mooseglove:graph-zoom", { detail: 0.7 }))
-                }
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg"
-                aria-label="Zoom out"
-              >
-                <Minus className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
+          <MobileGraphFullscreen graph={graph} onClose={() => setMobileGraphOpen(false)} />
         )}
       </>
     );
@@ -223,5 +178,83 @@ function ResizeHandle() {
       <div className="absolute inset-y-0 -left-1 -right-1 cursor-col-resize" />
       <div className="bg-border group-hover:bg-primary/60 pointer-events-none absolute left-1/2 top-1/2 h-8 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors" />
     </PanelResizeHandle>
+  );
+}
+
+/** Mobile fullscreen graph overlay with loading state. */
+function MobileGraphFullscreen({
+  graph,
+  onClose,
+}: {
+  graph: React.ReactNode;
+  onClose: () => void;
+}) {
+  const [loading, setLoading] = React.useState(true);
+
+  // G6 takes 1-3 seconds to init. Show loading for at least 500ms
+  // then check if the canvas has rendered.
+  React.useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 1500);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9999,
+        backgroundColor: "hsl(var(--background))",
+        touchAction: "none",
+      }}
+    >
+      {/* Loading overlay */}
+      {loading && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3">
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
+          <p className="text-muted-foreground text-xs">Loading graph...</p>
+        </div>
+      )}
+
+      {/* Graph — always rendered so G6 can init while loading shows */}
+      <div className={cn("h-full w-full", loading && "opacity-0")}>{graph}</div>
+
+      {/* Close button — top center, clear of legend and toolbar */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/70 px-4 py-2 text-xs font-medium text-white shadow-lg"
+      >
+        <X className="h-3.5 w-3.5" />
+        Close
+      </button>
+
+      {/* Zoom buttons — bottom right */}
+      <div className="absolute bottom-8 right-3 z-30 flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={() =>
+            document.dispatchEvent(new CustomEvent("mooseglove:graph-zoom", { detail: 1.3 }))
+          }
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg"
+          aria-label="Zoom in"
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            document.dispatchEvent(new CustomEvent("mooseglove:graph-zoom", { detail: 0.77 }))
+          }
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg"
+          aria-label="Zoom out"
+        >
+          <Minus className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
   );
 }
